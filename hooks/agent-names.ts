@@ -5,6 +5,7 @@ import type { EngineInterface } from 'claude-code'
 
 import type { WorkKind } from './work-kinds'
 import { briefOf } from './transcript-parse'
+import { ELLIPSIS } from './blocks/common'
 
 export const NAME_CAPS = { TITLE_CHARS: 40, TRIES: 3, RETRY_MS: 4000, RUN_TIMEOUT_MS: 5000 } as const
 /** The label of a subagent nothing is known about yet. */
@@ -32,6 +33,12 @@ export const placeholderFor = (kind?: WorkKind): string => (kind === undefined ?
 export const isPlaceholder = (label: string): boolean => label === PLACEHOLDER_BASE || label.startsWith(`${PLACEHOLDER_BASE}${PLACEHOLDER_JOIN}`)
 
 const LEADING_TICKET = /^T\d+\b[\s·:.—–-]*/i
+const SLUG_ID = /\b\d+[-_]([A-Za-z][\w-]*)/g
+const SLUG_SEPARATORS = /[-_]+/g
+const LOOSE_TICKET = /\bT\d+\b/gi
+const TITLE_SEPARATORS = /^[\s·:,.—–-]+|[\s·:,.—–-]+$/g
+const DUPLICATE_START = 2
+const TITLE_SUFFIX_JOIN = ' '
 const TRAILING_ROUTING = /\s*\(\s*[a-z0-9._-]+(?:\/[a-z0-9._-]+){1,2}\s*\)\s*$/i
 /** `Ticket: T66` (the id token and its separator): the brief may arrive on one line, so only the token goes, not the line. */
 const TICKET_LINE = /^\s*(?:ticket|task)\s*[:#]\s*\S+[\s·:—–-]*/gim
@@ -42,11 +49,37 @@ const CONTROL = /[\u0000-\u001f\u007f]/g
 
 const capitalise = (s: string): string => (s === '' ? s : s[0]!.toUpperCase() + s.slice(1))
 
-/** `T64 · avatar redesign (sonnet/low)` -> `Avatar redesign`. A text with nothing else left keeps itself; '' stays ''. */
-export function plainTitle(text: string): string {
+/** Strip bookkeeping before any display cap. Slug titles are humanised; ordinary titles may keep their casing. */
+export function plainTitle(text: string, capitaliseTitle = true): string {
   const flat = text.replace(CONTROL, ' ').replace(/\s+/g, ' ').trim()
-  const body = flat.replace(TRAILING_ROUTING, '').replace(LEADING_TICKET, '').trim()
-  return capitalise(body === '' ? flat : body)
+  const hasSlug = flat.search(SLUG_ID) >= 0
+  const body = flat.replace(TRAILING_ROUTING, '').replace(LEADING_TICKET, '').replace(LOOSE_TICKET, '')
+    .replace(SLUG_ID, (_, words: string) => words.replace(SLUG_SEPARATORS, ' '))
+    .replace(TITLE_SEPARATORS, '').replace(/\s+/g, ' ').trim()
+  return capitaliseTitle || hasSlug ? capitalise(body) : body
+}
+
+/** Fit a title including the ellipsis, keeping whole words whenever a boundary exists. */
+export function clipTitle(title: string, max: number): string {
+  if (title.length <= max) return title
+  const head = title.slice(0, Math.max(0, max - ELLIPSIS.length))
+  const boundary = head.lastIndexOf(' ')
+  return `${(boundary > 0 ? head.slice(0, boundary) : head).trimEnd()}${ELLIPSIS}`
+}
+
+/** Distinguish both cleaned-title and cap-induced collisions, reserving room for each numeric suffix. */
+export function uniqueTitles(titles: readonly string[], max = Number.MAX_SAFE_INTEGER): string[] {
+  const used = new Set<string>()
+  return titles.map(title => {
+    let label = clipTitle(title, max)
+    let next = DUPLICATE_START
+    while (used.has(label)) {
+      const suffix = `${TITLE_SUFFIX_JOIN}${next++}`
+      label = `${clipTitle(title, max - suffix.length)}${suffix}`
+    }
+    used.add(label)
+    return label
+  })
 }
 
 /** Cut at a word boundary within `max` characters (an ellipsis-free cut: the ticker adds its own). */

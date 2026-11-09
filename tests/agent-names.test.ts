@@ -12,7 +12,7 @@ test('plainTitle: ticket token, model/effort suffix and control characters go; f
   expect(plainTitle('T66 · fix transcript lookup (sonnet/low)')).toBe('Fix transcript lookup')
   expect(plainTitle('T7: review router state')).toBe('Review router state')
   expect(plainTitle('t12. ship it')).toBe('Ship it')
-  expect(plainTitle('T9')).toBe('T9')
+  expect(plainTitle('T9')).toBe('')
   expect(plainTitle('  \n ')).toBe('')
   expect(plainTitle('')).toBe('')
 })

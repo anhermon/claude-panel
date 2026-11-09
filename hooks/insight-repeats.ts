@@ -5,10 +5,9 @@
 // script run through `node` is just `node`), and the time cost is the time the calls themselves took (not the model's time
 // reading the result). Pure: no `$`, no I/O.
 import type { BoardFrame, RepeatRow } from '../types'
-import { plainTitle } from './agent-roles'
-import { nameOf } from './board-agents'
+import { FRAME_CAPS } from './board-frames'
 import { formatDuration, plural } from './insight-format'
-import { MAIN_NAME, pickLoops } from './insight-time'
+import { loopNames, pickLoops } from './insight-time'
 import type { Subject } from './insight-time'
 import { panelConfig } from './panel-config'
 import { MAIN_LOOP } from './pulse-model'
@@ -17,7 +16,7 @@ import { splitKey, TALLY_VERBS } from './pulse-tally'
 import { KIND_META, kindOf } from './work-kinds'
 
 export const REPEAT_FRAME_ID = 'repeats'
-export const REPEAT_CAPS = { COLS: 5, ROWS: 5, NOTES: 4, COMMAND_NOTES: 2, COL_CHARS: 14, LABEL_CHARS: 28, NOTE_CHARS: 140, HEADLINE_CHARS: 160 } as const
+export const REPEAT_CAPS = { COLS: 5, ROWS: 5, NOTES: 4, COMMAND_NOTES: 2, COL_CHARS: FRAME_CAPS.INSIGHT_LABEL_CHARS, LABEL_CHARS: 28, NOTE_CHARS: 140, HEADLINE_CHARS: 160 } as const
 const TITLE = 'Repeated work'
 const FOOT = 'Numbers = times each agent read or edited the file'
 const TIMES_MARK = '×'
@@ -37,8 +36,6 @@ const BASH = 'Bash'
 
 export type FileUse = { file: string; reads: number; edits: number; touches: number; byLoop: Map<string, { reads: number; edits: number }> }
 export type CommandUse = { target: string; runs: number; failed: number; retries: number; ms: number; loops: Set<string> }
-
-const loopName = (loop: PulseLoop): string => (loop.id === MAIN_LOOP ? MAIN_NAME : plainTitle(nameOf(loop)))
 
 /** Every file the loops read or edited, with the counts, most touched first. */
 export function fileUses(loops: readonly PulseLoop[]): FileUse[] {
@@ -136,6 +133,7 @@ export function repeatsFrame(loops: readonly PulseLoop[], subjects: readonly Sub
   const files = fileUses(picked).filter(u => u.touches >= panelConfig.repeatMin).slice(0, REPEAT_CAPS.ROWS)
   const touchesBy = (id: string): number => files.reduce((a, u) => a + (u.byLoop.get(id)?.reads ?? 0) + (u.byLoop.get(id)?.edits ?? 0), 0)
   const cols = picked.filter(l => touchesBy(l.id) > 0).sort((a, b) => touchesBy(b.id) - touchesBy(a.id)).slice(0, REPEAT_CAPS.COLS)
+  const names = loopNames(picked, REPEAT_CAPS.COL_CHARS)
   const rows: RepeatRow[] = files.map(u => ({
     label: u.file.slice(0, REPEAT_CAPS.LABEL_CHARS),
     cells: cols.map(l => (u.byLoop.get(l.id)?.reads ?? 0) + (u.byLoop.get(l.id)?.edits ?? 0)),
@@ -151,7 +149,7 @@ export function repeatsFrame(loops: readonly PulseLoop[], subjects: readonly Sub
     size: 'l',
     ...(headline === '' ? {} : { caption: headline.slice(0, REPEAT_CAPS.HEADLINE_CHARS) }),
     ...(rows.length === 0 ? {} : { foot: FOOT }),
-    cols: cols.map(l => loopName(l).slice(0, REPEAT_CAPS.COL_CHARS)),
+    cols: cols.map(l => names.get(l.id)!),
     rows,
     ...(notes.length === 0 ? {} : { notes }),
   }

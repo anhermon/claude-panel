@@ -151,7 +151,7 @@ test('events carry their tone: verify_fail and escalated danger, verify_pass and
   const f = frameOf(run([{ id: 'a', status: 'ready' }, { id: 'b', status: 'ready' }], lines), 'router-events')
   if (f?.type !== 'timeline') throw new Error('not a timeline')
   expect(f.items.map(i => i.tone)).toEqual(['danger', 'danger', 'ok', 'ok', undefined])
-  expect(f.items[0]).toMatchObject({ when: 'just now', text: 'T0 · verify_fail' })
+  expect(f.items[0]).toMatchObject({ when: 'just now', text: 'Task · verify_fail' })
 })
 
 test('the board: router frames are auto frames, silenced by frame_remove, replaced by a posted frame of the same id', () => {

@@ -5,8 +5,8 @@
 // so the sinks split them by time share and say so).
 import type { BoardFrame, InsightKind, KindStackItem, SinkItem } from '../types'
 import { endOf, spansOf } from './agent-insight'
-import { plainTitle } from './agent-roles'
-import { nameOf } from './board-agents'
+import { clipTitle, plainTitle, PLACEHOLDER_BASE, uniqueTitles } from './agent-names'
+import { FRAME_CAPS } from './board-frames'
 import { formatDuration, formatTokens, MS_PER_SECOND, percentOf, percentShares, plural } from './insight-format'
 import { panelConfig } from './panel-config'
 import { MAIN_LOOP } from './pulse-model'
@@ -28,7 +28,7 @@ export const TIME_CAPS = {
   STRETCH_MIN_MS: 60_000,
   /** A slice shorter than this is not drawn. */
   SLICE_MIN_MS: 1000,
-  LABEL_CHARS: 24,
+  LABEL_CHARS: FRAME_CAPS.INSIGHT_LABEL_CHARS,
   NOTE_CHARS: 140,
   HEADLINE_CHARS: 160,
 } as const
@@ -55,10 +55,18 @@ export function pickLoops(loops: readonly PulseLoop[]): PulseLoop[] {
   return agents.length > 0 ? agents : loops.filter(l => l.id === MAIN_LOOP)
 }
 
+/** Full source names, cleaned before clipping; repeats also includes loops without measurable spans. */
+export function loopNames(loops: readonly PulseLoop[], max = Number.MAX_SAFE_INTEGER): Map<string, string> {
+  const names = uniqueTitles(loops.map(loop => loop.id === MAIN_LOOP ? MAIN_NAME : plainTitle(loop.name ?? loop.label, false) || PLACEHOLDER_BASE), max)
+  return new Map(loops.map((loop, i) => [loop.id, names[i]!]))
+}
+
 /** The time split of every picked loop that has done enough to say something (at least `insightMinMs` in all), longest first. */
 export function subjectsOf(loops: readonly PulseLoop[], events: readonly PulseEvent[], now: number): Subject[] {
   const out: Subject[] = []
-  for (const loop of pickLoops(loops)) {
+  const picked = pickLoops(loops)
+  const names = loopNames(picked)
+  for (const loop of picked) {
     const spans = spansOf(loop, events)
     if (spans.length === 0) continue
     const end = endOf(loop, now)
@@ -68,7 +76,7 @@ export function subjectsOf(loops: readonly PulseLoop[], events: readonly PulseEv
     if (pause >= TIME_CAPS.SLICE_MIN_MS) byKind.set('thinking', pause)
     const totalMs = active + (byKind.get('thinking') ?? 0)
     if (totalMs < panelConfig.insightMinMs) continue
-    out.push({ loop, name: loop.id === MAIN_LOOP ? MAIN_NAME : plainTitle(nameOf(loop)), spans, end, byKind, totalMs, tokens: (loop.tokens ?? 0) > 0 ? (loop.tokens ?? null) : null })
+    out.push({ loop, name: names.get(loop.id)!, spans, end, byKind, totalMs, tokens: (loop.tokens ?? 0) > 0 ? (loop.tokens ?? null) : null })
   }
   return out.sort((a, b) => b.totalMs - a.totalMs)
 }
@@ -108,13 +116,15 @@ export function byKindHeadline(subjects: readonly Subject[]): string {
 
 /** The `time-by-kind` frame: one stacked bar per agent, its slices in seconds and in words; undefined while no agent has enough to show. */
 export function kindStackFrame(subjects: readonly Subject[]): BoardFrame | undefined {
-  const items: KindStackItem[] = subjects.slice(0, TIME_CAPS.BAR_ROWS).map(s => ({
-    label: s.name.slice(0, TIME_CAPS.LABEL_CHARS),
+  const picked = subjects.slice(0, TIME_CAPS.BAR_ROWS)
+  const names = uniqueTitles(picked.map(s => s.name), TIME_CAPS.LABEL_CHARS)
+  const items: KindStackItem[] = picked.map((s, i) => ({
+    label: names[i]!,
     total: formatDuration(s.totalMs),
     ...(s.tokens === null ? {} : { tokens: formatTokens(s.tokens) }),
     segs: kindsOf(s.byKind).map(k => ({ k, s: Math.round((s.byKind.get(k) ?? 0) / MS_PER_SECOND), text: formatDuration(s.byKind.get(k) ?? 0) })),
   }))
-  return items.length === 0 ? undefined : { id: TIME_FRAME_IDS.BY_KIND, type: 'kindstack', title: BY_KIND_TITLE, size: 'l', caption: byKindHeadline(subjects).slice(0, TIME_CAPS.HEADLINE_CHARS), foot: FOOTS.byKind, items }
+  return items.length === 0 ? undefined : { id: TIME_FRAME_IDS.BY_KIND, type: 'kindstack', title: BY_KIND_TITLE, size: 'l', caption: clipTitle(byKindHeadline(subjects), TIME_CAPS.HEADLINE_CHARS), foot: FOOTS.byKind, items }
 }
 
 type Sink = { kind: InsightKind; ms: number; agents: number; tokens: number }
@@ -151,7 +161,7 @@ export function stretchesOf(subjects: readonly Subject[]): Stretch[] {
 
 /** One compact line per stretch: `14 min 22 s writing logic · Fix parser edge cases` (the number of actions is not worth a line). */
 export const stretchNotes = (subjects: readonly Subject[]): string[] =>
-  stretchesOf(subjects).map(x => `${formatDuration(x.ms)} ${lowerFirst(KIND_META[x.kind].headline)} · ${x.name}`.slice(0, TIME_CAPS.NOTE_CHARS))
+  stretchesOf(subjects).map(x => clipTitle(`${formatDuration(x.ms)} ${lowerFirst(KIND_META[x.kind].headline)} · ${x.name}`, TIME_CAPS.NOTE_CHARS))
 
 /** The finding of the `time-sinks` frame: the biggest kind's share, and the longest stretch with the agent that spent it. */
 export function sinksHeadline(sinks: readonly Sink[], total: number, stretch: Stretch | undefined): string {
@@ -178,7 +188,7 @@ export function sinksFrame(subjects: readonly Subject[]): BoardFrame | undefined
     meta: [plural(s.agents, 'agent'), s.tokens > 0 ? `${TOKENS_ESTIMATE_MARK}${formatTokens(s.tokens).replace(TOKENS_WORD, TOKENS_SHORT)}` : ''].filter(m => m !== '').join(META_JOIN),
   }))
   const notes = stretchNotes(subjects)
-  const caption = sinksHeadline(sinks, total, stretchesOf(subjects)[0]).slice(0, TIME_CAPS.HEADLINE_CHARS)
+  const caption = clipTitle(sinksHeadline(sinks, total, stretchesOf(subjects)[0]), TIME_CAPS.HEADLINE_CHARS)
   return { id: TIME_FRAME_IDS.SINKS, type: 'sinks', title: SINKS_TITLE, size: 'l', caption, foot: FOOTS.sinks, items, ...(notes.length === 0 ? {} : { notes }) }
 }
 

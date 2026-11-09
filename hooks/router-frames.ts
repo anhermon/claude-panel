@@ -2,7 +2,7 @@
 // (many tickets), `checks` (exactly one ticket), `router-events` (a `timeline` of the latest events). Context-adaptive:
 // two or more tickets give `tickets`, one gives `checks` for it, none gives nothing. Pure: no `$`, no I/O.
 import type { BoardFrame, BoardTone, CheckItem, TicketItem } from '../types'
-import { plainTitle } from './agent-roles'
+import { clipTitle, plainTitle, uniqueTitles } from './agent-names'
 import { cut } from './blocks/common'
 import { FRAME_CAPS } from './board-frames'
 import type { RouterEvent, RouterRun, RouterStage, RouterTicket } from './router-state'
@@ -39,6 +39,7 @@ export const ROUTER_FRAME = {
 const STAGE_RANK: Record<RouterStage, number> = { fixing: 0, verifying: 1, building: 2, unproven: 3, unverified: 4, blocked: 5, ready: 6, draft: 7, done: 8 }
 const TITLE_PARTS_JOIN = ', '
 const TITLE_SEP = ' · '
+const TASK_TITLE = 'Task'
 const MS_PER_MIN = 60_000
 const MIN_PER_HOUR = 60
 const HOURS_PER_DAY = 24
@@ -56,12 +57,12 @@ const TONE_OF_EVENT: Record<string, BoardTone> = {
 const SLUG_NUMBER = /^\d+[-_]?/
 const SLUG_SEPARATORS = /[-_]+/g
 const humanise = (slug: string): string => {
-  const words = slug.replace(SLUG_NUMBER, '').replace(SLUG_SEPARATORS, ' ').trim()
-  return words === '' ? slug : words.charAt(0).toUpperCase() + words.slice(1)
+  const words = plainTitle(slug.replace(SLUG_NUMBER, '').replace(SLUG_SEPARATORS, ' '))
+  return words === '' ? TASK_TITLE : words
 }
 /** What a person calls the ticket: its title without number or routing note, never its id or folder slug. */
 export const ticketTitle = (t: RouterTicket): string => {
-  const plain = plainTitle(t.title)
+  const plain = plainTitle(t.title, false)
   return plain === '' || plain === t.id ? humanise(t.id) : plain
 }
 const titlesOf = (ids: readonly string[], all: readonly RouterTicket[]): string[] => ids.map(id => { const o = all.find(x => x.id === id); return o === undefined ? humanise(id) : ticketTitle(o) })
@@ -113,7 +114,7 @@ function itemOf(t: RouterTicket, all: readonly RouterTicket[]): TicketItem {
   const note = noteOf(t, all)
   return {
     id: cut(t.id, ROUTER_FRAME.TICKET_ID_CHARS),
-    title: cut(ticketTitle(t), ROUTER_FRAME.TICKET_TITLE_CHARS),
+    title: clipTitle(ticketTitle(t), ROUTER_FRAME.TICKET_TITLE_CHARS),
     stage: t.stage,
     agent: cut(t.agent, ROUTER_FRAME.AGENT_CHARS),
     ...(checks === undefined ? {} : { checks }),
@@ -165,7 +166,7 @@ function checksTitle(t: RouterTicket): string {
   const bad = failing(t).length
   const what =
     total === 0 ? 'not checked yet' : t.result === 'PASS' ? `all ${total} passed` : bad > 0 ? `${bad} of ${total} failed` : `${checksOf(t)?.pass ?? 0} of ${total} passed`
-  return cut(`Checks${TITLE_SEP}${what}${TITLE_SEP}${ticketTitle(t)}`, ROUTER_FRAME.TITLE_CHARS)
+  return clipTitle(`Checks${TITLE_SEP}${what}${TITLE_SEP}${ticketTitle(t)}`, ROUTER_FRAME.TITLE_CHARS)
 }
 
 function checksFrame(t: RouterTicket): BoardFrame | undefined {
@@ -210,7 +211,7 @@ function eventsFrame(events: readonly RouterEvent[], tickets: readonly RouterTic
       const text = full.length <= ROUTER_FRAME.EVENT_TEXT_CHARS ? full : `${who}${e.type}`
       const when = whenOf(e.ts, now)
       const tone = TONE_OF_EVENT[e.type]
-      return { ...(when === '' ? {} : { when: cut(when, ROUTER_FRAME.WHEN_CHARS) }), text: cut(text, ROUTER_FRAME.EVENT_TEXT_CHARS), ...(tone === undefined ? {} : { tone }) }
+      return { ...(when === '' ? {} : { when: cut(when, ROUTER_FRAME.WHEN_CHARS) }), text: clipTitle(text, ROUTER_FRAME.EVENT_TEXT_CHARS), ...(tone === undefined ? {} : { tone }) }
     }),
   }
 }
@@ -218,8 +219,10 @@ function eventsFrame(events: readonly RouterEvent[], tickets: readonly RouterTic
 /** The frames the run has something to say with, in board order. Nothing for a run with no ticket. */
 export function routerFrames(run: RouterRun | undefined, now: number): BoardFrame[] {
   if (run === undefined || run.tickets.length === 0) return []
-  const main = run.tickets.length === 1 ? checksFrame(run.tickets[0]!) : ticketsFrame(run)
-  return [main, eventsFrame(run.events, run.tickets, now)].filter((f): f is BoardFrame => f !== undefined)
+  const titles = uniqueTitles(run.tickets.map(ticketTitle), ROUTER_FRAME.TICKET_TITLE_CHARS)
+  const tickets = run.tickets.map((t, i) => ({ ...t, title: titles[i]! }))
+  const main = tickets.length === 1 ? checksFrame(tickets[0]!) : ticketsFrame({ ...run, tickets })
+  return [main, eventsFrame(run.events, tickets, now)].filter((f): f is BoardFrame => f !== undefined)
 }
 
 /** The ids of the frames, for the board's list of auto frames. */
