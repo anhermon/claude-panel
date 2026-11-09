@@ -26,7 +26,7 @@ import type { SessionRow } from './sessions-state'
 import { panelConfig } from './panel-config'
 import { PLUGIN_NAME } from './spec'
 import { watchedFolder } from './watch'
-import { agentsInfoLive, agentsInfoNote, agentsInfoPush } from './agents-info-host'
+import { agentsInfoLive, agentsInfoNote, agentsInfoPush, agentsInfoSessions } from './agents-info-host'
 
 type Dollar = EngineInterface
 
@@ -96,6 +96,7 @@ async function sessionsTick($: Dollar, b: Board): Promise<void> {
     if (key === (b.sessionsKey ?? '[]')) return
     b.sessionsKey = key
     b.sessions = rows
+    agentsInfoSessions(rows)
     b.flusher?.touch()
   } catch (err) {
     log($, `board: could not read the other sessions: ${String(err)}`)

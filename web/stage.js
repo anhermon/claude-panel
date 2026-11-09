@@ -103,6 +103,14 @@
       f.iframe.contentWindow.postMessage({ type: HOST_TYPE, name, data }, ANY_ORIGIN);
     } catch (e) { /* frame not ready or gone */ }
   }
+  /* A host message for the frame of scene `id` (the page's own command, e.g. open-session). A frame hidden behind a solo view is brought forward first, so what the message opens is seen. */
+  function hostCommand(id, name, data) {
+    const f = frames.get(id);
+    if (!f) return false;
+    if (soloId && soloId !== id) setSolo(id, true);
+    postHost(f, name, data);
+    return true;
+  }
   function focusFrame(f) {
     try {
       f.iframe.focus();
@@ -267,7 +275,7 @@
   }
 
   globalThis.PanelStage = {
-    init, sync, selectTab: (id) => setSolo(id, true), reload, view, sceneIdOf, onMessage, onKeydown, onHashChange,
+    init, sync, selectTab: (id) => setSolo(id, true), reload, view, sceneIdOf, hostCommand, onMessage, onKeydown, onHashChange,
     focusActive: () => { const f = active(); if (f) focusFrame(f); },
     hasStage: () => frames.size > 0,
     constants: { FORWARD_KEYS, STAGE_HASH_PREFIX },

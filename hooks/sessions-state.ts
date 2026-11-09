@@ -36,6 +36,8 @@ export const SESSION_ROWS = {
   TASK_CHARS: 80,
   PROJECT_CHARS: 20,
   BRANCH_CHARS: 20,
+  /** What of a tool call's input is kept before the whole task line is cut to TASK_CHARS. */
+  TOOL_DETAIL_CHARS: 120,
   /** What a row's name falls back to: the first characters of the session id. */
   ID_CHARS: 8,
 } as const
@@ -71,13 +73,24 @@ export type TailRead = {
   prompt: string | null
   /** Tool calls with no answer in the tail. */
   pending: number
+  /** The newest tool call with no answer, as `<Tool>: <what>`; null when every call was answered. */
+  doing: string | null
+  /** The first sentence of the newest assistant text of the current turn (no newer prompt), markdown stripped; null when there is none. */
+  said: string | null
 }
-export const EMPTY_TAIL: TailRead = { title: null, slug: null, cwd: null, branch: null, prompt: null, pending: 0 }
+export const EMPTY_TAIL: TailRead = { title: null, slug: null, cwd: null, branch: null, prompt: null, pending: 0, doing: null, said: null }
 export type SessionState = 'busy' | 'waiting' | 'idle'
 /** One row of the frame, ready to draw (ages are coarse, so a quiet board does not change every poll). */
 export type SessionRow = { id: string; title: string; state: SessionState; project: string; branch?: string; age?: string; task?: string }
 /** Everything known about one live session before it becomes a row. */
 export type SessionFacts = { live: LiveSession; slug: string | null; tail: TailRead; mainMs: number | null; lastWriteMs: number | null }
+
+/** The tool input fields that say what a call does, best first. */
+const TOOL_DETAIL_KEYS = ['description', 'command', 'file_path', 'path', 'pattern', 'url', 'query'] as const
+const MCP_PREFIX = /^mcp__.+?__/
+const SENTENCE = /^(.+?[.!?])(?=\s|$)/
+const ARROW = /\s*['"`]*\s*(?:->|=>|→)\s*['"`]*\s*/g
+const BRANCH_NOISE = 'HEAD'
 
 const str = (v: unknown, max: number): string | null => (typeof v === 'string' ? v.slice(0, max) : null)
 
@@ -152,10 +165,33 @@ export function promptOf(row: Record<string, unknown>): string | undefined {
   return text === '' || text.startsWith('<') || text.startsWith('[Request interrupted') ? undefined : text
 }
 
+const squash = (t: string): string => t.replace(/\s+/g, ' ').trim()
+
+/** `<Tool>: <description | command | file | pattern>` for one tool_use block (the mcp prefix dropped). */
+export function toolLabel(name: unknown, input: unknown): string {
+  const tool = typeof name === 'string' ? name.replace(MCP_PREFIX, '') : ''
+  const o = input !== null && typeof input === 'object' ? (input as Record<string, unknown>) : {}
+  const key = TOOL_DETAIL_KEYS.find(k => typeof o[k] === 'string' && squash(o[k] as string) !== '')
+  const detail = key === undefined ? '' : squash(o[key] as string).slice(0, SESSION_ROWS.TOOL_DETAIL_CHARS)
+  return detail === '' ? tool : `${tool}: ${detail}`
+}
+
+/** The first sentence of an assistant text with the markdown marks taken out; '' when there is no text. */
+export function firstSentence(text: string): string {
+  const plain = squash(text
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
+    .replace(/^\s*(?:#{1,6}|>|[-*+])\s+/gm, '')
+    .replace(/[*`]|~~/g, ''))
+  return SENTENCE.exec(plain)?.[1] ?? plain
+}
+
+/** A prompt as a task line: quote marks around it or before an arrow, and the arrows, are noise from pasted text. */
+export const cleanPrompt = (text: string): string => squash(text.replace(ARROW, ' ')).replace(/^['"`]+/, '').replace(/['"`]+$/, '').trim()
+
 /** The tail of a transcript (JSONL text; its first line may be cut) folded into what the frame needs. Never throws. */
 export function readTail(text: string): TailRead {
   const t: { -readonly [K in keyof TailRead]: TailRead[K] } = { ...EMPTY_TAIL }
-  const pending = new Set<string>()
+  const pending = new Map<string, string>()
   for (const line of text.split('\n')) {
     if (line === '') continue
     let row: Record<string, unknown>
@@ -173,15 +209,24 @@ export function readTail(text: string): TailRead {
     else if (row.type === 'last-prompt' && typeof row.lastPrompt === 'string') t.prompt = row.lastPrompt.trim().startsWith('<') ? t.prompt : row.lastPrompt
     else if (row.type === 'assistant' || row.type === 'user') {
       const content = (row.message as { content?: unknown } | undefined)?.content
+      const isSide = row.isSidechain === true
       for (const b of Array.isArray(content) ? (content as Record<string, unknown>[]) : []) {
         if (b === null || typeof b !== 'object') continue
-        if (b.type === 'tool_use' && typeof b.id === 'string') pending.add(b.id)
+        if (b.type === 'tool_use' && typeof b.id === 'string') pending.set(b.id, toolLabel(b.name, b.input))
         else if (b.type === 'tool_result' && typeof b.tool_use_id === 'string') pending.delete(b.tool_use_id)
+        else if (b.type === 'text' && row.type === 'assistant' && !isSide && typeof b.text === 'string') t.said = firstSentence(b.text) || t.said
       }
-      if (row.type === 'user') t.prompt = promptOf(row) ?? t.prompt
+      if (row.type === 'user') {
+        const prompt = promptOf(row)
+        if (prompt !== undefined) {
+          t.prompt = prompt
+          t.said = null // what the assistant said before this prompt is about the previous turn
+        }
+      }
     }
   }
   t.pending = pending.size
+  t.doing = [...pending.values()].pop() ?? null
   return t
 }
 
@@ -208,15 +253,16 @@ const projectOf = (cwd: string | null, slug: string | null): string => {
   return (slug ?? '').split('-').filter(Boolean).pop() ?? ''
 }
 
-/** Busy and waiting first (they need the eye), then the quiet ones; inside each, the most recent write first. */
-const rank = (s: SessionState): number => (s === 'idle' ? 1 : 0)
+/** Waiting first (it needs the user), then busy, then the quiet ones; inside each, the most recent write first. */
+const RANK: Record<SessionState, number> = { waiting: 0, busy: 1, idle: 2 }
+const rank = (s: SessionState): number => RANK[s]
 
 /** The row of one session: every text scrubbed (secrets, home folder) and cut. */
 export function sessionRow(f: SessionFacts, now: number): SessionRow {
   const cwd = f.tail.cwd ?? f.live.cwd
   const title = scrubText(f.tail.title ?? f.live.name ?? f.tail.slug ?? '')
-  const branch = f.tail.branch === null ? '' : scrubText(f.tail.branch)
-  const task = f.tail.prompt === null ? '' : scrubText(f.tail.prompt)
+  const branch = f.tail.branch === null || f.tail.branch === BRANCH_NOISE ? '' : scrubText(f.tail.branch) // "HEAD" is what a detached or worktree checkout records
+  const task = scrubText(f.tail.doing ?? f.tail.said ?? (f.tail.prompt === null ? '' : cleanPrompt(f.tail.prompt)))
   return {
     id: f.live.sessionId,
     title: clip(title === '' ? f.live.sessionId.slice(0, SESSION_ROWS.ID_CHARS) : title, SESSION_ROWS.TITLE_CHARS),

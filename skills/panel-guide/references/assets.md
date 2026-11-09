@@ -47,7 +47,7 @@ Keep numbers measured: build the data from a file or tool output, not from memor
 | what added and removed from a total | `waterfall` | `unit, start{label,value}, steps[{label,delta}], end?` |
 | a screenshot or picture with callouts | `annotate` | `src, alt, ratio?, notes[{x,y,text,tone?,shape?}]` (x,y,w,h are 0..1 of the picture; `src` is a scene file or a data: URI) |
 | a change you can slide between | `beforeafter` | `unit, goodWhen?, before{label,src?}, after{label,src?}, items[{label,before,after}]?, start?` |
-| status of many items | `statusboard` | `columns[{id,title,tone?,limit?,items[{title,sub?,tags?}]}]` |
+| status of many items | `statusboard` | `columns[{id,title,tone?,limit?,items[{title,sub?,tags?,open?}]}]` (`open` is a session id: the card becomes a button that opens that session's transcript in the Agents tile; the board's own sessions frame sets it) |
 | things placed in space | `scene3d` | `objects[{id,shape,pos,size?,label?,tone?}], links?, ground?, autoRotate?` |
 
 ## When NOT to use a chart

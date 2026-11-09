@@ -17,5 +17,8 @@ export const psText = (pids: number[]): string => [...pids.map(p => `${String(p)
 
 export const user = (text: string, over: Record<string, unknown> = {}): string => JSON.stringify({ type: 'user', cwd: '/work/alpha', gitBranch: 'feature/x', message: { role: 'user', content: text }, ...over })
 export const toolUse = (id: string): string => JSON.stringify({ type: 'assistant', message: { content: [{ type: 'tool_use', id, name: 'Bash', input: {} }] } })
+export const toolUseOf = (id: string, name: string, input: Record<string, unknown>): string => JSON.stringify({ type: 'assistant', message: { content: [{ type: 'tool_use', id, name, input }] } })
+export const assistantText = (text: string, over: Record<string, unknown> = {}): string => JSON.stringify({ type: 'assistant', message: { content: [{ type: 'text', text }] }, ...over })
+export const thinking = (text: string): string => JSON.stringify({ type: 'assistant', message: { content: [{ type: 'thinking', thinking: text }] } })
 export const toolResult = (id: string): string => JSON.stringify({ type: 'user', message: { content: [{ type: 'tool_result', tool_use_id: id, content: 'ok' }] } })
 export const transcript = (...lines: string[]): string => `${lines.join('\n')}\n`

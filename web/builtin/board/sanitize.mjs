@@ -132,7 +132,7 @@ export function sanitizeHtml(input, { idPrefix = 'h-' } = {}) {
     const isSvgTag = SVG_TAGS.has(lower) && (lower === 'svg' || inSvg);
     const tag = isSvgTag ? SVG_TAGS.get(lower) : HTML_TAGS.has(lower) ? lower : null;
     if (!tag || stack.length >= DEPTH_MAX) continue; // unknown tag: dropped, its text stays
-    if (tag === 'a' && stack.includes('a')) continue; // links do not nest
+    if (tag === 'a' && (inSvg || stack.includes('a'))) continue; // links do not nest, and an svg <a> is never kept
     const attrs = [];
     for (const [, name, dq, sq, bare] of m[2].matchAll(ATTR_RE)) {
       const cleaned = cleanAttr(name, dq ?? sq ?? bare ?? '', isSvgTag, idPrefix, tag);

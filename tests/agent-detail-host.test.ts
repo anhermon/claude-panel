@@ -7,6 +7,7 @@ import type { AgentRow } from '../hooks/agents-info-data'
 import { DETAIL_FILE_NAME, DETAIL_HOST, DETAIL_REASON, DETAIL_STUB, detailTick, resetDetail, startDetailLoop, wantFrom } from '../hooks/agent-detail-host'
 import type { BoardLane } from '../types'
 import type { DetailBind, DetailSource } from '../hooks/agent-detail-host'
+import type { SessionRow } from '../hooks/sessions-state'
 
 const NOW = 1_767_000_000_000
 const DIR = '/tmp/t/agents-info/sess-1'
@@ -33,7 +34,7 @@ const transcript = [
 ].join('\n')
 
 type Calls = { runs: string[][]; writes: { path: string; text: string }[]; reads: string[] }
-function world(opts: { events?: string; size?: number; lanes?: BoardLane[] } = {}) {
+function world(opts: { events?: string; size?: number; lanes?: BoardLane[]; sessions?: SessionRow[] } = {}) {
   const calls: Calls = { runs: [], writes: [], reads: [] }
   const files: Record<string, string> = { [EVENTS]: opts.events ?? '' }
   const clock = { now: NOW }
@@ -64,7 +65,7 @@ function world(opts: { events?: string; size?: number; lanes?: BoardLane[] } = {
   }
   const rows = [row(), row({ id: 'sib', name: 'Sibling', loop: 'sib' }), row({ id: 'main', name: 'Me', isMain: true, loop: 'main' })]
   const lanes = opts.lanes ?? []
-  const source: DetailSource = { dir: () => DIR, rows: () => rows, pulse: () => ({ loops: [], events: [], lanes }) }
+  const source: DetailSource = { dir: () => DIR, rows: () => rows, pulse: () => ({ loops: [], events: [], lanes }), sessions: () => opts.sessions ?? [] }
   const bind: DetailBind = { eventsFile: EVENTS, isCurrent: async () => true }
   return { $: $ as never, calls, files, clock, source, bind }
 }
@@ -246,4 +247,34 @@ test('a lane whose session file is missing is looked for again only after LOCATE
   await detailTick(bad.$, bad.source, bad.bind)
   expect(bad.calls.runs.filter(r => r[0] === 'find')).toEqual([])
   expect(JSON.parse(detailWrites(bad.calls)[0]!.text).transcript.reason).toBe(DETAIL_REASON.NOT_FOUND)
+})
+
+const SESSION_ROW: SessionRow = { id: SIBLING, title: 'Fix login', state: 'waiting', project: 'alpha' }
+
+test('a click on a card of the Other sessions frame: the page asks for that session id; the host builds a detail from `<session>.jsonl` with the card\'s name and state', async () => {
+  resetDetail()
+  const w = world({ events: `${event(1, AGENT_EVENT, { id: SIBLING })}\n`, sessions: [SESSION_ROW], size: DETAIL_HOST.BASE_BYTES * 10 })
+  await detailTick(w.$, w.source, w.bind)
+  expect(w.calls.runs.find(r => r[0] === 'find')).toEqual(['find', `${HOME}/.claude/projects`, '-maxdepth', '2', '-type', 'f', '-name', `${SIBLING}.jsonl`])
+  expect(w.calls.runs.some(r => r[0] === 'head')).toBe(false)
+  const detail = JSON.parse(detailWrites(w.calls)[0]!.text)
+  expect(detail).toMatchObject({ id: SIBLING, name: 'Fix login', isMain: false, state: 'waiting', transcript: { isAvailable: true } })
+  expect(detailWrites(w.calls)[0]!.text).toContain('Sibling session says hello')
+})
+
+test('a session id that is not one of the other sessions now builds nothing: no find, no read, no write', async () => {
+  resetDetail()
+  const w = world({ events: `${event(1, AGENT_EVENT, { id: SIBLING })}\n`, sessions: [{ ...SESSION_ROW, id: 'someone-else' }] })
+  await detailTick(w.$, w.source, w.bind)
+  expect(w.calls.runs).toEqual([])
+  expect(detailWrites(w.calls)).toEqual([])
+})
+
+test('the session states map onto the words of the detail view', async () => {
+  for (const [state, word] of [['busy', 'working'], ['waiting', 'waiting'], ['idle', 'done']] as const) {
+    resetDetail()
+    const w = world({ events: `${event(1, AGENT_EVENT, { id: SIBLING })}\n`, sessions: [{ ...SESSION_ROW, state }] })
+    await detailTick(w.$, w.source, w.bind)
+    expect(JSON.parse(detailWrites(w.calls)[0]!.text).state).toBe(word)
+  }
 })

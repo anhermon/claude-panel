@@ -18,3 +18,14 @@ test('the workspace page hands a host command to the scene iframe', () => {
   assert.match(src, /window\.PanelWorkspace = Object\.freeze\(\{ hostCommand: hostCommand \}\)/);
   assert.match(src, /postMessage\(\{ type: HOST_TYPE, name: name, data: data \}/);
 });
+
+test('the session-card click is named the same in the board asset, the page router and the Agents tile', () => {
+  const asset = read('../../kit/assets/statusboard.js');
+  const router = read('../../events-client.js');
+  const tile = read('./agents-info.js');
+  assert.match(asset, /SESSION_OPEN = 'session-open'/);
+  assert.match(router, /SESSION_OPEN = "session-open"/);
+  assert.match(router, /OPEN_SESSION = "open-session"/);
+  assert.match(tile, /panel\.on\(HOST_OPEN_SESSION/);
+  assert.match(tile, /HOST_OPEN_SESSION = 'open-session'/);
+});

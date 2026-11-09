@@ -2,9 +2,9 @@
 // may-be-waiting call, the order and the cap. Deterministic: the clock is an argument, nothing reads a disk.
 import { expect, test } from 'claude-code/testing'
 
-import { ageText, candidates, isAlive, liveSessions, parseEntry, parsePs, promptOf, readTail, SESSION_ROWS, sessionRows, stateOf } from '../hooks/sessions-state'
+import { ageText, candidates, cleanPrompt, isAlive, liveSessions, parseEntry, parsePs, promptOf, readTail, SESSION_ROWS, sessionRows, stateOf } from '../hooks/sessions-state'
 import type { LiveSession, SessionFacts } from '../hooks/sessions-state'
-import { ID_A, ID_B, ID_DEAD, MIN, NOW, psText, registryFile, SELF, toolResult, toolUse, transcript, user } from './sessions-fixture'
+import { ID_A, ID_B, ID_DEAD, MIN, NOW, psText, registryFile, SELF, assistantText, thinking, toolResult, toolUse, toolUseOf, transcript, user } from './sessions-fixture'
 
 const live = (id: string, over: Partial<LiveSession> = {}): LiveSession => ({ sessionId: id, pid: 1, cwd: '/work/alpha', name: 'alpha', status: 'idle', startedAt: 0, ...over })
 const facts = (id: string, over: Partial<SessionFacts> = {}, liveOver: Partial<LiveSession> = {}): SessionFacts => ({
@@ -76,6 +76,64 @@ test('busy: written in the last 30 s or the registry says busy; may be waiting: 
   expect(stateOf(facts(ID_A, { tail: pending, mainMs: NOW - 5000, lastWriteMs: NOW - 5000 }), NOW)).toBe('busy') // a tool that just started is not waiting
   expect(stateOf(facts(ID_A, { tail: pending, mainMs: NOW - 25_000, lastWriteMs: NOW - 25_000 }), NOW)).toBe('waiting')
   expect(stateOf(facts(ID_A, { mainMs: NOW - 60 * MIN, lastWriteMs: NOW - 5000 }), NOW)).toBe('busy') // only a subagent wrote
+})
+
+const taskOf = (...lines: string[]): string | undefined => sessionRows([facts(ID_A, { tail: readTail(transcript(...lines)) })], SELF, NOW)[0]!.task
+
+test('task line: a tool call in flight reads "<Tool>: <description, else command, else file>"; the last unanswered call wins; mcp prefixes are dropped', () => {
+  expect(taskOf(user('go'), toolUseOf('t1', 'Bash', { command: 'npm test', description: 'Run the unit tests' }))).toBe('Bash: Run the unit tests')
+  expect(taskOf(user('go'), toolUseOf('t1', 'Bash', { command: 'npm   test\n--silent' }))).toBe('Bash: npm test --silent')
+  expect(taskOf(user('go'), toolUseOf('t1', 'Edit', { file_path: '/work/alpha/src/app.ts', old_string: 'x' }))).toBe('Edit: /work/alpha/src/app.ts')
+  expect(taskOf(user('go'), toolUseOf('t1', 'Grep', { pattern: 'TODO' }))).toBe('Grep: TODO')
+  expect(taskOf(user('go'), toolUseOf('t1', 'mcp__panel__board', { description: 'Draw the board' }))).toBe('board: Draw the board')
+  expect(taskOf(user('go'), toolUseOf('t1', 'Read', {}))).toBe('Read')
+  expect(taskOf(user('go'), toolUseOf('t1', 'Read', { file_path: 'a.ts' }), toolUseOf('t2', 'Bash', { description: 'Second one' }), toolResult('t1'))).toBe('Bash: Second one')
+})
+
+test('task line: an answered tool no longer shows (not even from an earlier read of the same session); the secret in a command is masked', () => {
+  const before = readTail(transcript(user('go'), toolUseOf('t1', 'Bash', { description: 'Run it' })))
+  expect(before.doing).toBe('Bash: Run it')
+  const after = readTail(transcript(user('go'), assistantText('Done running it.'), toolResult('t1')))
+  expect(after.doing).toBeNull()
+  expect(taskOf(user('go'), toolUseOf('t1', 'Bash', { command: 'deploy password=hunter2 now' }))).not.toMatch(/hunter2/)
+})
+
+test('task line: with no tool in flight, the first sentence of the latest assistant text, markdown stripped, cut at 80; thinking is skipped', () => {
+  expect(taskOf(user('go'), assistantText('**Fixing** the `login` bug in app.ts. Then I will run the tests.'))).toBe('Fixing the login bug in app.ts.')
+  expect(taskOf(user('go'), assistantText('## Plan\n- [the docs](http://x.y) are next! More later'))).toBe('Plan the docs are next!')
+  expect(taskOf(user('go'), assistantText('First text.'), thinking('secret musings. more'), assistantText('Latest text here. Second.'))).toBe('Latest text here.')
+  expect(taskOf(user('go'), assistantText('No terminal punctuation at all'))).toBe('No terminal punctuation at all')
+  expect(taskOf(user('go'), assistantText(`${'word '.repeat(40)}end.`))!.length).toBeLessThanOrEqual(SESSION_ROWS.TASK_CHARS)
+  expect(taskOf(user('go'), assistantText('Sidechain says hi.', { isSidechain: true }))).toBe('go')
+})
+
+test('task line: assistant text older than the last real prompt describes the previous turn, so the prompt is the fallback', () => {
+  expect(taskOf(user('first ask'), assistantText('Finished the first thing.'), user('now do the second'))).toBe('now do the second')
+})
+
+test('task line fallback: the last prompt with leading quote marks and arrows cleaned (the two live examples)', () => {
+  expect(cleanPrompt("'''What you might be missing: - A store only helps...'''")).toBe('What you might be missing: - A store only helps...')
+  expect(cleanPrompt("'No ETA — will report when it lands.' -> wtf do you mean...")).toBe('No ETA — will report when it lands. wtf do you mean...')
+  expect(cleanPrompt('"quoted" => done')).toBe('quoted done')
+  expect(cleanPrompt('  ```\n  fix it  ')).toBe('fix it')
+  expect(taskOf(user("'''What you might be missing: - A store only helps...'''"))).toBe('What you might be missing: - A store only helps...')
+})
+
+test('rows: a branch of HEAD (detached or a worktree) is no tag; a real one stays', () => {
+  const row = (branch: string | null) => sessionRows([facts(ID_A, { tail: { ...readTail(''), branch } })], SELF, NOW)[0]!
+  expect(row('HEAD')).not.toHaveProperty('branch')
+  expect(row('')).not.toHaveProperty('branch')
+  expect(row('feature/x')).toMatchObject({ branch: 'feature/x' })
+})
+
+test('rows: may-be-waiting first (it needs the user), then busy, then idle; the cap never cuts a waiting one', () => {
+  const pending = readTail(transcript(toolUse('t1')))
+  const waiting = (id: string, ms: number) => facts(id, { tail: pending, mainMs: NOW - ms, lastWriteMs: NOW - ms }, { name: `w-${id.slice(0, 2)}` })
+  const many = Array.from({ length: 9 }, (_, i) => facts(`${String(i).padStart(8, '0')}-0000-4000-8000-000000000000`, { lastWriteMs: NOW - 1000 - i }, { name: `busy${i}`, status: 'busy' }))
+  const rows = sessionRows([...many, facts(ID_B, { lastWriteMs: NOW - 9 * MIN }, { name: 'idle' }), waiting(ID_A, 3 * MIN)], SELF, NOW)
+  expect(rows).toHaveLength(SESSION_ROWS.MAX)
+  expect(rows[0]).toMatchObject({ state: 'waiting', title: expect.stringMatching(/^w-aa/) })
+  expect(rows.slice(1).every(r => r.state === 'busy')).toBe(true)
 })
 
 test('rows: busy first, then the most recent; the current session is left out; at most 8; project is the folder name, age is coarse', () => {
