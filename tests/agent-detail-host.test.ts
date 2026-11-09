@@ -5,6 +5,7 @@ import { expect, test } from 'claude-code/testing'
 import { AGENT_CLOSE_EVENT, AGENT_EVENT, AGENTS_INFO_SCENE_ID } from '../hooks/agents-info-scene'
 import type { AgentRow } from '../hooks/agents-info-data'
 import { DETAIL_FILE_NAME, DETAIL_HOST, DETAIL_REASON, DETAIL_STUB, detailTick, resetDetail, startDetailLoop, wantFrom } from '../hooks/agent-detail-host'
+import type { BoardLane } from '../types'
 import type { DetailBind, DetailSource } from '../hooks/agent-detail-host'
 
 const NOW = 1_767_000_000_000
@@ -15,6 +16,10 @@ const SESSION = 'sess-1'
 const MAIN_PATH = `${HOME}/.claude/projects/p/${SESSION}.jsonl`
 const AGENT_PATH = `${HOME}/.claude/projects/p/${SESSION}/subagents/agent-ag1.jsonl`
 const MIN = 60_000
+const SIBLING = 'sib-0001'
+const SIBLING_PATH = `${HOME}/.claude/projects/q/${SIBLING}.jsonl`
+const SIBLING_LINE = (id: string, text: string) => JSON.stringify({ type: 'assistant', timestamp: new Date(NOW - MIN).toISOString(), message: { id: id, content: [{ type: 'text', text }] } })
+const SIBLING_TEXT = `${SIBLING_LINE('m8', 'cut by the partial read')}\n${SIBLING_LINE('m9', 'Sibling session says hello')}`
 const FLUSH_TURNS = 100
 
 const event = (n: number, name: string, data: unknown) => JSON.stringify({ n, t: NOW, scene: AGENTS_INFO_SCENE_ID, name, data })
@@ -28,7 +33,7 @@ const transcript = [
 ].join('\n')
 
 type Calls = { runs: string[][]; writes: { path: string; text: string }[]; reads: string[] }
-function world(opts: { events?: string; size?: number } = {}) {
+function world(opts: { events?: string; size?: number; lanes?: BoardLane[] } = {}) {
   const calls: Calls = { runs: [], writes: [], reads: [] }
   const files: Record<string, string> = { [EVENTS]: opts.events ?? '' }
   const clock = { now: NOW }
@@ -39,7 +44,7 @@ function world(opts: { events?: string; size?: number } = {}) {
     fs: {
       stat: async (p: string) => {
         if (p in files) return { size: files[p]!.length }
-        if (p === MAIN_PATH || p === AGENT_PATH) return { size: opts.size ?? transcript.length }
+        if (p === MAIN_PATH || p === AGENT_PATH || p === SIBLING_PATH) return { size: opts.size ?? transcript.length }
         throw new Error('ENOENT')
       },
       read: async (p: string) => { calls.reads.push(p); if (p in files) return files[p]; throw new Error('ENOENT') },
@@ -48,6 +53,8 @@ function world(opts: { events?: string; size?: number } = {}) {
     process: {
       run: async (argv: readonly string[]) => {
         calls.runs.push([...argv])
+        if (argv[0] === 'find' && argv.includes(`${SIBLING}.jsonl`)) return { exitCode: 0, stdout: `${SIBLING_PATH}\n` }
+        if (argv[0] === 'tail' && argv[3] === SIBLING_PATH) return { exitCode: 0, stdout: SIBLING_TEXT }
         if (argv[0] === 'find') return { exitCode: 0, stdout: argv.join(' ').includes('agent-ag1') ? `${AGENT_PATH}\n` : `${MAIN_PATH}\n` }
         if (argv[0] === 'tail') return { exitCode: 0, stdout: transcript }
         if (argv[0] === 'head') return { exitCode: 0, stdout: transcript.split('\n')[0] }
@@ -55,8 +62,9 @@ function world(opts: { events?: string; size?: number } = {}) {
       },
     },
   }
-  const rows = [row(), row({ id: 'main', name: 'Me', isMain: true, loop: 'main' })]
-  const source: DetailSource = { dir: () => DIR, rows: () => rows, pulse: () => ({ loops: [], events: [] }) }
+  const rows = [row(), row({ id: 'sib', name: 'Sibling', loop: 'sib' }), row({ id: 'main', name: 'Me', isMain: true, loop: 'main' })]
+  const lanes = opts.lanes ?? []
+  const source: DetailSource = { dir: () => DIR, rows: () => rows, pulse: () => ({ loops: [], events: [], lanes }) }
   const bind: DetailBind = { eventsFile: EVENTS, isCurrent: async () => true }
   return { $: $ as never, calls, files, clock, source, bind }
 }
@@ -191,4 +199,51 @@ test('a loop that is no longer the current one does nothing', async () => {
   startDetailLoop(w.$, w.source, { ...w.bind, isCurrent: async () => false })
   await flush()
   expect(w.calls.runs.filter(r => r[0] === 'find' || r[0] === 'tail')).toEqual([])
+})
+
+const lane = (over: Partial<BoardLane> = {}): BoardLane => ({
+  id: 'sib', label: 'Sibling', state: 'working', pct: null, step: '', note: '', goal: '', dod: [], at: null, startedAt: NOW - MIN, updatedAt: NOW, by: 'main', loop: 'sib', ...over,
+})
+
+test('a lane that stands for another session opens that session\'s transcript, found by its own file name like main (no head read), and cached', async () => {
+  resetDetail()
+  const w = world({ events: `${event(1, AGENT_EVENT, { id: 'sib' })}\n`, lanes: [lane({ session: SIBLING })], size: DETAIL_HOST.BASE_BYTES * 10 })
+  await detailTick(w.$, w.source, w.bind)
+  const find = w.calls.runs.find(r => r[0] === 'find')!
+  expect(find).toEqual(['find', `${HOME}/.claude/projects`, '-maxdepth', '2', '-type', 'f', '-name', `${SIBLING}.jsonl`])
+  expect(w.calls.runs.some(r => r[0] === 'head')).toBe(false)
+  expect(JSON.parse(detailWrites(w.calls)[0]!.text).transcript).toMatchObject({ isAvailable: true })
+  expect(detailWrites(w.calls)[0]!.text).toContain('Sibling session says hello')
+  w.clock.now += DETAIL_HOST.REFRESH_MS
+  await detailTick(w.$, w.source, w.bind)
+  expect(w.calls.runs.filter(r => r[0] === 'find')).toHaveLength(1)
+})
+
+test('a lane with no session keeps the old behaviour: no sub-agent file, so NOT_FOUND', async () => {
+  resetDetail()
+  const w = world({ events: `${event(1, AGENT_EVENT, { id: 'sib' })}\n`, lanes: [lane()] })
+  ;(w.$ as { process: { run: (a: readonly string[]) => Promise<unknown> } }).process.run = async (argv: readonly string[]) => { w.calls.runs.push([...argv]); return { exitCode: 0, stdout: '' } }
+  await detailTick(w.$, w.source, w.bind)
+  expect(w.calls.runs.find(r => r[0] === 'find')!.join(' ')).toContain(`${SESSION}/subagents/agent-sib.jsonl`)
+  expect(JSON.parse(detailWrites(w.calls)[0]!.text).transcript.reason).toBe(DETAIL_REASON.NOT_FOUND)
+})
+
+test('a lane whose session file is missing is looked for again only after LOCATE_RETRY_MS; an unsafe session id is never searched', async () => {
+  resetDetail()
+  const w = world({ events: `${event(1, AGENT_EVENT, { id: 'sib' })}\n`, lanes: [lane({ session: SIBLING })] })
+  ;(w.$ as { process: { run: (a: readonly string[]) => Promise<unknown> } }).process.run = async (argv: readonly string[]) => { w.calls.runs.push([...argv]); return { exitCode: 0, stdout: '' } }
+  const finds = () => w.calls.runs.filter(a => a[0] === 'find').length
+  await detailTick(w.$, w.source, w.bind)
+  w.clock.now += DETAIL_HOST.REFRESH_MS
+  await detailTick(w.$, w.source, w.bind)
+  expect(finds()).toBe(1)
+  w.clock.now += DETAIL_HOST.LOCATE_RETRY_MS
+  await detailTick(w.$, w.source, w.bind)
+  expect(finds()).toBe(2)
+
+  resetDetail()
+  const bad = world({ events: `${event(1, AGENT_EVENT, { id: 'sib' })}\n`, lanes: [lane({ session: '../x' })] })
+  await detailTick(bad.$, bad.source, bad.bind)
+  expect(bad.calls.runs.filter(r => r[0] === 'find')).toEqual([])
+  expect(JSON.parse(detailWrites(bad.calls)[0]!.text).transcript.reason).toBe(DETAIL_REASON.NOT_FOUND)
 })

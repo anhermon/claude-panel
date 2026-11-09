@@ -2,14 +2,16 @@
 // It never edits the input: it TOKENISES it and re-emits only allow-listed tags and attributes, every value decoded
 // and re-escaped, so the output is safe by construction (it does not depend on the browser parsing the input the way
 // we do). No DOM, so Node tests it. Kept: basic text tags, <svg> and its drawing elements, `class`, `id` (prefixed),
-// `style` limited to ALLOWED_STYLE. Dropped (with their content): script, style, iframe, object, embed, foreignObject,
-// template... Dropped (tag only, text kept): everything else, e.g. <a>, <img>, <use>, <image>, <animate>, <set>, <form>.
+// `style` limited to ALLOWED_STYLE, and <a> with an absolute http(s) `href` only (re-emitted as the parsed URL with a
+// forced target="_blank" rel="noopener noreferrer"; the author's target/rel/anything else is ignored). Dropped (with their content): script, style, iframe, object, embed, foreignObject,
+// template... Dropped (tag only, text kept): everything else, e.g. <a> without a valid href, <a> in <svg>, <img>, <use>, <image>, <animate>, <set>, <form>.
 
 export const HTML_MAX = 8192;
 const DEPTH_MAX = 24;
 const STYLE_VALUE_MAX = 120;
+const HREF_MAX = 2048;
 
-const HTML_TAGS = new Set(['div', 'span', 'p', 'b', 'strong', 'i', 'em', 'small', 'br', 'ul', 'ol', 'li', 'h1', 'h2', 'h3', 'h4', 'code', 'pre', 'sub', 'sup', 'u', 's', 'mark', 'hr']);
+const HTML_TAGS = new Set(['a', 'div', 'span', 'p', 'b', 'strong', 'i', 'em', 'small', 'br', 'ul', 'ol', 'li', 'h1', 'h2', 'h3', 'h4', 'code', 'pre', 'sub', 'sup', 'u', 's', 'mark', 'hr']);
 const SVG_TAGS = new Map(['svg', 'g', 'path', 'circle', 'rect', 'line', 'polyline', 'polygon', 'ellipse', 'text', 'tspan', 'defs', 'linearGradient', 'radialGradient', 'stop', 'title', 'desc']
   .map((t) => [t.toLowerCase(), t]));
 const VOID_TAGS = new Set(['br', 'hr']);
@@ -28,6 +30,7 @@ const NAMED_ENTITIES = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", colon
 // control chars, spaces, DEL/C1, zero-width and line-separator chars, BOM: browsers ignore them inside a URL scheme
 const IGNORED_IN_SCHEME = /[\u0000-\u0020\u007f-\u009f\u200b-\u200f\u2028\u2029\ufeff]/g;
 const BAD_SCHEME = /(?:javascript|vbscript|data|livescript):/i;
+const ABS_HTTP_RE = /^https?:\/\/[^/]/i;
 const ID_RE = /^[A-Za-z][\w-]{0,31}$/;
 const LOCAL_URL_RE = /^url\(#([A-Za-z][\w-]{0,31})\)$/;
 const TAG_RE = /^<([a-zA-Z][a-zA-Z0-9:-]*)((?:\s+[^\s"'<>/=]+(?:\s*=\s*(?:"[^"]*"|'[^']*'|[^\s"'=<>`]+))?)*)\s*(\/?)>/;
@@ -59,11 +62,25 @@ export function cleanStyle(value) {
   return out.join(';');
 }
 
-function cleanAttr(name, value, inSvg, idPrefix) {
+/** decoded href text -> the normalised absolute http(s) URL, or '' (relative, protocol-relative, other schemes, too long). */
+function cleanHref(val) {
+  const v = val.trim();
+  if (v.length > HREF_MAX || !ABS_HTTP_RE.test(v.replace(IGNORED_IN_SCHEME, ''))) return '';
+  try {
+    const u = new URL(v);
+    return (u.protocol === 'https:' || u.protocol === 'http:') && u.href.length <= HREF_MAX ? u.href : '';
+  } catch { return ''; }
+}
+
+function cleanAttr(name, value, inSvg, idPrefix, tag) {
   const lower = name.toLowerCase();
   if (lower.startsWith('on')) return null;
   const val = decodeEntities(value);
   if (/[<\\]/.test(val) || BAD_SCHEME.test(val.replace(IGNORED_IN_SCHEME, ''))) return null;
+  if (tag === 'a') { // a link keeps its href and nothing else but class/style; target and rel are forced by the caller
+    if (lower === 'href') { const href = cleanHref(val); return href ? ['href', href] : null; }
+    if (lower !== 'class' && lower !== 'style') return null;
+  }
   if (lower === 'class') return [name, val.replace(/[^\w -]/g, '').trim()];
   if (lower === 'style') { const s = cleanStyle(value); return s ? ['style', s] : null; }
   if (lower === 'id') return ID_RE.test(val) ? ['id', idPrefix + val] : null;
@@ -115,10 +132,15 @@ export function sanitizeHtml(input, { idPrefix = 'h-' } = {}) {
     const isSvgTag = SVG_TAGS.has(lower) && (lower === 'svg' || inSvg);
     const tag = isSvgTag ? SVG_TAGS.get(lower) : HTML_TAGS.has(lower) ? lower : null;
     if (!tag || stack.length >= DEPTH_MAX) continue; // unknown tag: dropped, its text stays
+    if (tag === 'a' && stack.includes('a')) continue; // links do not nest
     const attrs = [];
     for (const [, name, dq, sq, bare] of m[2].matchAll(ATTR_RE)) {
-      const cleaned = cleanAttr(name, dq ?? sq ?? bare ?? '', isSvgTag, idPrefix);
+      const cleaned = cleanAttr(name, dq ?? sq ?? bare ?? '', isSvgTag, idPrefix, tag);
       if (cleaned && !attrs.some(([n]) => n === cleaned[0])) attrs.push(cleaned);
+    }
+    if (tag === 'a') {
+      if (!attrs.some(([n]) => n === 'href')) continue; // no valid href: the tag is dropped, its text stays
+      attrs.push(['target', '_blank'], ['rel', 'noopener noreferrer']);
     }
     const attrText = attrs.map(([n, v]) => ` ${n}="${escapeAttr(v)}"`).join('');
     if (VOID_TAGS.has(tag)) out += `<${tag}${attrText}>`;

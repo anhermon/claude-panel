@@ -20,6 +20,8 @@ export const CONFIG_DEFAULTS = {
   ticketLabels: 'ticket',
   /** The workflow-insight frames (time by kind, sinks, repeats, improve) wait for this many seconds of agent time: below it a share means nothing. */
   insightMinSeconds: 30,
+  /** Draw the `sessions` frame: every other Claude Code session running on this machine. */
+  sessionsFrame: true,
   /** The same file touched / the same command run at least this many times is a repeat. */
   repeatMin: 4,
   /** A command run again right after it failed, at least this many times, is shown as a retry. */
@@ -44,6 +46,7 @@ export type PanelConfig = {
   goalLabels: readonly string[]
   ticketLabels: readonly string[]
   insightMinMs: number
+  sessionsFrame: boolean
   repeatMin: number
   retryMin: number
   similarMin: number
@@ -71,6 +74,7 @@ export const configOf = (options: PluginOptions = {}): PanelConfig => ({
   goalLabels: labelsOf(options.goalLabels, CONFIG_DEFAULTS.goalLabels),
   ticketLabels: labelsOf(options.ticketLabels, CONFIG_DEFAULTS.ticketLabels),
   insightMinMs: countOf(options.insightMinSeconds, CONFIG_DEFAULTS.insightMinSeconds) * MS_PER_SECOND,
+  sessionsFrame: typeof options.sessionsFrame === 'boolean' ? options.sessionsFrame : CONFIG_DEFAULTS.sessionsFrame,
   repeatMin: Math.floor(countOf(options.repeatMin, CONFIG_DEFAULTS.repeatMin)),
   retryMin: Math.floor(countOf(options.retryMin, CONFIG_DEFAULTS.retryMin)),
   similarMin: Math.floor(countOf(options.similarMin, CONFIG_DEFAULTS.similarMin)),

@@ -20,6 +20,10 @@ import { hasLanePart } from './pulse-lanes'
 import type { LanePlan } from './pulse-lanes'
 import { ROUTER_IO, readRouter } from './router-io'
 import type { RouterRead } from './router-io'
+import { newSessionsCache, readSessions } from './sessions-io'
+import type { SessionsCache } from './sessions-io'
+import type { SessionRow } from './sessions-state'
+import { panelConfig } from './panel-config'
 import { PLUGIN_NAME } from './spec'
 import { watchedFolder } from './watch'
 import { agentsInfoLive, agentsInfoNote, agentsInfoPush } from './agents-info-host'
@@ -42,6 +46,11 @@ type Board = {
   routerRoot?: string
   poll?: { cancel: () => void }
   isPolling?: boolean
+  /** The other live sessions (./sessions-io.ts) as last read, what that read remembers, and a guard so two reads never overlap. */
+  sessions?: SessionRow[]
+  sessionsKey?: string
+  sessionsCache?: SessionsCache
+  isScanning?: boolean
 }
 let board: Board | null = null
 
@@ -53,7 +62,7 @@ const sliceOf = (s: PanelState): Slice => ({ status: s.status, task: s.task, ask
 
 function inputOf(b: Board, now: number): BoardInput {
   const parts = pulseBoardParts(now)
-  return { ...b.slice, lanes: parts.lanes as BoardLane[], loops: parts.loops, pulse: parts.pulse, events: parts.events, hasAgentsTile: agentsInfoLive(), router: b.router?.run, now }
+  return { ...b.slice, lanes: parts.lanes as BoardLane[], loops: parts.loops, pulse: parts.pulse, events: parts.events, hasAgentsTile: agentsInfoLive(), router: b.router?.run, sessions: b.sessions, now }
 }
 
 /** Read `.router/` again (cheap: a listing and a stat per file unless something changed); a change wakes the writer. Never throws. */
@@ -76,6 +85,25 @@ async function routerTick($: Dollar, b: Board): Promise<void> {
   }
 }
 
+/** Read the other live sessions again (mtime-gated, tail-only; nothing at all while the setting is off); a change wakes the writer. Never throws. */
+async function sessionsTick($: Dollar, b: Board): Promise<void> {
+  if (b.isScanning === true) return
+  b.isScanning = true
+  try {
+    b.sessionsCache ??= newSessionsCache()
+    const rows = await readSessions($, b.sessionsCache, await $.session.id(), await $.clock.now(), panelConfig.sessionsFrame)
+    const key = JSON.stringify(rows)
+    if (key === (b.sessionsKey ?? '[]')) return
+    b.sessionsKey = key
+    b.sessions = rows
+    b.flusher?.touch()
+  } catch (err) {
+    log($, `board: could not read the other sessions: ${String(err)}`)
+  } finally {
+    b.isScanning = false
+  }
+}
+
 /** Session start (and every reload): the scene's files, the model read back, the writer. Quiet when the board is not built yet. */
 export async function boardStart($: Dollar, tmp: string, state: PanelState): Promise<void> {
   board?.poll?.cancel()
@@ -93,7 +121,11 @@ export async function boardStart($: Dollar, tmp: string, state: PanelState): Pro
     })
     board = b
     await routerTick($, b)
-    b.poll = $.clock.every(ROUTER_IO.POLL_MS, () => void routerTick($, b))
+    await sessionsTick($, b)
+    b.poll = $.clock.every(ROUTER_IO.POLL_MS, () => {
+      void routerTick($, b)
+      void sessionsTick($, b)
+    })
     setPulseListener({ touch: () => b.flusher?.touch(), flushNow: () => b.flusher?.flushNow() ?? Promise.resolve() })
     b.flusher.touch()
   } catch (err) {

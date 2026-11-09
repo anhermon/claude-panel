@@ -9,6 +9,8 @@ import { FRAME_CAPS, STEP_STATES } from './board-frames'
 export const LANE_CAPS = {
   LANES: 12,
   ID_PATTERN: /^[a-z0-9-]{1,24}$/,
+  /** A Claude Code session id (the uuid that names `<id>.jsonl`). */
+  SESSION_PATTERN: /^[A-Za-z0-9_-]{1,64}$/,
   ID_CHARS: 24,
   LABEL_CHARS: 60,
   STEP_CHARS: 80,
@@ -27,7 +29,7 @@ export type LaneState = (typeof LANE_STATES)[number]
 export const LANE_KEY = 'lane'
 export const LANE_REMOVE_KEY = 'lane_remove'
 export const LANE_INPUT_KEYS = [LANE_KEY, LANE_REMOVE_KEY] as const
-const LANE_FIELDS = ['id', 'label', 'state', 'pct', 'step', 'note', 'goal', 'dod', 'at'] as const
+const LANE_FIELDS = ['id', 'label', 'state', 'pct', 'step', 'note', 'goal', 'dod', 'at', 'session'] as const
 const DOD_FIELDS = ['t', 'state'] as const
 const DEFAULT_STATE: LaneState = 'working'
 const DONE_STATE: LaneState = 'done'
@@ -47,6 +49,8 @@ export type Lane = {
   dod: DodItem[]
   /** Index into `dod` of the item being worked on, or null. */
   at: number | null
+  /** The Claude Code session this lane stands for (its row opens that session's transcript); absent for any other lane. */
+  session?: string
   startedAt: number
   updatedAt: number
   /** The loop (`main` or an agent id) whose call last posted it. */
@@ -57,7 +61,7 @@ export type DodState = (typeof STEP_STATES)[number]
 export type DodItem = { t: string; state: DodState }
 
 /** The fields one lane call carries; an absent field keeps the lane's value. */
-export type LanePatch = { id: string; label?: string; state?: LaneState; pct?: number; step?: string; note?: string; goal?: string; dod?: DodItem[]; at?: number }
+export type LanePatch = { id: string; label?: string; state?: LaneState; pct?: number; step?: string; note?: string; goal?: string; dod?: DodItem[]; at?: number; session?: string }
 export type LanePlan = { rest: Plain; upsert?: LanePatch; remove?: string; trimmed: string[] }
 export type PlanResult = { isOk: true; plan: LanePlan } | { isOk: false; error: string }
 export type LaneApplied = { isOk: true; lanes: Lane[]; lines: string[] } | { isOk: false; error: string }
@@ -69,6 +73,12 @@ function laneId(v: unknown, name: string): string {
     throw new Invalid(
       `${name} ${JSON.stringify(v)} is invalid: use 1-${LANE_CAPS.ID_CHARS} characters from a-z, 0-9 and "-" (for example "t25")`,
     )
+  return v
+}
+
+function sessionId(v: unknown): string {
+  if (typeof v !== 'string' || !LANE_CAPS.SESSION_PATTERN.test(v))
+    throw new Invalid(`${at('session')} ${JSON.stringify(v)} is invalid: use a Claude Code session id (1-64 characters from A-Z, a-z, 0-9, "_" and "-")`)
   return v
 }
 
@@ -116,6 +126,7 @@ function parsePatch(v: unknown, trimmed: string[]): LanePatch {
     if (size !== undefined && v.at >= size) throw new Invalid(`${at('at')} ${v.at} is past the end of ${at('dod')} (${size} items)`)
     patch.at = v.at
   }
+  if (!isAbsent(v.session)) patch.session = sessionId(v.session)
   return patch
 }
 
@@ -189,6 +200,8 @@ export function applyLanePlan(prev: readonly Lane[], plan: LanePlan, now: number
     updatedAt: now,
     by,
   }
+  const session = patch.session ?? old?.session
+  if (session !== undefined) next.session = session
   lanes = old === undefined ? [...lanes, next] : lanes.map(l => (l.id === patch.id ? next : l))
   lines.push(laneLine(next))
   return { isOk: true, lanes, lines }

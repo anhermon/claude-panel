@@ -13,6 +13,7 @@ import {
   newModel,
   PULSE_CAPS,
   restore,
+  restoreLanes,
   snapshot,
   spawnLoop,
   syncAgents,
@@ -214,6 +215,19 @@ const apply = (prev: Lane[], p: LanePlan, now = NOW, by = 'a1') => {
   return r
 }
 
+test('lane session: a Claude Code session id, validated with the field named, kept by later posts, survives a restore', () => {
+  const id = '0b1c2d3e-4f50-6789-abcd-ef0123456789'
+  const first = apply([], plan({ id: 'sib', session: id })).lanes
+  expect(first[0]).toMatchObject({ id: 'sib', session: id })
+  expect(apply(first, plan({ id: 'sib', pct: 5 })).lanes[0]).toMatchObject({ session: id })
+  expect(apply([], plan({ id: 'plain' })).lanes[0]!.session).toBeUndefined()
+  expect(refused({ lane: { id: 'sib', session: '../etc/passwd' } })).toMatch(/lane\.session .* is invalid/)
+  expect(refused({ lane: { id: 'sib', session: 5 } })).toMatch(/lane\.session .* is invalid/)
+  expect(refused({ lane: { id: 'sib', session: 'a'.repeat(65) } })).toMatch(/lane\.session .* is invalid/)
+  expect(restoreLanes(JSON.parse(JSON.stringify(first)))[0]).toMatchObject({ session: id })
+  expect(restoreLanes([{ id: 'sib', session: '../x' }])[0]!.session).toBeUndefined()
+})
+
 test('lane goal, dod and at: validated with the field named, upsert-only, dod replaces the list, at follows it', () => {
   const dod = [{ t: 'frames', state: 'done' }, { t: 'tests', state: 'todo' }]
   const first = apply([], plan({ id: 't30', goal: 'Board in the mod', dod, at: 1 })).lanes
@@ -266,7 +280,7 @@ test('lane validation names the field and says what is allowed', () => {
   expect(refused({ lane: { id: 't25', pct: -1 } })).toMatch(/lane\.pct -1/)
   expect(refused({ lane: { id: 't25', pct: '50' } })).toMatch(/lane\.pct "50"/)
   expect(refused({ lane: { id: 't25', pct: Number.NaN } })).toMatch(/lane\.pct/)
-  expect(refused({ lane: { id: 't25', colour: 'red' } })).toMatch(/^panel: lane\.colour is not a known field \(allowed: id, label, state, pct, step, note, goal, dod, at\)/)
+  expect(refused({ lane: { id: 't25', colour: 'red' } })).toMatch(/^panel: lane\.colour is not a known field \(allowed: id, label, state, pct, step, note, goal, dod, at, session\)/)
   expect(refused({ lane: 'nope' })).toMatch(/lane must be an object/)
   expect(refused({ lane: [] })).toMatch(/lane must be an object/)
   expect(refused({ lane_remove: 'Bad Id' })).toMatch(/lane_remove "Bad Id" is invalid/)

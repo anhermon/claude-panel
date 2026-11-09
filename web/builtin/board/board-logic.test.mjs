@@ -269,6 +269,42 @@ test('sanitizeHtml removes scripts, handlers, urls, foreign content and obfuscat
   }
 });
 
+test('sanitizeHtml keeps absolute http(s) links with a forced target and rel', () => {
+  assert.equal(sanitizeHtml('<a href="https://x.pagerduty.com/incidents/P1?a=1&b=2">Open</a>'),
+    '<a href="https://x.pagerduty.com/incidents/P1?a=1&amp;b=2" target="_blank" rel="noopener noreferrer">Open</a>');
+  assert.match(sanitizeHtml("<a href='http://example.com/x'>x</a>"), /^<a href="http:\/\/example\.com\/x" target="_blank" rel="noopener noreferrer">x<\/a>$/);
+  assert.match(sanitizeHtml('<a href="https://e.com/?q=a&quot;b&amp;c=1">x</a>'), /href="https:\/\/e\.com\/\?q=a%22b&amp;c=1"/, 'the href is decoded, then re-escaped');
+  assert.match(sanitizeHtml('<a href="  https://e.com/x  ">x</a>'), /href="https:\/\/e\.com\/x"/);
+  assert.match(sanitizeHtml('<a class="btn" style="color:red;position:fixed" href="https://e.com">x</a>'), /<a class="btn" style="color:red" href="https:\/\/e\.com\/" target="_blank"/);
+  assert.match(sanitizeHtml('<p><b><a href="https://e.com">x</a></b></p>'), /<p><b><a [^>]*>x<\/a><\/b><\/p>/);
+});
+
+test('sanitizeHtml replaces author target, rel and handlers on a link', () => {
+  const out = sanitizeHtml('<a href="https://e.com" target="_self" rel="opener" onclick="x()" download ping="//evil">x</a>');
+  assert.equal(out, '<a href="https://e.com/" target="_blank" rel="noopener noreferrer">x</a>');
+  assert.equal(sanitizeHtml('<a target="_blank" rel="opener" href="https://e.com">x</a>'), out);
+});
+
+test('sanitizeHtml drops the tag of a link whose href is not an absolute http(s) url, keeping the text', () => {
+  const bad = [
+    'javascript:alert(1)', ' javascript:alert(1)', '\tjava\nscript:alert(1)', 'jav&#x61;script:alert(1)', 'java&#x0A;script:alert(1)', 'JaVaScRiPt:1',
+    'data:text/html,<b>x</b>', 'vbscript:x', 'mailto:a@b.c', 'ftp://e.com', 'file:///etc/passwd', '/relative', 'relative/path', '#frag', '?q=1',
+    '//evil.com/x', '\\\\evil.com', 'https:/e.com', 'https:', 'http', '', 'https://' + 'a'.repeat(2100) + '.com',
+  ];
+  for (const href of bad) {
+    const out = sanitizeHtml(`<a href="${href}" target="_blank">kept</a>`);
+    assert.equal(out, 'kept', JSON.stringify(href));
+  }
+  assert.equal(sanitizeHtml('<a>no href</a>'), 'no href');
+  assert.equal(sanitizeHtml('<a href="https://a.com">1<a href="https://b.com">2</a></a>'), '<a href="https://a.com/" target="_blank" rel="noopener noreferrer">12</a>', 'no nested links');
+  assert.equal(sanitizeHtml('<a href=https://e.com/ok>bare</a>'), '<a href="https://e.com/ok" target="_blank" rel="noopener noreferrer">bare</a>');
+});
+
+test('sanitizeHtml still drops <a> inside svg', () => {
+  const out = sanitizeHtml('<svg><a href="https://e.com"><text>x</text></a></svg>');
+  assert.equal(out, '<svg><text>x</text></svg>');
+});
+
 test('sanitizeHtml prefixes ids and local gradient references, closes open tags, caps length', () => {
   const out = sanitizeHtml('<svg><defs><linearGradient id="g"/></defs><rect fill="url(#g)"/></svg><div>open', { idPrefix: 'p-' });
   assert.match(out, /id="p-g"/);

@@ -42,7 +42,7 @@ export const TOOL_DESCRIPTION =
   'Every frame must answer a question the user has; no decoration. ' +
   'Other fields: task, status, ask+choices, labels, context, done, next, cards (the text sections, shown on the browser page); each given field REPLACES its section. ' +
   'Every result also carries new clicks and messages from the user\'s browser panel (`events: N new`); a call with no fields checks for them. ' +
-  'Workers and subagents: never send task, cards or the other sections; post `lane` ({lane:{id,label,step,pct,note}}, plus goal and dod[{t,state}] ' +
+  'Workers and subagents: never send task, cards or the other sections; post `lane` ({lane:{id,label,step,pct,note}}, plus goal, session (another Claude Code session\'s id) and dod[{t,state}] ' +
   'when you have acceptance criteria: they show as a checklist) or a `frame`, both only add or update their own item. `lane_remove: id` drops a lane.'
 
 const STRING_LIST = { type: 'array', items: { type: 'string' } }
@@ -162,6 +162,7 @@ export const TOOL_INPUT_SCHEMA = {
           },
         },
         at: { type: 'integer', minimum: 0, description: 'Index into dod of the item in progress.' },
+        session: { type: 'string', description: 'For a lane that stands for ANOTHER Claude Code session: that session\'s id (the uuid of its <id>.jsonl); its row then opens that session\'s transcript.' },
       },
       required: ['id'],
     },

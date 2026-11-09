@@ -38,7 +38,7 @@ licenses (`web/kit/LICENSES.md`).
 
 The model gets two tools:
 
-- `mcp__panel__panel`: puts one frame or card on the board (text, metric, bars, line, steps, diagram, timeline, compare, ask, viz, ...) or sets the task, status, context, done and next. Agents post a `lane` to show their own progress.
+- `mcp__panel__panel`: puts one frame or card on the board (text, metric, bars, line, steps, diagram, timeline, compare, ask, viz, ...) or sets the task, status, context, done and next. Agents post a `lane` to show their own progress; a lane for another Claude Code session can pass `session: <id>` so its row opens that session's transcript.
 - `mcp__panel__scene`: publishes a sandboxed HTML/JS folder (or inline `html`) as a scene, and takes a headless screenshot of it for the model to check.
 
 The `panel:panel-guide` skill (`skills/panel-guide`) tells the model how to choose a form and write a scene.
@@ -55,6 +55,7 @@ All optional; the defaults are in `.claude-plugin/plugin.json`.
 | `goalLabels` | Goal line labels | string | `goal,objective` | Comma-separated labels of the brief line that states an agent's goal. |
 | `ticketLabels` | Ticket line labels | string | `ticket` | Comma-separated labels of the brief line that names an agent's ticket. |
 | `insightMinSeconds` | Insight minimum (seconds) | number | `30` | The workflow-insight frames wait for this many seconds of agent time before they say anything. |
+| `sessionsFrame` | Other sessions frame | boolean | `true` | Draw a frame listing the other Claude Code sessions running on this machine (name, state, project, current task). |
 | `repeatMin` | Repeat: times | number | `4` | The same file touched or command run this many times is shown as repeated work. |
 | `retryMin` | Retry: times | number | `2` | A command run again right after failing this many times is shown as a retry. |
 | `similarMin` | Same task: agents | number | `3` | This many agents started with the same kind of task are shown as repeated work. |
@@ -87,6 +88,7 @@ Other environment variables: `CLAUDE_PANEL_PORT` (first port to try, default 471
 - State is written under `$TMPDIR/claude-panel/` (default `/tmp/claude-panel/`): per-session state files, board, pulse, live-frame and inline-scene folders, and screenshots. The OS cleans temp folders; nothing is written to your project or home folder by the panel itself.
 - Transcript text shown on the board (agent details) is passed through a redaction step first (home folders, key/token shapes, passwords in URLs), but treat the board as showing your session's work.
 - Nothing is sent to any remote service by the mod. Scenes are model-written code: they run in a sandboxed iframe with a strict content-security policy, but with the CDN allow-list on (`web/scene-files.mjs`) a scene may load scripts from cdnjs, jsdelivr or unpkg in your browser. Do not put secrets in a scene folder.
+- The board's `Other sessions` frame (`sessionsFrame` option, on by default) is drawn from the `~/.claude/sessions` registry and `ps`, plus the last 128 KiB of each such session's transcript (title, branch, last prompt, redacted and cut to 80 characters). It is not sent to the model; turn it off with `sessionsFrame: false`.
 
 ## Develop and test
 

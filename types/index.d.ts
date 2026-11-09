@@ -308,6 +308,8 @@ export type BoardLane = {
   dod: { t: string; state: 'todo' | 'doing' | 'done' | 'failed' }[]
   /** Index into `dod` of the item in progress, or null. */
   at: number | null
+  /** The Claude Code session this lane stands for: its row opens that session's transcript. */
+  session?: string
   startedAt: number
   updatedAt: number
   by: string
