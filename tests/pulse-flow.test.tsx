@@ -137,10 +137,10 @@ test('main and subagent calls land in their own loops; only a tool name and a sh
   // with zero effort from anyone the board shows one row per agent (name, state, current action) and the time per agent (main is not an agent: no bar for it)
   expect(data().frames.map((f: Json) => [f.id, f.type, f.size])).toEqual([['now-doing', 'doing', 's'], ['lanes', 'lanes', 'l'], ['bars', 'bars', 's'], ['activity-timeline', 'swimlane', 'm']])
   // the rows say what each agent is FOR (spawn description + the ticket and first goal sentence of its prompt), never a shell word
-  expect(data().lanes.map((l: Json) => [l.label, l.state, l.step, l.calls])).toEqual([['main', 'working', '', 3], ['T25 pulse', 'working', 'T25 (P0) · Wire the pulse into the board.', 3]])
+  expect(data().lanes.map((l: Json) => [l.label, l.state, l.step, l.calls])).toEqual([['main', 'working', '', 3], ['pulse', 'working', 'T25 (P0) · Wire the pulse into the board.', 3]])
   expect(JSON.stringify(data().lanes)).not.toMatch(/Bash|npm|WebSearch|WebFetch/)
   expect(data().frames.find((f: Json) => f.id === 'bars').title).toBe('Time per agent')
-  expect(data().frames.find((f: Json) => f.id === 'bars').items.map((i: Json) => [i.label, i.value])).toEqual([['T25 pulse', 0]]) // the test clock has not moved: 0 minutes
+  expect(data().frames.find((f: Json) => f.id === 'bars').items.map((i: Json) => [i.label, i.value])).toEqual([['pulse', 0]]) // the test clock has not moved: 0 minutes
   // nothing the pulse ever wrote (the temp file, whichever write) holds a secret
   const everything = writes.filter(w => w.path.startsWith(`${PULSE_DIR}/live/`)).map(w => w.text).join('\n')
   expect(snapshots().length).toBeGreaterThan(0)

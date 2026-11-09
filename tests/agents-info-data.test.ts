@@ -52,13 +52,13 @@ test('rows come from the board rows: the main loop is the first row ("Me", isMai
   const agents = all.filter(r => !r.isMain)
   expect(agents.map(a => a.id)).toEqual(['a', 'b'])
   const a = agents[0]!
-  expect(a).toMatchObject({ short: 'T43', pct: 60, tokens: 4200, files: ['board.css'], endedAt: null })
+  expect(a).toMatchObject({ short: 'Fix lanes', pct: 60, tokens: 4200, files: ['board.css'], endedAt: null })
   expect(a.kind).not.toBeNull()
   expect(a.kindColor).toBe(KIND_META[a.kind as keyof typeof KIND_META].color)
   expect(agents[1]).toMatchObject({ state: 'done', kind: 'done' })
   expect(agents[1]!.endedAt).toBe(NOW - 1000)
   // nothing but numbers, a state, a kind, a headline and basenames: the keys are the board's own set
-  expect(Object.keys(a).sort()).toEqual(['agentType', 'endedAt', 'files', 'headline', 'id', 'isMain', 'kind', 'kindColor', 'kindGlyph', 'kindLabel', 'loop', 'name', 'pct', 'role', 'segs', 'short', 'startedAt', 'state', 'ticket', 'tokens'])
+  expect(Object.keys(a).sort()).toEqual(['agentType', 'endedAt', 'files', 'headline', 'id', 'isMain', 'kind', 'kindColor', 'kindGlyph', 'kindLabel', 'loop', 'name', 'pct', 'proof', 'role', 'segs', 'short', 'startedAt', 'state', 'ticket', 'tokens'])
   // role and ticket are null for an ordinary agent: nothing is shown that the board does not already say
   expect(a).toMatchObject({ role: null, ticket: null })
 })
