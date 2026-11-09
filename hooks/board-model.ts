@@ -1,7 +1,7 @@
 // The board's model, pure (no `$`, no I/O): the `frame` / `frame_remove` / `frames_clear` part of the `panel` tool and the
 // assembly of the board's data. The frames the model sends are UPSERT-ONLY (a frame call never replaces anything else of
 // the panel, so a subagent can call it safely), keyed by id, kept in the mod's memory (at most BOARD_CAPS.FRAMES) and
-// never in PanelState. AUTO frames (`now`, `ask`, `lanes`, `bars`, `delegation`, `pipeline`, `time-by-kind`, `time-sinks`, `repeats`, `improve`, and with a `.router/` folder `tickets` / `checks` / `router-events`) keep the board alive with no frame at all; the model
+// never in PanelState. AUTO frames (`now`, `ask`, `lanes`, `bars`, `delegation`, `pipeline`, `time-by-kind`, `time-sinks`, `repeats`, `improve`, `sessions` (the other live Claude Code sessions), and with a `.router/` folder `tickets` / `checks` / `router-events`) keep the board alive with no frame at all; the model
 // overrides one by sending a frame with its id and silences one with `frame_remove`. Every refusal names the field.
 import type { BoardData, BoardFrame, BoardLane, PanelChoice, PanelStatus, PanelTask } from '../types'
 import { Invalid, cut, isAbsent, isPlain } from './blocks/common'
@@ -14,6 +14,8 @@ import { nowFrame } from './now-frame'
 import type { PulseEvent, PulseLoop } from './pulse-model'
 import { routerFrames, ROUTER_FRAME_IDS } from './router-frames'
 import type { RouterRun } from './router-state'
+import { sessionsFrame, SESSIONS_FRAME_ID } from './sessions-frame'
+import type { SessionRow } from './sessions-state'
 import { pushRecent, restoreRecent } from './variety'
 
 export const BOARD_CAPS = {
@@ -28,7 +30,7 @@ export const FRAME_INPUT_KEYS = [FRAME_KEY, FRAME_REMOVE_KEY, FRAMES_CLEAR_KEY] 
 
 /** The ids of the frames the mod draws by itself. */
 export const AUTO = { NOW: 'now', ASK: 'ask', LANES: 'lanes', BARS: 'bars', DELEGATION: 'delegation', PIPELINE: 'pipeline', DOING: 'now-doing', TIMELINE: 'activity-timeline' } as const
-export const AUTO_IDS: readonly string[] = [...Object.values(AUTO), ...INSIGHT_FRAME_IDS, ...ROUTER_FRAME_IDS]
+export const AUTO_IDS: readonly string[] = [...Object.values(AUTO), ...INSIGHT_FRAME_IDS, ...ROUTER_FRAME_IDS, SESSIONS_FRAME_ID]
 /** An auto frame: one of AUTO, or the checklist frame of a lane (`dod-<lane id>`). */
 export const isAutoId = (id: string): boolean => AUTO_IDS.includes(id) || id.startsWith(DOD_FRAME_PREFIX)
 const AUTO_TITLES = { now: 'Now', ask: 'Question', lanes: 'Agents' } as const
@@ -162,6 +164,8 @@ export type BoardInput = {
   hasAgentsTile?: boolean
   /** The router-kit run read from `<cwd>/.router/` (./router-io.ts); undefined when the session has none: nothing is drawn. */
   router?: RouterRun
+  /** The other live Claude Code sessions (./sessions-io.ts), ordered and capped; undefined or empty: nothing is drawn. */
+  sessions?: readonly SessionRow[]
   now: number
 }
 
@@ -205,6 +209,8 @@ function autoFrames(input: BoardInput): { ask: BoardFrame[]; rest: { id: string;
   if (delegation !== undefined) rest.push({ id: AUTO.DELEGATION, frame: delegation })
   const pipeline = isTile ? undefined : pipelineFrame(agentRows(input), input.loops)
   if (pipeline !== undefined) rest.push({ id: AUTO.PIPELINE, frame: pipeline })
+  const sessions = sessionsFrame(input.sessions) // the other sessions on this machine, last: context, not this run's work
+  if (sessions !== undefined) rest.push({ id: SESSIONS_FRAME_ID, frame: sessions })
   return { ask, rest }
 }
 
