@@ -124,9 +124,11 @@ Never autoplay: sound needs a first gesture (the deck counts a key or click). ma
 ## Assets (generate, never hot-link)
 Allowed files: html css js mjs json csv txt png jpg jpeg gif webp avif svg ico mp3 wav ogg oga m4a aac flac mp4 webm glb gltf bin obj stl hdr ktx2 woff2 (put Markdown for `<p-md src>` in `.txt`). Draw diagrams and charts as SVG, `<p-chart>` or `<p-diagram>`; build 3D from primitives or drop a `.glb` in the folder; make images with code, `screencapture -x`, or `sips -Z 1280 in.png --out out.png`. `curl` a file into the folder if you must; nothing loads from the network at view time. No storage APIs in the frame.
 
+Board `html` frames may contain `https://` links (`<a href="https://...">`); they open in a new tab. Other schemes and relative links are shown as plain text.
+
 ## Live preview, goto and live data
 The CLI pane shows a live-streamed preview of the workspace: every stage scene as a tile of one grid. Send `goto` alone with the id to move that live view (the result says `live: moved to #/2` or `live: not running`); the user toggles the preview with `/panel live on|off|status`. If the pane shows no picture, the user's terminal has no image support: the browser has everything.
-With agents running, the mod adds an Agents tile by itself: the ONE place for agent state (a 3D avatar, a satellite per agent, a ticker, a list with a row per agent incl. "Me", the main session). Clicking a row opens its transcript, metrics and struggles inside the tile (Back or Escape returns). While the tile exists the board drops its own agent rows, `now-doing`, `bars` and `pipeline` (checklists, `activity-timeline`, `delegation`, insight and your own frames stay); without it they come back. Post lanes as usual, it needs nothing else; `scene {remove: "agents-info"}` takes it off for the session.
+With agents running, the mod adds an Agents tile by itself: the ONE place for agent state (a 3D avatar, a satellite per agent, a ticker, a list with a row per agent incl. "Me", the main session). Clicking a row opens its transcript, metrics and struggles inside the tile (Back or Escape returns). While the tile exists the board drops its own agent rows, `now-doing`, `bars` and `pipeline` (checklists, `activity-timeline`, `delegation`, insight and your own frames stay); without it they come back. Post lanes as usual, it needs nothing else; a lane for another session can pass `session: <id>` so its row opens that session's transcript; `scene {remove: "agents-info"}` takes it off for the session.
 
 <!-- scene-input -->
 ```json

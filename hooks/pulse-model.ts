@@ -403,6 +403,7 @@ export function restoreLanes(json: unknown): Lane[] {
         startedAt: num(raw.startedAt),
         updatedAt: num(raw.updatedAt),
         by: typeof raw.by === 'string' ? raw.by.slice(0, PULSE_CAPS.ID_CHARS) : MAIN_LOOP,
+        ...(typeof raw.session === 'string' && LANE_CAPS.SESSION_PATTERN.test(raw.session) ? { session: raw.session } : {}),
       })
     }
   return out

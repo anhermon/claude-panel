@@ -46,7 +46,7 @@ Per type (extra fields; every text is capped, bad values are dropped, nothing th
     repeats   caption, cols: [agent names], rows: [{ label: file, cells: [n per column], note? }], notes?: a heat matrix (numbered columns
               with a key below) and sentences about commands re-run, retries, same-kind tasks (auto frame `repeats`)
     hints     caption, items: [{ text, evidence, rule }]: up to 4 cards, each with the number behind it and the setting that fired it (auto frame `improve`)
-    image     src (scene-relative path or data:image), caption?      html   html (sanitised: text, basic tags, inline svg)
+    image     src (scene-relative path or data:image), caption?      html   html (sanitised: text, basic tags, inline svg, https links)
 
 Unknown type: a quiet "unsupported" tile.
 
@@ -76,3 +76,5 @@ Unknown type: a quiet "unsupported" tile.
     node web/builtin/board/seed-board.mjs <sceneDir> busy        # install + seed a fixture, then open the scene
     node scripts/render-board.mjs [fixture...|--all] --out DIR   # 720x1600, 600x1300, 960x540, 1920x1080: PNGs + audits
     node --test web/builtin/board/*.test.mjs
+
+html frames may hold `<a href="https://...">`. The sanitiser keeps only an absolute http(s) href (relative, `//host`, javascript:, data:, mailto: and the like drop the tag and keep the text), forces `target="_blank" rel="noopener noreferrer"` and ignores any author target/rel. The board iframe stays `sandbox="allow-scripts"`, so it cannot open a tab itself: a click is posted to the page as `{type:"panel-open", url}`, and the page (events-client.js) opens it in a new tab, for the board only.

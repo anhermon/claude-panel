@@ -2,6 +2,7 @@
 /* Return channel, browser side: user actions travel page -> POST <base>event -> events file -> Claude.
  *
  * Trust rules (do not weaken):
+ *  - {type:"panel-open", url} (a link click in the board's html frames) is honoured from the board frame only.
  *  - Only THIS page sends events. A scene frame can only ask the page to, via {type:"panel-emit", name, data}; the page
  *    checks event.source against its own iframe windows and tags the scene id ITSELF (the id in a message is never read).
  *  - Names starting with "deck." are page-side commands (fullscreen, drawer); they are handled here and never forwarded.
@@ -10,6 +11,9 @@
 (function () {
   const EVENT_PATH = "event";
   const EMIT_TYPE = "panel-emit";
+  const OPEN_TYPE = "panel-open";
+  const BOARD_SCENE = "board"; // the built-in board; its id is reserved, a model's scene cannot take it
+  const MAX_URL_CHARS = 2048;
   const HOST_PREFIX = "deck.";
   const ASK_SCENE = "_ask";
   const ASK_NAME = "answer";
@@ -67,8 +71,20 @@
     return (stage && stage.sceneIdOf(source)) || (cards && cards.sceneIdOf(source)) || null;
   }
 
+  /* The board's html frames hold links, but its sandboxed iframe cannot open a tab itself (no allow-popups, and the
+   * sandbox must stay as is): it asks the page. Only the board may ask, only for an absolute http(s) url, opened
+   * in a new tab without opener or referrer. */
+  function openLink(ev, d) {
+    if (sceneIdOf(ev.source) !== BOARD_SCENE || typeof d.url !== "string" || d.url.length > MAX_URL_CHARS) return;
+    if (!/^https?:\/\/[^/\\\s]/i.test(d.url)) return;
+    let url;
+    try { url = new URL(d.url); } catch { return; }
+    if (url.protocol === "https:" || url.protocol === "http:") window.open(url.href, "_blank", "noopener,noreferrer");
+  }
+
   function onMessage(ev) {
     const d = ev.data;
+    if (isObj(d) && d.type === OPEN_TYPE) { openLink(ev, d); return; }
     if (!isObj(d) || d.type !== EMIT_TYPE || typeof d.name !== "string" || !NAME_RE.test(d.name)) return;
     const id = sceneIdOf(ev.source);
     if (!id) return;

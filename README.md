@@ -38,7 +38,7 @@ licenses (`web/kit/LICENSES.md`).
 
 The model gets two tools:
 
-- `mcp__panel__panel`: puts one frame or card on the board (text, metric, bars, line, steps, diagram, timeline, compare, ask, viz, ...) or sets the task, status, context, done and next. Agents post a `lane` to show their own progress.
+- `mcp__panel__panel`: puts one frame or card on the board (text, metric, bars, line, steps, diagram, timeline, compare, ask, viz, ...) or sets the task, status, context, done and next. Agents post a `lane` to show their own progress; a lane for another Claude Code session can pass `session: <id>` so its row opens that session's transcript.
 - `mcp__panel__scene`: publishes a sandboxed HTML/JS folder (or inline `html`) as a scene, and takes a headless screenshot of it for the model to check.
 
 The `panel:panel-guide` skill (`skills/panel-guide`) tells the model how to choose a form and write a scene.

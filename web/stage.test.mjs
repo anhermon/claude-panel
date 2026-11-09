@@ -223,6 +223,20 @@ test('panel-emit: POSTed to the relative event URL with the scene id taken from 
   assert.deepEqual(t.fetchLog[2].body, { scene: 'note', name: 'card.click', data: { n: 1 } }, 'card-layout scenes can emit too');
 });
 
+test('panel-open: only the built-in board may ask the page to open an absolute http(s) url, in a new tab without opener', () => {
+  const t = env();
+  const opened = [];
+  t.ctx.window.open = (...a) => { opened.push(a); return null; };
+  t.render(stateOf([stageScene({ id: 'board', builtin: true }), stageScene({ id: 'other', title: 'Other' })]));
+  const open = (id, url) => t.post({ source: t.iframeOf(id).contentWindow, data: { type: 'panel-open', url } });
+  open('board', 'https://x.pagerduty.com/incidents/P1');
+  assert.deepEqual(opened, [['https://x.pagerduty.com/incidents/P1', '_blank', 'noopener,noreferrer']]);
+  for (const bad of ['javascript:alert(1)', 'data:text/html,x', '//evil.com', '/rel', 'mailto:a@b.c', '', 5, null, 'https://' + 'a'.repeat(2100)]) open('board', bad);
+  open('other', 'https://e.com/');
+  t.post({ source: {}, data: { type: 'panel-open', url: 'https://e.com/' } });
+  assert.equal(opened.length, 1, 'bad urls and non-board senders are ignored');
+});
+
 test('panel-emit validation and failure handling: bad names, big data, floods, and rejections are silent', async () => {
   const t = env();
   t.render(stateOf([stageScene()]));

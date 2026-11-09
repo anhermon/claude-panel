@@ -99,22 +99,27 @@ async function run($: Dollar, argv: readonly string[]): Promise<string | undefin
 }
 
 /** The transcript file of a loop (the session's own file for `main`, the sub-agent's file under the session folder), cached. */
-async function locate($: Dollar, loopId: string, now: number): Promise<string | undefined> {
-  const held = state.paths.get(loopId)
+async function locate($: Dollar, loopId: string, now: number, laneSession?: string): Promise<string | undefined> {
+  // A lane that stands for another session is keyed by that session id, so it never collides with a loop id.
+  const key = laneSession === undefined ? loopId : `session:${laneSession}`
+  const held = state.paths.get(key)
   if (held !== undefined) return held
-  const missedAt = state.misses.get(loopId)
+  const missedAt = state.misses.get(key)
   if (missedAt !== undefined && now - missedAt < DETAIL_HOST.LOCATE_RETRY_MS) return undefined
   const home = await $.env.get('HOME')
   const session = await $.session.id()
   if (home === undefined || !SAFE_ID.test(session) || !SAFE_ID.test(loopId)) return undefined
+  if (laneSession !== undefined && !SAFE_ID.test(laneSession)) return undefined
   const projects = `${home.replace(/\/+$/, '')}/${PROJECTS_DIR}`
   const isMain = loopId === MAIN_LOOP_ID
-  const argv = isMain
+  const argv = laneSession !== undefined
+    ? ['find', projects, '-maxdepth', FIND_DEPTH_MAIN, '-type', 'f', '-name', `${laneSession}.jsonl`]
+    : isMain
     ? ['find', projects, '-maxdepth', FIND_DEPTH_MAIN, '-type', 'f', '-name', `${session}.jsonl`]
     : ['find', projects, '-maxdepth', FIND_DEPTH_AGENT, '-type', 'f', '-path', `*/${session}/subagents/agent-${loopId}.jsonl`]
   const found = ((await run($, argv)) ?? '').split('\n').find(l => l !== '')
-  if (found !== undefined) state.paths.set(loopId, found)
-  else state.misses.set(loopId, now)
+  if (found !== undefined) state.paths.set(key, found)
+  else state.misses.set(key, now)
   return found
 }
 
@@ -158,11 +163,11 @@ async function refresh($: Dollar, source: DetailSource, want: Want, now: number)
     await writeLive($, dir, DETAIL_FILE_NAME, DETAIL_TEMP_NAME, JSON.stringify(own === undefined ? ext.detail : { ...ext.detail, run: own.run }) + '\n')
     return
   }
-  const path = await locate($, row.loop, now)
+  const path = await locate($, row.loop, now, lane?.session)
   const size = path === undefined ? undefined : await sizeOf($, path)
   const sig = `${want.id}|${want.pages}|${size ?? ''}|${row.state}|${Math.floor(now / DETAIL_HOST.REFRESH_MS)}`
   if (sig === state.lastSig) return
-  const read = path === undefined || size === undefined ? undefined : await readTranscript($, path, size, want.pages, row.isMain)
+  const read = path === undefined || size === undefined ? undefined : await readTranscript($, path, size, want.pages, row.isMain || lane?.session !== undefined)
   // A run of another harness (codex) with no transcript read: say what is true for it, from its record, not Claude Code's words.
   const own = read === undefined && loop?.source === 'external' ? await loadRunDetail($, loop) : undefined
   const detail = buildDetail({
