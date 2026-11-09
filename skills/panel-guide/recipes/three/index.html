@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>3D scene</title>
+<!--
+  RECIPE three: three.js from the kit: a faceted planet, a ring, three moons on their own orbits and a starfield, with OrbitControls
+    (drag to orbit, wheel or pinch to zoom). Everything is built from primitives, no model file needed.
+  Use when: a shape, structure, surface or spatial relationship has to be seen, not described. One declarative shape needs no code:
+    <p-3d shape="torusknot" auto-rotate controls zoom> or <p-3d src="model.glb"> (house element, import 'panel/components').
+  Adapt: change the meshes and MOONS; for your own model put model.glb in this folder and
+    const { GLTFLoader } = await import('three/addons/loaders/GLTFLoader.js'); new GLTFLoader().load('model.glb', (g) => scene.add(g.scene));
+  Constraints: bare specifiers 'three' and 'three/addons/...' come from the kit importmap (no CDN, no version to pin); needs WebGL
+    (the page says so if it is missing); colours follow the --panel-* tokens; reduced motion starts the scene still.
+-->
+<style>
+  html, body { height: 100%; margin: 0; overflow: hidden; }
+  canvas { display: block; touch-action: none; }
+  #msg { position: absolute; left: 14px; bottom: 10px; margin: 0; font-size: 12px; color: var(--panel-muted); pointer-events: none; }
+</style>
+</head>
+<body>
+<p id="msg">Loading 3D...</p>
+<script type="module">
+  const msg = document.getElementById('msg');
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const css = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  const MOONS = [{ r: 1.9, size: 0.14, speed: 0.9, key: '--panel-accent-2' }, { r: 2.5, size: 0.2, speed: 0.55, key: '--panel-ok' }, { r: 3.1, size: 0.11, speed: 0.35, key: '--panel-warn' }];
+  try {
+    const THREE = await import('three');
+    const { OrbitControls } = await import('three/addons/controls/OrbitControls.js');
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });        // alpha: the panel background shows through
+    renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+    renderer.domElement.setAttribute('role', 'img');
+    renderer.domElement.setAttribute('aria-label', 'A faceted planet with a ring and three orbiting moons; drag to orbit, scroll to zoom');
+    document.body.prepend(renderer.domElement);
+
+    const scene = new THREE.Scene(), camera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
+    camera.position.set(3.4, 2.4, 5.2);
+    scene.add(new THREE.HemisphereLight(0xffffff, 0x445066, 1.7));
+    const sun = new THREE.DirectionalLight(0xffffff, 2.4); sun.position.set(4, 5, 3); scene.add(sun);
+
+    const planet = new THREE.Mesh(new THREE.IcosahedronGeometry(1, 1), new THREE.MeshStandardMaterial({ color: css('--panel-accent'), flatShading: true, roughness: 0.5 }));
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(1.5, 0.04, 12, 96), new THREE.MeshStandardMaterial({ color: css('--panel-fg'), roughness: 0.6 }));
+    ring.rotation.x = Math.PI / 2.4;
+    scene.add(planet, ring);
+    const moons = MOONS.map((m, i) => {                                               // each moon is a pivot group, so one rotation = one orbit
+      const pivot = new THREE.Group(); pivot.rotation.x = 0.3 * i; pivot.rotation.y = i * 2;
+      const moon = new THREE.Mesh(new THREE.SphereGeometry(m.size, 20, 14), new THREE.MeshStandardMaterial({ color: css(m.key), roughness: 0.4 }));
+      moon.position.x = m.r; pivot.add(moon); scene.add(pivot); return { pivot, speed: m.speed };
+    });
+    const stars = new THREE.BufferGeometry();
+    stars.setAttribute('position', new THREE.Float32BufferAttribute(Array.from({ length: 900 }, () => (Math.random() - 0.5) * 30), 3));
+    scene.add(new THREE.Points(stars, new THREE.PointsMaterial({ color: css('--panel-muted'), size: 0.04 })));
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    const fit = () => { renderer.setSize(innerWidth, innerHeight); camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); };
+    addEventListener('resize', fit); fit();
+
+    renderer.setAnimationLoop((t) => {
+      if (!reduced && !document.hidden) { planet.rotation.y = t / 4000; for (const m of moons) m.pivot.rotation.y += 0.01 * m.speed; }
+      controls.update();
+      renderer.render(scene, camera);
+    });
+    msg.textContent = 'Drag to orbit, scroll to zoom.';
+  } catch (e) {
+    msg.textContent = '3D unavailable: ' + (e && e.message || e) + ' (this scene needs WebGL)';
+  }
+</script>
+</body></html>

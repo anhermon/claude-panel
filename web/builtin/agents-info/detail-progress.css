@@ -1,0 +1,98 @@
+/* Drilldown tabs Progress and Struggles, and the phase bar the Metrics tab shares. Tokens come from agents-info.css (:root). */
+.detail-body { --ph-read: #60a5fa; --ph-edit: #86efac; --ph-tests: #fbbf24; --ph-run: #64748b; --ph-delegate: #a78bfa; --ph-ask: #f0abfc; --ph-other: #94a3b8; }
+@media (max-width: 420px) { .tabs { gap: 0; } .tab { padding: 6px 6px; font-size: max(12px, .9em); } .badge, .alert-dot { margin-left: 4px; } .badge { padding: 0 5px; } }
+.alert-dot { display: inline-block; width: 9px; height: 9px; margin-left: 6px; border-radius: 50%; background: var(--s-blocked); vertical-align: middle; }
+
+.p-sec { margin: 0 0 12px; min-width: 0; }
+.p-head { margin: 0 0 6px; font-size: 1em; display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 8px; }
+.p-head small { color: var(--mut); font-weight: 400; font-size: max(12px, .8em); }
+.p-empty { margin: 0; color: var(--mut); font-size: max(12px, .9em); }
+.p-time, .p-when { color: var(--mut); font-size: max(12px, .8em); font-variant-numeric: tabular-nums; }
+.p-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0 18px; }
+@container (min-width: 700px) { .p-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
+.p-col { min-width: 0; }
+
+.p-now { padding: 8px 12px; border-radius: 10px; background: var(--card-hi); border-left: 4px solid var(--acc); display: grid; gap: 2px; }
+.p-now p { margin: 0; overflow-wrap: anywhere; }
+.p-call { font: 600 max(12px, .9em)/1.3 ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--s-working); }
+.p-say { font-weight: 600; }
+.p-lane, .p-pace { color: var(--mut); font-size: max(12px, .9em); }
+.p-pace { color: var(--s-waiting); }
+
+.p-bar { display: flex; gap: 2px; height: 34px; border-radius: 8px; overflow: hidden; background: var(--card-hi); border: 1px solid var(--line); }
+.p-seg { --c: var(--ph-other); min-width: 4px; flex: 1 1 0; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 0 6px; background: color-mix(in srgb, var(--c) 28%, var(--card)); border-bottom: 3px solid var(--c); overflow: hidden; white-space: nowrap; font-size: max(12px, .8em); }
+.p-seg[data-failed="true"] { box-shadow: inset 0 3px 0 var(--s-blocked); }
+.p-seg[data-current="true"] { box-shadow: inset 0 0 0 1px var(--fg); }
+.p-seg-label { overflow: hidden; text-overflow: ellipsis; }
+.p-seg-time { font-variant-numeric: tabular-nums; }
+.p-seg[data-kind="read"], .p-phase[data-kind="read"] { --c: var(--ph-read); }
+.p-seg[data-kind="edit"], .p-phase[data-kind="edit"] { --c: var(--ph-edit); }
+.p-seg[data-kind="tests"], .p-phase[data-kind="tests"] { --c: var(--ph-tests); }
+.p-seg[data-kind="run"], .p-phase[data-kind="run"] { --c: var(--ph-run); }
+.p-seg[data-kind="delegate"], .p-phase[data-kind="delegate"] { --c: var(--ph-delegate); }
+.p-seg[data-kind="ask"], .p-phase[data-kind="ask"] { --c: var(--ph-ask); }
+.p-phase-list { list-style: none; margin: 6px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 3px 14px; font-size: max(12px, .86em); }
+.p-phase { --c: var(--ph-other); display: flex; align-items: baseline; gap: 5px; min-width: 0; }
+.p-dot { width: 9px; height: 9px; border-radius: 2px; background: var(--c); flex: none; align-self: center; }
+.p-phase-name { overflow-wrap: anywhere; }
+.p-phase-time { font-variant-numeric: tabular-nums; color: var(--mut); font-weight: 600; }
+.p-phase[data-failed="true"] .p-phase-time { color: var(--s-blocked); }
+.p-phase[data-current="true"] .p-phase-name { font-weight: 700; }
+
+.p-source { margin: 0 0 4px; color: var(--mut); font-size: max(12px, .8em); }
+.p-plan, .p-done, .p-decisions, .p-issues { list-style: none; margin: 0; padding: 0; display: grid; gap: 5px; }
+.p-item { display: grid; grid-template-columns: 1.4em minmax(0, 1fr); column-gap: 4px; align-items: baseline; }
+.p-mark { text-align: center; color: var(--mut); font-weight: 700; }
+.p-item[data-state="done"] .p-mark { color: var(--s-done); }
+.p-item[data-state="doing"] .p-mark { color: var(--s-working); }
+.p-item[data-state="failed"] .p-mark { color: var(--s-blocked); }
+.p-item-text { overflow-wrap: anywhere; }
+.p-item[data-state="todo"] .p-item-text { color: var(--mut); }
+.p-item-note { grid-column: 2; color: var(--mut); font-size: max(12px, .8em); overflow-wrap: anywhere; }
+
+.p-done li { display: grid; gap: 1px; padding: 6px 10px; border-radius: 10px; background: var(--card-hi); min-width: 0; }
+.p-done small, .p-check-result { color: var(--mut); font-size: max(12px, .86em); overflow-wrap: anywhere; }
+.p-check[data-outcome="pass"] .p-check-result { color: var(--s-done); }
+.p-check[data-outcome="fail"] .p-check-result { color: var(--s-blocked); }
+.p-check-cmd { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+.p-decision { display: grid; gap: 1px; padding: 6px 10px; border-radius: 10px; background: var(--card-hi); border-left: 4px solid var(--ph-delegate); }
+.p-decision q { quotes: "\201C" "\201D"; overflow-wrap: anywhere; }
+
+.p-summary { margin: 0 0 6px; color: var(--mut); font-size: max(12px, .9em); }
+.p-sec[data-open="true"] .p-summary { color: var(--s-blocked); font-weight: 650; }
+.p-issue { --lv: var(--s-blocked); display: grid; gap: 2px; padding: 6px 10px; border-radius: 10px; background: var(--card-hi); border-left: 4px solid var(--lv); min-width: 0; }
+.p-issue[data-outcome="resolved"] { --lv: var(--s-done); }
+.p-issue-top { display: flex; flex-wrap: wrap; gap: 2px 8px; align-items: baseline; min-width: 0; }
+.p-issue-kind { color: var(--lv); font-size: max(12px, .8em); font-weight: 650; text-transform: uppercase; letter-spacing: .03em; }
+.p-issue-title { overflow-wrap: anywhere; min-width: 0; }
+.p-chip, .sg-chip { padding: 0 8px; border-radius: 999px; font-size: max(12px, .8em); font-weight: 650; background: var(--lv, var(--mut)); color: #0b0c10; white-space: nowrap; }
+.p-quote, .sg-evidence { color: var(--mut); font: 400 max(12px, .86em)/1.3 ui-monospace, SFMono-Regular, Menlo, monospace; overflow-wrap: anywhere; }
+
+.sg-verdict { margin: 0 0 8px; padding: 8px 12px; border-radius: 10px; font-weight: 650; background: var(--card-hi); border-left: 4px solid var(--mut); overflow-wrap: anywhere; }
+.sg-verdict[data-level="ok"] { border-left-color: var(--s-done); }
+.sg-verdict[data-level="warn"] { border-left-color: var(--s-waiting); }
+.sg-verdict[data-level="bad"] { border-left-color: var(--s-blocked); }
+.sg-group { margin: 0 0 10px; }
+.sg-group-head { margin: 0 0 4px; font-size: max(12px, .86em); color: var(--mut); text-transform: uppercase; letter-spacing: .04em; }
+.sg-list, .sg-calm-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+@container (min-width: 900px) { .sg-list { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.sg-row { --lv: var(--s-blocked); display: grid; gap: 3px; padding: 7px 10px; border-radius: 10px; background: var(--card-hi); border-left: 4px solid var(--lv); min-width: 0; }
+.sg-row[data-outcome="resolved"] { --lv: var(--s-done); }
+.sg-row[data-kind="slow-call"][data-outcome="resolved"], .sg-row[data-kind="idle-gap"][data-outcome="resolved"] { --lv: var(--s-waiting); }
+.sg-top { display: flex; flex-wrap: wrap; gap: 2px 8px; align-items: baseline; min-width: 0; }
+.sg-kind { color: var(--lv); font-size: max(12px, .8em); font-weight: 650; text-transform: uppercase; letter-spacing: .03em; }
+.sg-title { overflow-wrap: anywhere; min-width: 0; }
+.sg-n { padding: 0 7px; border-radius: 999px; border: 1px solid var(--lv); font-size: max(12px, .8em); font-weight: 700; }
+.sg-chip { --lv: var(--s-blocked); }
+.sg-chip.resolved { --lv: var(--s-done); }
+.sg-foot { display: flex; flex-wrap: wrap; gap: 2px 12px; align-items: baseline; }
+.sg-when { color: var(--mut); font-size: max(12px, .8em); font-variant-numeric: tabular-nums; }
+.sg-hint { font-size: max(12px, .86em); overflow-wrap: anywhere; }
+.sg-calm { opacity: .85; }
+.sg-calm-list li { padding: 5px 10px; border-radius: 10px; border: 1px dashed var(--line); color: var(--mut); font-size: max(12px, .9em); overflow-wrap: anywhere; }
+
+.m-standing { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 3px 12px; margin: 8px 0 0; font-size: max(12px, .9em); }
+.m-standing dt { color: var(--mut); }
+.m-standing dd { margin: 0; overflow-wrap: anywhere; }
+/* A narrow pane has no room for the names inside the segments: the times stay, the list below names each phase. */
+@container (max-width: 720px) { .p-seg-label { display: none; } }

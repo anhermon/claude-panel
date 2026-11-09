@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Flow diagram</title>
+<!--
+  RECIPE diagram: <p-diagram>, an automatic node-link layout drawn as SVG with animated edges and a travelling dot.
+  Use when: showing how parts connect or how a request moves (pipelines, architectures, state machines, dependencies).
+  Adapt: <li data-node="id">Label</li> names a node, <li data-from="a" data-to="b">edge label</li> adds an edge (cycles are fine, back edges
+    loop underneath). direction="lr|tb"; add `rough` for a hand-drawn look. Nodes also appear from edges alone. Keep it under ~10 nodes.
+  Constraints: kit only (rough.js loads on demand for `rough`); no CDN, no storage. For a hand-built SVG use the same --panel-* tokens.
+-->
+<style>
+  body { padding: 16px 20px; }
+  h1 { margin: 0; font-size: 18px; }
+  .lead { margin: 4px 0 0; color: var(--panel-muted); }
+  .p-btn[aria-pressed="true"] { background: var(--panel-accent); color: var(--panel-on-accent); }
+  .p-card { padding: 14px 18px; }
+  .p-card .lead { margin: 6px 0 0; }
+</style>
+</head>
+<body class="p-stack">
+<div class="p-row">
+  <div><h1>What happens to an upload</h1><p class="lead">Retries loop back through the queue; the dot follows the request.</p></div>
+  <div class="p-row" style="margin-left:auto" role="group" aria-label="Diagram options">
+    <button class="p-btn ghost" id="dir" type="button">Top to bottom</button>
+    <button class="p-btn ghost" id="rough" type="button" aria-pressed="false">Hand-drawn</button>
+  </div>
+</div>
+<p-diagram id="d" direction="lr">
+  <li data-node="client">Client</li>
+  <li data-node="api">API</li>
+  <li data-node="queue">Job queue</li>
+  <li data-node="worker">Worker</li>
+  <li data-node="store">Object store</li>
+  <li data-from="client" data-to="api">POST /upload</li>
+  <li data-from="api" data-to="queue">enqueue</li>
+  <li data-from="queue" data-to="worker">pull</li>
+  <li data-from="worker" data-to="store">write</li>
+  <li data-from="worker" data-to="queue">retry on 503</li>
+</p-diagram>
+<div class="p-grid" style="--p-min:260px">
+  <div class="p-card"><b>Why a queue</b><p class="lead">Bursts wait in line instead of hitting the workers all at once.</p></div>
+  <div class="p-card"><b>Why a loop</b><p class="lead">A 503 puts the job back; jitter spreads the retries out.</p></div>
+  <div class="p-card"><b>Where it ends</b><p class="lead">The object store holds the file; the API never touches it.</p></div>
+</div>
+<script type="module">
+  import 'panel/components';
+  const d = document.getElementById('d');
+  document.getElementById('dir').onclick = (e) => {                       // attribute changes rebuild the element
+    const tb = d.getAttribute('direction') === 'lr';
+    d.setAttribute('direction', tb ? 'tb' : 'lr');
+    e.target.textContent = tb ? 'Left to right' : 'Top to bottom';
+  };
+  document.getElementById('rough').onclick = (e) => {
+    const on = !d.hasAttribute('rough');
+    d.toggleAttribute('rough', on);
+    e.target.setAttribute('aria-pressed', String(on));
+  };
+</script>
+</body></html>

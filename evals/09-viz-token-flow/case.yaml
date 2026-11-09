@@ -1,0 +1,8 @@
+schema_version: "1.1"
+name: viz-token-flow-picks-flow-shape
+description: "Where did the tokens go: a quantity that splits and merges is shown as a sankey/treemap-style asset (viz frame), not a bars frame"
+runs: 3
+execution:
+  max_turns: 6
+  timeout_seconds: 300
+  prompt: "I want to understand where the tokens went in this session. About 100k in total: 46k went to reading files, 22k to editing, 18k to thinking and 14k to tool output; 24k of the total were re-reads of files already read. Show me on the panel. There are no files in this session; build whatever you need from scratch. (File-writing tools are disabled in this test session, so a folder you would write does not exist; use the panel tool the way you normally would anyway.)"

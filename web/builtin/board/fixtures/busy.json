@@ -1,0 +1,210 @@
+{
+ "frames": [
+  {
+   "id": "flow",
+   "type": "diagram",
+   "title": "Where the time goes",
+   "size": "xl",
+   "nodes": [
+    {
+     "id": "web",
+     "label": "Browser"
+    },
+    {
+     "id": "edge",
+     "label": "Edge proxy"
+    },
+    {
+     "id": "api",
+     "label": "Checkout API"
+    },
+    {
+     "id": "price",
+     "label": "Pricing service",
+     "tone": "danger"
+    },
+    {
+     "id": "cache",
+     "label": "Redis cache",
+     "tone": "warn"
+    },
+    {
+     "id": "db",
+     "label": "Postgres"
+    }
+   ],
+   "edges": [
+    {
+     "from": "web",
+     "to": "edge",
+     "label": "HTTPS"
+    },
+    {
+     "from": "edge",
+     "to": "api"
+    },
+    {
+     "from": "api",
+     "to": "price",
+     "label": "gRPC"
+    },
+    {
+     "from": "api",
+     "to": "cache",
+     "label": "miss"
+    },
+    {
+     "from": "price",
+     "to": "db",
+     "label": "1,210 ms"
+    },
+    {
+     "from": "cache",
+     "to": "db"
+    }
+   ]
+  },
+  {
+   "id": "now",
+   "type": "now",
+   "title": "Now",
+   "text": "Bisecting latency",
+   "status": "working",
+   "size": "s"
+  },
+  {
+   "id": "p95",
+   "type": "metric",
+   "title": "p95 checkout",
+   "size": "s",
+   "value": "1,840 ms",
+   "label": "last 5 min",
+   "delta": "+310%",
+   "tone": "danger",
+   "spark": [
+    310,
+    322,
+    318,
+    341,
+    402,
+    580,
+    910,
+    1320,
+    1610,
+    1840
+   ]
+  },
+  {
+   "id": "tracer",
+   "type": "avatar",
+   "title": "Agent",
+   "size": "s",
+   "mood": "working",
+   "say": "Tracing the slow query"
+  },
+  {
+   "id": "answer",
+   "type": "ask",
+   "title": "Your call",
+   "size": "s",
+   "q": "Roll back 14:05?",
+   "options": [
+    "Roll back",
+    "Keep digging"
+   ]
+  },
+  {
+   "id": "latency",
+   "type": "line",
+   "title": "Checkout latency, ms",
+   "size": "m",
+   "series": [
+    {
+     "label": "p95",
+     "points": [
+      310,
+      322,
+      318,
+      330,
+      341,
+      365,
+      402,
+      580,
+      910,
+      1320,
+      1610,
+      1790,
+      1840
+     ]
+    },
+    {
+     "label": "p50",
+     "points": [
+      120,
+      118,
+      124,
+      121,
+      126,
+      130,
+      128,
+      140,
+      190,
+      260,
+      330,
+      360,
+      372
+     ]
+    }
+   ]
+  },
+  {
+   "id": "hops",
+   "type": "bars",
+   "title": "Time per hop, ms",
+   "size": "s",
+   "items": [
+    {
+     "label": "Edge",
+     "value": 12
+    },
+    {
+     "label": "Pricing",
+     "value": 1210,
+     "color": "#f87171"
+    },
+    {
+     "label": "Postgres",
+     "value": 320,
+     "color": "#fbbf24"
+    }
+   ]
+  },
+  {
+   "id": "jobs",
+   "type": "lanes",
+   "title": "Workers",
+   "size": "s"
+  }
+ ],
+ "lanes": [
+  {
+   "id": "trace",
+   "label": "Trace slow query",
+   "state": "working",
+   "pct": 62,
+   "step": "reading pg_stat"
+  },
+  {
+   "id": "replay",
+   "label": "Replay traffic",
+   "state": "waiting",
+   "pct": 20,
+   "step": "needs your OK"
+  }
+ ],
+ "now": {
+  "title": "Bisecting latency",
+  "status": "working"
+ },
+ "updatedAt": 1794133809000
+}

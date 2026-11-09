@@ -1,0 +1,35 @@
+{
+ "frames": [
+  {
+   "id": "now",
+   "type": "now",
+   "title": "Now"
+  },
+  {
+   "id": "lanes",
+   "type": "lanes",
+   "title": "Agents",
+   "size": "l"
+  }
+ ],
+ "lanes": [
+  {
+   "id": "t34",
+   "label": "Board polish",
+   "goal": "Make the board show what each agent is doing",
+   "state": "working",
+   "pct": null,
+   "step": "Rewriting the agent rows so goal, step and progress read at a glance",
+   "note": "",
+   "dod": [],
+   "at": null,
+   "calls": 47,
+   "startedAgoMs": 840000,
+   "updatedAgoMs": 4000
+  }
+ ],
+ "now": {
+  "title": "One agent on the board polish",
+  "status": "working"
+ }
+}

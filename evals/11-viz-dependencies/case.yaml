@@ -1,0 +1,8 @@
+schema_version: "1.1"
+name: viz-dependencies-uses-network
+description: "What depends on what: a relationship network (viz network) or a diagram, never a chart of numbers"
+runs: 3
+execution:
+  max_turns: 6
+  timeout_seconds: 300
+  prompt: "Show me which modules depend on which: api imports auth and db; auth imports crypto; db imports crypto and config; worker imports db and queue. I want the dependency picture on the panel. There are no files in this session; build whatever you need from scratch. (File-writing tools are disabled in this test session, so a folder you would write does not exist; use the panel tool the way you normally would anyway.)"

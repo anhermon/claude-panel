@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Visual assets</title>
+<!--
+  RECIPE visual-assets: three different assets (sankey, treemap, radar) side by side, chosen by the SHAPE of the information, one finding in words on top.
+  Use when: the answer is a split, a part-of-whole or a multi-axis comparison and a bar chart would hide the shape.
+  Adapt: replace the three objects in DATA with numbers you MEASURED (read them from a file or tool output in a script; never type guesses), change the kinds
+    by looking at `describe(kind).sample` (kinds() lists all), and rewrite HEADLINE as the one sentence the user should remember.
+  Constraints: offline, no CDN. Every asset validates its data and shows a named error panel when a field is wrong. Do not animate to decorate.
+-->
+<style>
+  body { margin: 0; padding: 16px; background: var(--panel-bg); color: var(--panel-fg); font: 14px/1.4 system-ui, sans-serif; }
+  h1 { font-size: 18px; margin: 0 0 12px; font-weight: 650; }
+  main { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+  main > * { min-width: 0; }
+</style>
+</head>
+<body>
+<h1 id="headline"></h1>
+<main id="out"></main>
+<script type="module">
+  import { sankey, treemap, radar } from 'panel/assets';
+  const HEADLINE = 'Reading is the biggest cost, and a third of it is re-reading';
+  const DATA = {
+    split: { unit: 'k tok', links: [
+      { from: 'Session', to: 'Reading', value: 46 }, { from: 'Session', to: 'Editing', value: 22 },
+      { from: 'Reading', to: 'Useful', value: 30 }, { from: 'Reading', to: 'Re-read', value: 16 }, { from: 'Editing', to: 'Useful', value: 22 } ] },
+    parts: { unit: 'k tok', root: { name: 'Session', children: [
+      { name: 'Reading', children: [{ name: 'core.js', value: 20 }, { name: 'tests', value: 26 }] },
+      { name: 'Editing', children: [{ name: 'flow.js', value: 12 }, { name: 'index.js', value: 10 }] } ] } },
+    axes: { axes: [{ key: 'a', label: 'Speed', max: 10 }, { key: 'b', label: 'Cost', max: 10 }, { key: 'c', label: 'Quality', max: 10 }],
+      series: [{ name: 'Before', values: [4, 5, 6] }, { name: 'After', values: [7, 6, 8] }] },
+  };
+  document.getElementById('headline').textContent = HEADLINE;
+  document.getElementById('out').append(
+    sankey(DATA.split, { title: 'Where the tokens went', caption: 'k tokens, left to right', height: 300 }),
+    treemap(DATA.parts, { title: 'What was read and edited', caption: 'area = k tokens', height: 300 }),
+    radar(DATA.axes, { title: 'Before and after', caption: 'score out of 10', height: 300 }));
+</script>
+</body></html>

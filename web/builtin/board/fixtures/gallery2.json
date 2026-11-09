@@ -1,0 +1,235 @@
+{
+ "frames": [
+  {
+   "id": "live",
+   "type": "pulse",
+   "title": "Agents",
+   "size": "l"
+  },
+  {
+   "id": "pic",
+   "type": "image",
+   "title": "Picture",
+   "size": "m",
+   "src": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMjAgMTgwIj48ZGVmcz48bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIwIiB5MT0iMCIgeDI9IjEiIHkyPSIxIj48c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiMxZTJhNTUiLz48c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiMzYjJhNjMiLz48L2xpbmVhckdyYWRpZW50PjwvZGVmcz48cmVjdCB3aWR0aD0iMzIwIiBoZWlnaHQ9IjE4MCIgZmlsbD0idXJsKCNnKSIvPjxjaXJjbGUgY3g9IjI0MCIgY3k9IjU0IiByPSIyNiIgZmlsbD0iI2ZiYmYyNCIgb3BhY2l0eT0iLjkiLz48cGF0aCBkPSJNMCAxNTAgTDcwIDkwIEwxMjAgMTMwIEwxOTAgNjAgTDI2MCAxMjAgTDMyMCA4NCBMMzIwIDE4MCBMMCAxODBaIiBmaWxsPSIjMGYxNDI2Ii8+PHBhdGggZD0iTTAgMTY1IEw5MCAxMjAgTDE2MCAxNTAgTDIzMCAxMDggTDMyMCAxNDggTDMyMCAxODAgTDAgMTgwWiIgZmlsbD0iIzE2MWMzMyIvPjwvc3ZnPg==",
+   "caption": "Ridge at dawn"
+  },
+  {
+   "id": "free",
+   "type": "html",
+   "title": "Freeform",
+   "size": "m",
+   "html": "<svg viewBox=\"0 0 120 56\" width=\"100%\" height=\"100%\" preserveAspectRatio=\"xMidYMid meet\"><defs><linearGradient id=\"a\" x1=\"0\" x2=\"1\"><stop offset=\"0\" stop-color=\"#7c9cff\"/><stop offset=\"1\" stop-color=\"#c084fc\"/></linearGradient></defs><rect x=\"6\" y=\"8\" width=\"34\" height=\"40\" rx=\"8\" fill=\"url(#a)\" opacity=\".85\"/><circle cx=\"82\" cy=\"28\" r=\"20\" fill=\"none\" stroke=\"#4ade80\" stroke-width=\"5\" stroke-dasharray=\"80 50\" stroke-linecap=\"round\"/><path d=\"M42 28 H58\" stroke=\"#8b91a1\" stroke-width=\"3\" stroke-linecap=\"round\"/></svg>"
+  },
+  {
+   "id": "face",
+   "type": "avatar",
+   "title": "Agent",
+   "size": "m",
+   "mood": "thinking",
+   "say": "Checking the pricing config before I touch anything."
+  }
+ ],
+ "pulse": {
+  "v": 1,
+  "now": 1794133809000,
+  "session": {
+   "turn": "running",
+   "startedAt": 1794133714000,
+   "turnStartedAt": 1794133734000
+  },
+  "totals": {
+   "calls": 663,
+   "files": 51,
+   "agents": 3,
+   "active": 4
+  },
+  "loops": [
+   {
+    "id": "main",
+    "label": "main",
+    "kind": "main",
+    "status": "running",
+    "lastTool": "WebFetch",
+    "lastTarget": "docs.example.com",
+    "calls": 29
+   },
+   {
+    "id": "agent-a31f9c",
+    "label": "T25 pulse + lanes",
+    "kind": "subagent",
+    "status": "running",
+    "lastTool": "WebFetch",
+    "lastTarget": "docs.example.com",
+    "calls": 13
+   },
+   {
+    "id": "agent-b77e02",
+    "label": "T23 visual pane",
+    "kind": "subagent",
+    "status": "running",
+    "lastTool": "WebSearch",
+    "lastTarget": "14 chars",
+    "calls": 11
+   },
+   {
+    "id": "agent-c0d4a8",
+    "label": "review tests",
+    "kind": "subagent",
+    "status": "done",
+    "lastTool": "Write",
+    "lastTarget": "README.md",
+    "calls": 10
+   }
+  ],
+  "lanes": [],
+  "events": [
+   {
+    "t": 1794133783038,
+    "loop": "agent-b77e02",
+    "tool": "Glob",
+    "target": "README.md"
+   },
+   {
+    "t": 1794133785067,
+    "loop": "agent-a31f9c",
+    "tool": "Glob",
+    "target": "layout.ts"
+   },
+   {
+    "t": 1794133786055,
+    "loop": "main",
+    "tool": "Edit",
+    "target": "pulse-model.ts"
+   },
+   {
+    "t": 1794133786430,
+    "loop": "main",
+    "tool": "WebFetch",
+    "target": "docs.example.com"
+   },
+   {
+    "t": 1794133788526,
+    "loop": "agent-a31f9c",
+    "tool": "Read",
+    "target": "pulse-model.ts"
+   },
+   {
+    "t": 1794133789092,
+    "loop": "main",
+    "tool": "Grep",
+    "target": "boot.ts"
+   },
+   {
+    "t": 1794133789132,
+    "loop": "agent-a31f9c",
+    "tool": "Glob",
+    "target": "pulse-model.ts"
+   },
+   {
+    "t": 1794133789802,
+    "loop": "agent-c0d4a8",
+    "tool": "WebSearch",
+    "target": "22 chars"
+   },
+   {
+    "t": 1794133790825,
+    "loop": "main",
+    "tool": "WebSearch",
+    "target": "33 chars"
+   },
+   {
+    "t": 1794133793171,
+    "loop": "agent-c0d4a8",
+    "tool": "Edit",
+    "target": "spec.ts"
+   },
+   {
+    "t": 1794133793550,
+    "loop": "agent-a31f9c",
+    "tool": "WebSearch",
+    "target": "19 chars"
+   },
+   {
+    "t": 1794133794343,
+    "loop": "agent-b77e02",
+    "tool": "WebSearch",
+    "target": "37 chars"
+   },
+   {
+    "t": 1794133797540,
+    "loop": "agent-c0d4a8",
+    "tool": "Edit",
+    "target": "pane.tsx"
+   },
+   {
+    "t": 1794133798174,
+    "loop": "main",
+    "tool": "Read",
+    "target": "pulse-model.ts",
+    "err": true
+   },
+   {
+    "t": 1794133798407,
+    "loop": "main",
+    "tool": "Read",
+    "target": "index.html"
+   },
+   {
+    "t": 1794133798794,
+    "loop": "agent-b77e02",
+    "tool": "WebFetch",
+    "target": "github.com"
+   },
+   {
+    "t": 1794133799454,
+    "loop": "main",
+    "tool": "Bash",
+    "target": "npm"
+   },
+   {
+    "t": 1794133801485,
+    "loop": "main",
+    "tool": "Read",
+    "target": "pane.tsx"
+   },
+   {
+    "t": 1794133803835,
+    "loop": "main",
+    "tool": "WebFetch",
+    "target": "docs.example.com"
+   },
+   {
+    "t": 1794133805306,
+    "loop": "agent-b77e02",
+    "tool": "Bash",
+    "target": "ls"
+   },
+   {
+    "t": 1794133807583,
+    "loop": "agent-a31f9c",
+    "tool": "Read",
+    "target": "register.tsx"
+   },
+   {
+    "t": 1794133808748,
+    "loop": "main",
+    "tool": "Bash",
+    "target": "tsc"
+   },
+   {
+    "t": 1794133808902,
+    "loop": "main",
+    "tool": "WebFetch",
+    "target": "docs.example.com"
+   },
+   {
+    "t": 1794133808980,
+    "loop": "agent-c0d4a8",
+    "tool": "Write",
+    "target": "README.md"
+   }
+  ]
+ },
+ "updatedAt": 1794133809000
+}

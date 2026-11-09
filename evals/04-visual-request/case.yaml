@@ -1,0 +1,8 @@
+schema_version: "1.1"
+name: visual-request-publishes-scene
+description: "Visual request: asking to see something (not read about it) publishes a scene (inline html or files, or an absolute dir) with an alt"
+runs: 3
+execution:
+  max_turns: 6
+  timeout_seconds: 300
+  prompt: "Show me how exponential backoff with jitter works. I'd like to see it, not read about it. There are no files in this session; build whatever you need from scratch. (File-writing tools are disabled in this test session, so a folder you would write does not exist; publish the scene the way you normally would anyway.)"

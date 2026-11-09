@@ -1,0 +1,37 @@
+/* doing.css - the `doing` and `swimlane` frames (frames/doing.js, frames/swimlane.js). Loaded by those modules; board.css is not touched. */
+
+.doing, .swimlane { height: 100%; overflow: hidden; font-size: var(--fs); container-type: inline-size; --k-none: #272d42; }
+.doing-body, .swimlane-body { display: flex; flex-direction: column; gap: calc(.45em + var(--spread, 0px)); }
+.dg-list, .sw-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: calc(.35em + var(--spread, 0px)); }
+/* a wide frame (2 cells) lists the agents in two columns */
+@container (min-width: 440px) { .dg-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 1.2em; align-content: start; } }
+
+/* doing: glyph | name | kind, the files under the name (roomy) or nothing more (compact) */
+.dg-row { display: grid; grid-template-columns: 1.5em minmax(0, 1fr) auto; column-gap: .45em; align-items: baseline; line-height: 1.2; }
+.dg-glyph { grid-row: 1 / span 2; align-self: center; font-style: normal; font-weight: 800; color: var(--kc); text-align: center; }
+.dg-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 650; color: var(--fg); }
+.dg-kind { color: var(--kc); font-weight: 700; white-space: nowrap; }
+.dg-files { grid-column: 2 / -1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--mut); }
+.dg-files:empty { display: none; }
+.dg-row[data-running="false"] .dg-name { color: var(--mut); font-weight: 500; }
+.dg-row[data-running="false"] .dg-glyph, .dg-row[data-running="false"] .dg-kind { opacity: .7; }
+.doing[data-fit="compact"] .dg-files { display: none; }
+.doing[data-fit="compact"] .dg-glyph { grid-row: 1; }
+
+/* the legend: one line, only the kinds present */
+.dg-legend { margin: 0; display: flex; gap: .2em 1em; flex-wrap: nowrap; overflow: hidden; white-space: nowrap; color: var(--mut); }
+.dg-lg { display: inline-flex; gap: .3em; align-items: baseline; flex: none; }
+.dg-lg > i { font-style: normal; font-weight: 800; color: var(--kc); line-height: 1; } /* a fallback-font glyph (∷) must not make the line taller than the legend */
+/* too narrow for the words: glyphs only (the rows say the kind in words); the swimlane's legend is the only key to its colors, so it wraps instead */
+@container (max-width: 380px) { .dg-legend:not(.dg-wrap) .dg-lg-label { display: none; } .dg-legend:not(.dg-wrap) { gap: .2em .8em; } }
+.dg-wrap { flex-wrap: wrap; white-space: normal; }
+
+/* swimlane: name left, duration right, the track under both */
+.sw-lane { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: .6em; row-gap: .15em; line-height: 1.2; }
+.sw-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 650; }
+.sw-dur { color: var(--mut); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.sw-lane[data-state="done"] .sw-name { color: var(--mut); font-weight: 500; }
+.sw-track { grid-column: 1 / -1; display: block; width: 100%; height: max(7px, .55em); border-radius: .25em; background: #151826; overflow: hidden; }
+.swimlane[data-fit="compact"] .sw-lane { grid-template-columns: minmax(0, 1fr) auto minmax(0, 1.4fr); align-items: center; }
+.swimlane[data-fit="compact"] .sw-dur { order: 2; }
+.swimlane[data-fit="compact"] .sw-track { grid-column: auto; order: 3; }

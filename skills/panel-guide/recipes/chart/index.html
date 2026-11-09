@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Chart</title>
+<!--
+  RECIPE chart: two views of one data file: <p-chart> (Chart.js, switch line/bar/area) and a custom Observable Plot with the peak
+    annotated. Both read data.json, so rewriting that one file and republishing (or just saving it) updates the picture.
+  Use when: a trend, a comparison or a distribution is easier to see than to read. Works as a card scene or as a deck slide.
+  Adapt: edit data.json (an array of row objects; x = first string key, y = numeric keys; or set x= and y= on <p-chart>).
+    Native Chart.js {labels, datasets} also works. For anything custom reach for Plot or d3 (both in the kit), as below.
+  Constraints: kit specifiers only (chart.js through <p-chart>, @observablehq/plot, d3); no CDN, no storage. Plot draws plain SVG,
+    so pass colours from the --panel-* tokens (read with getComputedStyle), not var() inside attributes.
+-->
+<style>
+  body { padding: 16px 20px; }
+  h1 { margin: 0; font-size: 18px; }
+  p-chart { --p-chart-h: 250px; }
+  #plot svg { display: block; max-width: 100%; height: auto; }
+  .tools { margin-left: auto; }
+  .p-btn[aria-pressed="true"] { background: var(--panel-accent); color: var(--panel-on-accent); }
+</style>
+</head>
+<body class="p-stack">
+<div class="p-row">
+  <h1>Weekly signups</h1>
+  <div class="p-row tools" role="group" aria-label="Chart type">
+    <button class="p-btn ghost" type="button" data-type="line" aria-pressed="true">Line</button>
+    <button class="p-btn ghost" type="button" data-type="bar" aria-pressed="false">Bar</button>
+    <button class="p-btn ghost" type="button" data-type="area" aria-pressed="false">Area</button>
+  </div>
+</div>
+<p-chart id="c" type="line" src="data.json" x="day" y="signups" title="Signups per day"></p-chart>
+<div id="plot" aria-label="Same data as a line with the busiest day marked" role="img"></div>
+<script type="module">
+  import 'panel/components';
+  import * as Plot from '@observablehq/plot';
+
+  const chart = document.getElementById('c');
+  for (const btn of document.querySelectorAll('[data-type]')) btn.onclick = () => {   // p-chart rebuilds when `type` changes
+    chart.setAttribute('type', btn.dataset.type);
+    for (const b of document.querySelectorAll('[data-type]')) b.setAttribute('aria-pressed', String(b === btn));
+  };
+
+  const css = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  const rows = await (await fetch('data.json')).json();            // a sibling file of this page
+  const peak = rows.reduce((a, b) => (b.signups > a.signups ? b : a));
+  document.getElementById('plot').append(Plot.plot({
+    width: Math.min(1100, innerWidth - 40), height: 190, marginLeft: 36, style: { color: css('--panel-fg'), background: 'transparent', fontSize: '13px' },
+    y: { grid: true, label: null }, x: { label: null, domain: rows.map((d) => d.day) },   // domain keeps data order (default is alphabetical)
+    marks: [
+      Plot.ruleY([0], { stroke: css('--panel-line') }),
+      Plot.lineY(rows, { x: 'day', y: 'signups', stroke: css('--panel-accent'), strokeWidth: 3, curve: 'catmull-rom' }),
+      Plot.dot([peak], { x: 'day', y: 'signups', r: 6, fill: css('--panel-accent-2') }),
+      Plot.text([peak], { x: 'day', y: 'signups', text: (d) => `peak ${d.signups}`, dy: -16, fill: css('--panel-fg') }),
+    ],
+  }));
+</script>
+</body></html>

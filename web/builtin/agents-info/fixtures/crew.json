@@ -1,0 +1,168 @@
+{
+ "overall": "working",
+ "mainKind": "delegating",
+ "agents": [
+  {
+   "id": "main",
+   "isMain": true,
+   "name": "Me",
+   "short": "Me",
+   "state": "working",
+   "pct": null,
+   "startedAgoMs": 5400000,
+   "endedAgoMs": null,
+   "tokens": 310000,
+   "kind": "delegating",
+   "kindLabel": "Delegating",
+   "kindColor": "#c084fc",
+   "kindGlyph": "⇉",
+   "headline": "Delegating: T43, T40, T47",
+   "files": []
+  },
+  {
+   "id": "t43",
+   "name": "T43 Work-kind classifier",
+   "short": "T43",
+   "state": "testing",
+   "pct": 60,
+   "startedAgoMs": 1560000,
+   "endedAgoMs": null,
+   "tokens": 48200,
+   "kind": "tests",
+   "kindLabel": "Tests",
+   "kindColor": "#4ade80",
+   "kindGlyph": "✓",
+   "headline": "Running tests: work-kinds.test.ts",
+   "files": [
+    "work-kinds.test.ts"
+   ]
+  },
+  {
+   "id": "t40",
+   "name": "T40 Deep per-agent insight",
+   "short": "T40",
+   "state": "working",
+   "pct": 40,
+   "startedAgoMs": 2460000,
+   "endedAgoMs": null,
+   "tokens": 126000,
+   "kind": "logic",
+   "kindLabel": "Logic",
+   "kindColor": "#7c9cff",
+   "kindGlyph": "ƒ",
+   "headline": "Editing logic: agent-insight.ts",
+   "files": [
+    "agent-insight.ts",
+    "board-agents.ts"
+   ]
+  },
+  {
+   "id": "t47",
+   "name": "T47 Panel guide rewrite",
+   "short": "T47",
+   "state": "working",
+   "pct": null,
+   "startedAgoMs": 720000,
+   "endedAgoMs": null,
+   "tokens": 9300,
+   "kind": "docs",
+   "kindLabel": "Docs",
+   "kindColor": "#fbbf24",
+   "kindGlyph": "¶",
+   "headline": "Writing docs: SKILL.md",
+   "files": [
+    "SKILL.md"
+   ]
+  },
+  {
+   "id": "t44",
+   "name": "T44 Board lanes UI",
+   "short": "T44",
+   "state": "blocked",
+   "pct": 20,
+   "startedAgoMs": 1980000,
+   "endedAgoMs": null,
+   "tokens": 31500,
+   "kind": "ui",
+   "kindLabel": "UI",
+   "kindColor": "#22d3ee",
+   "kindGlyph": "◧",
+   "headline": "Waiting on a decision about card sizes",
+   "files": [
+    "board.css"
+   ]
+  },
+  {
+   "id": "t45",
+   "name": "T45 Landscape research",
+   "short": "T45",
+   "state": "waiting",
+   "pct": 80,
+   "startedAgoMs": 1140000,
+   "endedAgoMs": null,
+   "tokens": 2100,
+   "kind": "research",
+   "kindLabel": "Research",
+   "kindColor": "#c084fc",
+   "kindGlyph": "◎",
+   "headline": "Waiting for the user",
+   "files": []
+  },
+  {
+   "id": "t38",
+   "name": "T38 Visual baseline",
+   "short": "T38",
+   "state": "done",
+   "pct": 100,
+   "startedAgoMs": 4200000,
+   "endedAgoMs": 1080000,
+   "tokens": 64000,
+   "kind": "visual",
+   "kindLabel": "Visual",
+   "kindColor": "#fb7185",
+   "kindGlyph": "◐",
+   "headline": "Checked 3 screenshots",
+   "files": [
+    "board-1280.png"
+   ]
+  }
+ ],
+ "events": [
+  {
+   "id": 101,
+   "agent": "t38",
+   "kind": "state",
+   "from": "working",
+   "to": "done",
+   "text": "T38 done · 52 min",
+   "ago": 50000
+  },
+  {
+   "id": 102,
+   "agent": "t45",
+   "kind": "handoff",
+   "from": "main",
+   "to": "t45",
+   "text": "main → T45",
+   "ago": 30000
+  },
+  {
+   "id": 103,
+   "agent": "t43",
+   "kind": "state",
+   "from": "working",
+   "to": "testing",
+   "text": "T43 testing",
+   "ago": 12000
+  },
+  {
+   "id": 104,
+   "agent": "t40",
+   "kind": "progress",
+   "from": "30",
+   "to": "40",
+   "text": "T40 40%",
+   "ago": 4000
+  }
+ ]
+}

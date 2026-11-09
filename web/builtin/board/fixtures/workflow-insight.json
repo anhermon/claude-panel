@@ -1,0 +1,319 @@
+{
+ "frames": [
+  {
+   "id": "now",
+   "type": "now",
+   "title": "Now",
+   "size": "m",
+   "text": "Workflow insight: where does agent time go?",
+   "status": "working"
+  },
+  {
+   "id": "time-by-kind",
+   "type": "kindstack",
+   "title": "Time by kind of work, per agent",
+   "size": "l",
+   "caption": "Fix parser edge cases took longest: 48 min 19 s, 40% of agent time; Tests led in 2 of 5 agents",
+   "items": [
+    {
+     "label": "Fix parser edge cases",
+     "total": "48 min 19 s",
+     "tokens": "412k tokens",
+     "segs": [
+      {
+       "k": "tests",
+       "s": 1274,
+       "text": "21 min 14 s"
+      },
+      {
+       "k": "logic",
+       "s": 1023,
+       "text": "17 min 3 s"
+      },
+      {
+       "k": "reading",
+       "s": 370,
+       "text": "6 min 10 s"
+      },
+      {
+       "k": "working",
+       "s": 50,
+       "text": "50 s"
+      },
+      {
+       "k": "thinking",
+       "s": 182,
+       "text": "3 min 2 s"
+      }
+     ]
+    },
+    {
+     "label": "Build the board frames UI",
+     "total": "28 min 27 s",
+     "tokens": "269k tokens",
+     "segs": [
+      {
+       "k": "ui",
+       "s": 740,
+       "text": "12 min 20 s"
+      },
+      {
+       "k": "visual",
+       "s": 368,
+       "text": "6 min 8 s"
+      },
+      {
+       "k": "tests",
+       "s": 340,
+       "text": "5 min 40 s"
+      },
+      {
+       "k": "reading",
+       "s": 184,
+       "text": "3 min 4 s"
+      },
+      {
+       "k": "thinking",
+       "s": 75,
+       "text": "1 min 15 s"
+      }
+     ]
+    },
+    {
+     "label": "Write tests for lanes",
+     "total": "23 min 19 s",
+     "tokens": "187k tokens",
+     "segs": [
+      {
+       "k": "tests",
+       "s": 1025,
+       "text": "17 min 5 s"
+      },
+      {
+       "k": "reading",
+       "s": 170,
+       "text": "2 min 50 s"
+      },
+      {
+       "k": "logic",
+       "s": 140,
+       "text": "2 min 20 s"
+      },
+      {
+       "k": "thinking",
+       "s": 64,
+       "text": "1 min 4 s"
+      }
+     ]
+    },
+    {
+     "label": "Research layout options",
+     "total": "9 min 25 s",
+     "tokens": "96k tokens",
+     "segs": [
+      {
+       "k": "research",
+       "s": 390,
+       "text": "6 min 30 s"
+      },
+      {
+       "k": "reading",
+       "s": 85,
+       "text": "1 min 25 s"
+      },
+      {
+       "k": "docs",
+       "s": 40,
+       "text": "40 s"
+      },
+      {
+       "k": "thinking",
+       "s": 50,
+       "text": "50 s"
+      }
+     ]
+    },
+    {
+     "label": "Update README and guide",
+     "total": "4 min 31 s",
+     "tokens": "42k tokens",
+     "segs": [
+      {
+       "k": "docs",
+       "s": 189,
+       "text": "3 min 9 s"
+      },
+      {
+       "k": "reading",
+       "s": 62,
+       "text": "1 min 2 s"
+      },
+      {
+       "k": "thinking",
+       "s": 20,
+       "text": "20 s"
+      }
+     ]
+    }
+   ],
+   "foot": "Thinking = pauses of 20 s or more between actions"
+  },
+  {
+   "id": "time-sinks",
+   "type": "sinks",
+   "title": "Where agent time went",
+   "size": "l",
+   "caption": "Tests took 39% of agent time; Fix parser edge cases spent 14 min 22 s in a row writing logic",
+   "items": [
+    {
+     "k": "tests",
+     "pct": 39,
+     "text": "43 min 59 s across 3 agents · about 372k tokens (estimated)",
+     "time": "43 min 59 s",
+     "meta": "3 agents · ~372k tok"
+    },
+    {
+     "k": "logic",
+     "pct": 17,
+     "text": "19 min 23 s across 2 agents · about 164k tokens (estimated)",
+     "time": "19 min 23 s",
+     "meta": "2 agents · ~164k tok"
+    },
+    {
+     "k": "reading",
+     "pct": 13,
+     "text": "14 min 31 s across 5 agents · about 128k tokens (estimated)",
+     "time": "14 min 31 s",
+     "meta": "5 agents · ~128k tok"
+    },
+    {
+     "k": "ui",
+     "pct": 11,
+     "text": "12 min 20 s across 1 agent · about 117k tokens (estimated)",
+     "time": "12 min 20 s",
+     "meta": "1 agent · ~117k tok"
+    },
+    {
+     "k": "thinking",
+     "pct": 6,
+     "text": "6 min 31 s across 5 agents · about 58k tokens (estimated)",
+     "time": "6 min 31 s",
+     "meta": "5 agents · ~58k tok"
+    },
+    {
+     "k": "research",
+     "pct": 6,
+     "text": "6 min 30 s across 1 agent · about 66k tokens (estimated)",
+     "time": "6 min 30 s",
+     "meta": "1 agent · ~66k tok"
+    }
+   ],
+   "notes": [
+    "14 min 22 s writing logic · Fix parser edge cases",
+    "11 min 51 s running tests · Write tests for lanes",
+    "9 min 40 s writing UI · Build the board frames UI"
+   ],
+   "foot": "Tokens are estimated from each agent's share of time"
+  },
+  {
+   "id": "repeats",
+   "type": "repeats",
+   "title": "Repeated work",
+   "size": "l",
+   "caption": "pulse-model.ts was touched 7 times by 1 agent; tsc ran 9 times (4 min 11 s)",
+   "cols": [
+    "Fix parser edge cases",
+    "Build the board frames UI",
+    "Write tests for lanes",
+    "Research layout options"
+   ],
+   "rows": [
+    {
+     "label": "grid-plan.mjs",
+     "cells": [
+      6,
+      4,
+      3,
+      1
+     ],
+     "note": "11 reads · 3 edits"
+    },
+    {
+     "label": "board-logic.mjs",
+     "cells": [
+      5,
+      2,
+      4,
+      0
+     ],
+     "note": "9 reads · 2 edits"
+    },
+    {
+     "label": "kind-meta.mjs",
+     "cells": [
+      3,
+      3,
+      2,
+      1
+     ],
+     "note": "9 reads · 0 edits"
+    },
+    {
+     "label": "pulse-model.ts",
+     "cells": [
+      7,
+      0,
+      0,
+      0
+     ],
+     "note": "4 reads · 3 edits"
+    },
+    {
+     "label": "lane-logic.test.mjs",
+     "cells": [
+      0,
+      0,
+      5,
+      0
+     ],
+     "note": "2 reads · 3 edits"
+    }
+   ],
+   "notes": [
+    "tsc ×9 · 4 min 11 s · 3 agents · run it once, after the change is done",
+    "npm test ×6 · 3 min 2 s · 2 agents · run it once, after the change is done",
+    "tsc re-run after failing ×3 · read the error before re-running",
+    "3 agents on similar \"write\" tasks, mostly tests · merge them into one brief"
+   ],
+   "foot": "Numbers = times each agent read or edited the file"
+  },
+  {
+   "id": "improve",
+   "type": "hints",
+   "title": "What to improve",
+   "size": "m",
+   "items": [
+    {
+     "text": "Run only affected tests while working; the full suite once at the end.",
+     "evidence": "Tests took 39% of agent time (43 min 59 s of 1 h 54 min); \"tsc\" ran 9 times",
+     "rule": "Rule: tests and checks at 35% of agent time or more (setting hintTestsPct)."
+    },
+    {
+     "text": "Put these files in the brief so each agent skips re-reading them.",
+     "evidence": "4 files read by 3+ agents each: grid-plan.mjs, board-logic.mjs, kind-meta.mjs, ...",
+     "rule": "Rule: 3+ files read by 3+ agents each (settings hintSharedFiles, hintSharedAgents)."
+    },
+    {
+     "text": "Read why a command failed before re-running it; put known fixes in the brief.",
+     "evidence": "Re-ran straight after failing 4 times; most often \"tsc\" (3)",
+     "rule": "Rule: 3+ immediate re-runs after a failure (setting hintRetries)."
+    }
+   ]
+  }
+ ],
+ "lanes": [],
+ "now": {
+  "title": "Workflow insight: where does agent time go?",
+  "status": "working"
+ }
+}

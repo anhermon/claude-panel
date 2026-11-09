@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Compose assets</title>
+<!--
+  RECIPE freeform-compose: an asset plus your own SVG on top of it, in one card (a matrix with a hand-drawn circle and a note), next to an estimate range.
+  Use when: no single asset says it, so you combine one with your own mark (a ring, an arrow, a rule at a moment) that points at the finding.
+  Adapt: change TOUCHES (rows x cols of real counts), CALLOUT (row and col index to circle, and the sentence), and ESTIMATES. The overlay is positioned from the
+    asset's own box, so it follows resizes; keep it to one mark and one label.
+  Constraints: offline. The overlay is plain SVG with panel tokens (var(--panel-accent)); do not add a second callout, the first one is the point.
+-->
+<style>
+  body { margin: 0; padding: 16px; background: var(--panel-bg); color: var(--panel-fg); font: 14px/1.4 system-ui, sans-serif; }
+  main { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+  .stack { position: relative; }
+  .stack svg.over { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
+  .note { margin: 8px 0 0; color: var(--panel-muted); font-size: 13px; }
+</style>
+</head>
+<body>
+<main>
+  <section><div class="stack" id="stack"></div><p class="note" id="note"></p></section>
+  <section id="est"></section>
+</main>
+<script type="module">
+  import { matrix, ranges } from 'panel/assets';
+  const TOUCHES = { unit: 'edits', rowTitle: 'File', colTitle: 'Agent', rows: ['core.js', 'flow.js', 'index.js'], cols: ['W1', 'W2', 'Lead'],
+    values: [[null, 2, 9], [null, null, 7], [1, 1, 4]] };
+  const CALLOUT = { row: 0, col: 2, text: 'Only the lead touched core.js heavily' };
+  const ESTIMATES = { unit: 'h', target: 8, items: [{ label: 'Core', low: 2, mid: 3, high: 5, actual: 4 }, { label: 'Docs', low: 1, mid: 2, high: 4 }] };
+  const SVG = 'http://www.w3.org/2000/svg';
+  const stack = document.getElementById('stack');
+  const m = matrix(TOUCHES, { title: 'Who touched what', height: 220 });
+  const over = document.createElementNS(SVG, 'svg'); over.classList.add('over');
+  const ring = document.createElementNS(SVG, 'circle');
+  for (const [k, v] of Object.entries({ fill: 'none', stroke: 'var(--panel-accent)', 'stroke-width': 2 })) ring.setAttribute(k, v);
+  over.append(ring); stack.append(m, over);
+  document.getElementById('note').textContent = CALLOUT.text;
+  function place() {   // find the cell's box in the asset's DOM, draw the ring around it
+    const cells = m.querySelectorAll('[data-r][data-c]');
+    const cell = [...cells].find((c) => +c.dataset.r === CALLOUT.row && +c.dataset.c === CALLOUT.col);
+    if (!cell) { ring.setAttribute('r', 0); return; }
+    const a = stack.getBoundingClientRect(), b = cell.getBoundingClientRect();
+    ring.setAttribute('cx', b.left - a.left + b.width / 2); ring.setAttribute('cy', b.top - a.top + b.height / 2);
+    ring.setAttribute('r', Math.max(b.width, b.height) * 0.7);
+  }
+  new ResizeObserver(place).observe(stack);
+  document.getElementById('est').append(ranges(ESTIMATES, { title: 'Estimate vs actual', caption: 'bar = 80% interval; ring = actual', height: 220 }));
+</script>
+</body></html>

@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Galton board</title>
+<!--
+  RECIPE stage-demo: ONE full-bleed interactive scene, no deck engine: a live matter-js simulation with controls that report back
+    to Claude through panel.emit. Balls fall through pegs and pile up in bins: a bell curve appears.
+  Use when: the user should play with the idea, not click through slides (simulations, toys, small tools). Publish with layout "stage".
+  Adapt: swap the model (bodies, forces), keep the shape: world, a draw loop on your own canvas, controls, emit on user actions only
+    (never per frame). Pause when document.hidden; with prefers-reduced-motion nothing animates until the user presses Drop.
+  Live data: files in the top-level live/ folder are served like any scene file but never reload the page, so the scene polls
+    live/status.json every 2 s (fetch with cache:'no-store') and Claude can rewrite that file while the user plays.
+  Constraints: matter-js comes from the kit importmap (import 'matter-js'); no CDN, no storage. Colours come from --panel-* tokens.
+-->
+<style>
+  html, body { height: 100%; margin: 0; overflow: hidden; }
+  body { background: var(--panel-bg); }
+  canvas { position: fixed; inset: 0; width: 100%; height: 100%; }
+  .bar { position: fixed; left: 20px; top: 16px; right: 20px; display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; }
+  .bar h1 { margin: 0 12px 0 0; font-size: 20px; }
+  .bar label { display: flex; align-items: center; gap: 8px; color: var(--panel-muted); font-size: 14px; }
+  .note { position: fixed; left: 20px; bottom: 6px; margin: 0; font-size: 13px; color: var(--panel-muted); }
+  .count { margin-left: auto; font-size: 14px; color: var(--panel-muted); font-variant-numeric: tabular-nums; }
+</style>
+</head>
+<body>
+<canvas id="cv" role="img" aria-label="Galton board: balls fall through rows of pegs into bins and form a bell-shaped pile"></canvas>
+<div class="bar">
+  <h1>Galton board</h1>
+  <button class="p-btn" id="drop" type="button">Drop 50</button>
+  <button class="p-btn ghost" id="reset" type="button">Reset</button>
+  <label>Bounce <input id="bounce" type="range" min="0" max="0.7" step="0.05" value="0.35" aria-label="Bounciness"></label>
+  <span class="count" id="count" role="status">0 balls</span>
+</div>
+<p class="note" id="note" role="status"></p>
+<script type="module">
+  import Matter from 'matter-js';
+  import panel from 'panel';
+
+  const { Engine, Bodies, Composite, Body } = Matter;
+  const BINS = 11, ROWS = 11, R = 6, PEG_R = 5, MAX_BALLS = 400, DROP_N = 50, DRIP_MS = 60, BIN_H = 170;
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const cv = document.getElementById('cv'), g = cv.getContext('2d');
+  const css = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  let W = 0, H = 0, bins, balls = [], queued = reduced ? 0 : DROP_N;
+  let bounce = 0.35, engine, pegs;
+
+  function build() {                                  // (re)creates the world for the current canvas size
+    const dpr = devicePixelRatio; W = cv.width = innerWidth * dpr; H = cv.height = innerHeight * dpr; g.setTransform(dpr, 0, 0, dpr, 0, 0);
+    W /= dpr; H /= dpr;
+    engine = Engine.create({ gravity: { y: 1 } });
+    const gap = Math.min(64, (W - 80) / BINS), left = (W - gap * BINS) / 2, floor = H - 24, top = 130;
+    const rowH = Math.max(18, (floor - BIN_H - 24 - top) / ROWS);          // pegs fill the space above the bins
+    pegs = [];
+    for (let r = 0; r < ROWS; r++) for (let c = 0; c <= BINS; c++) {
+      if (r % 2 && c === BINS) continue;
+      pegs.push(Bodies.circle(left + gap * c + (r % 2 ? gap / 2 : 0), top + r * rowH, PEG_R, { isStatic: true, restitution: bounce }));
+    }
+    const walls = Array.from({ length: BINS + 1 }, (_, i) => Bodies.rectangle(left + gap * i, floor - BIN_H / 2, 3, BIN_H, { isStatic: true }));
+    Composite.add(engine.world, [...pegs, ...walls, Bodies.rectangle(W / 2, floor + 10, W, 20, { isStatic: true })]);
+    bins = { left, gap, floor, counts: new Array(BINS).fill(0) };
+    balls = [];
+  }
+  function spawn() {
+    const b = Bodies.circle(innerWidth / 2 + (Math.random() - 0.5) * 6, 84, R, { restitution: bounce, friction: 0, frictionAir: 0.004, label: 'ball' });
+    Composite.add(engine.world, b); balls.push(b);
+  }
+  function tally() {                                  // a ball that sits low and slow is counted into its bin once
+    for (const b of balls) if (!b.counted && b.position.y > bins.floor - BIN_H && b.speed < 0.3) {
+      b.counted = true; bins.counts[Math.min(BINS - 1, Math.max(0, Math.floor((b.position.x - bins.left) / bins.gap)))]++;
+    }
+  }
+  function draw() {
+    g.clearRect(0, 0, W, H);
+    g.strokeStyle = css('--panel-line'); g.lineWidth = 3; g.beginPath();    // bin walls and floor
+    for (let i = 0; i <= BINS; i++) { g.moveTo(bins.left + bins.gap * i, bins.floor - BIN_H); g.lineTo(bins.left + bins.gap * i, bins.floor); }
+    g.moveTo(bins.left, bins.floor); g.lineTo(bins.left + bins.gap * BINS, bins.floor); g.stroke();
+    g.fillStyle = css('--panel-muted'); for (const p of pegs) { g.beginPath(); g.arc(p.position.x, p.position.y, PEG_R, 0, 7); g.fill(); }
+    g.fillStyle = css('--panel-accent'); for (const b of balls) { g.beginPath(); g.arc(b.position.x, b.position.y, R, 0, 7); g.fill(); }
+    const peak = Math.max(1, ...bins.counts);                                  // the bell curve the counts trace
+    if (peak > 1) {
+      g.strokeStyle = css('--panel-accent-2'); g.lineWidth = 3; g.beginPath();
+      bins.counts.forEach((n, i) => { const x = bins.left + bins.gap * (i + 0.5), y = bins.floor - BIN_H - 12 - (n / peak) * 90; i ? g.lineTo(x, y) : g.moveTo(x, y); });
+      g.stroke();
+    }
+  }
+  function tick() {
+    if (!document.hidden) {
+      if (queued > 0 && balls.length < MAX_BALLS && performance.now() - tick.last > DRIP_MS) { spawn(); queued--; tick.last = performance.now(); }
+      Engine.update(engine, 1000 / 60); tally(); draw();
+      document.getElementById('count').textContent = `${balls.length} balls`;
+    }
+    requestAnimationFrame(tick);
+  }
+  tick.last = 0;
+
+  const drop = (n) => { queued += n; panel.emit('sim.drop', { n, bounce }); };           // user actions only, never per frame
+  document.getElementById('drop').onclick = () => drop(DROP_N);
+  document.getElementById('reset').onclick = () => { queued = 0; build(); panel.emit('sim.reset'); };
+  document.getElementById('bounce').onchange = (e) => { bounce = Number(e.target.value); build(); panel.emit('sim.bounce', { bounce }); };
+  const POLL_MS = 2000, note = document.getElementById('note');                        // live data: see the header comment
+  const poll = () => fetch('live/status.json', { cache: 'no-store' }).then((r) => r.json()).then((j) => { note.textContent = j.message ?? ''; }, () => {});
+  setInterval(() => { if (!document.hidden) poll(); }, POLL_MS); poll();
+  addEventListener('resize', build);
+  build(); requestAnimationFrame(tick);
+</script>
+</body></html>

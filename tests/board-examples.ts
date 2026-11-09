@@ -1,0 +1,45 @@
+// One valid `frame` per type: the examples the tool description and the report quote, and the table the validator
+// tests walk. Shared by board-frames.test.ts, board-model.test.ts and board-flow.test.tsx.
+export const EXAMPLES: Record<string, Record<string, unknown>> = {
+  text: { id: 'why', type: 'text', text: 'Retries pile up when the cache is cold', sub: 'seen in 3 of 4 runs' },
+  now: { id: 'now', type: 'now', text: 'Reading the retry logic', status: 'working' },
+  metric: { id: 'p95', type: 'metric', title: 'Latency', value: '1,840 ms', label: 'p95 latency', delta: '-18%', tone: 'ok', spark: [300, 280, 260, 212] },
+  rings: { id: 'coverage', type: 'rings', items: [{ label: 'unit', pct: 92 }, { label: 'e2e', pct: 40, color: '#f59e0b' }] },
+  bars: { id: 'sizes', type: 'bars', unit: 'KB', items: [{ label: 'before', value: 840 }, { label: 'after', value: 310, color: '#4ade80' }] },
+  line: { id: 'cpu-latency', type: 'line', size: 'l', series: [{ label: 'cpu', points: [10, 22, 35, 31, 48] }, { label: 'p95', points: [90, 95, 120, 118, 140] }] },
+  steps: { id: 'plan', type: 'steps', items: [{ t: 'Reproduce the flake', state: 'done' }, { t: 'Add jitter', state: 'doing' }, { t: 'Ship', state: 'todo' }] },
+  diagram: {
+    id: 'flow',
+    type: 'diagram',
+    nodes: [{ id: 'client', label: 'Client' }, { id: 'cache', label: 'Cache', tone: 'warn' }, { id: 'db', label: 'Database' }],
+    edges: [{ from: 'client', to: 'cache', label: 'get' }, { from: 'cache', to: 'db', label: 'miss' }],
+  },
+  timeline: { id: 'when', type: 'timeline', items: [{ when: '10:02', text: 'Deploy', tone: 'ok' }, { when: '10:07', text: 'Errors rise', tone: 'danger' }] },
+  compare: { id: 'options', type: 'compare', left: { title: 'Queue', items: ['durable', 'slower'] }, right: { title: 'Direct call', items: ['fast', 'loses jobs'] } },
+  avatar: { id: 'me', type: 'avatar', mood: 'thinking', say: 'Checking the logs' },
+  ask: { id: 'q', type: 'ask', q: 'Ship the fix now?', options: ['Yes', 'Wait for review'] },
+  lanes: { id: 'agents', type: 'lanes' },
+  pulse: { id: 'activity', type: 'pulse' },
+  image: { id: 'shot', type: 'image', src: 'diagrams/arch.png', caption: 'The architecture' },
+  html: { id: 'custom', type: 'html', html: '<b>hello</b> <i>board</i>' },
+  doing: { id: 'now-doing', type: 'doing' },
+  swimlane: { id: 'activity-timeline', type: 'swimlane', items: [{ label: 'main', state: 'working', from: 0, to: 120, segs: [{ k: 'reading', a: 0, b: 40 }, { k: 'logic', a: 40, b: 120 }] }, { label: 'writer', state: 'done', from: 30, to: 90, segs: [{ k: 'tests', a: 30, b: 90 }] }] },
+  kindstack: { id: 'time-by-kind', type: 'kindstack', caption: 'Each bar is one agent, split by kind of work.', items: [{ label: 'writer', total: '3 min 20 s', tokens: '12k tokens', segs: [{ k: 'logic', s: 120, text: '2 min' }, { k: 'tests', s: 80, text: '1 min 20 s' }] }] },
+  sinks: { id: 'time-sinks', type: 'sinks', caption: 'Share of all agent time by kind of work.', items: [{ k: 'logic', pct: 60, text: '2 min across 1 agent' }, { k: 'tests', pct: 40, text: '1 min 20 s across 1 agent' }], notes: ['writer spent 2 min in a row writing logic (9 actions).'] },
+  repeats: { id: 'repeats', type: 'repeats', caption: 'Files touched again and again.', cols: ['writer', 'tester'], rows: [{ label: 'board.js', cells: [5, 2], note: '5 reads, 2 edits' }], notes: ['"npm test" was run 4 times, 1 min 10 s in total.'] },
+  hints: { id: 'improve', type: 'hints', caption: 'Each suggestion shows its number and rule.', items: [{ text: 'Run only the affected tests while working.', evidence: 'Tests took 41% of agent time (2 min of 5 min).', rule: 'Rule: tests at 35% or more (setting hintTestsPct).' }] },
+  viz: { id: 'where-tokens-went', type: 'viz', kind: 'sankey', caption: 'k tokens by what they were spent on', data: { unit: 'k tok', links: [{ from: 'Session', to: 'Reading', value: 46 }, { from: 'Session', to: 'Editing', value: 22 }, { from: 'Reading', to: 'Useful', value: 40 }, { from: 'Reading', to: 'Re-read', value: 6 }] } },
+  tickets: {
+    id: 'tickets',
+    type: 'tickets',
+    title: 'Tickets · 1 of 2 verified',
+    summary: { total: 2, verified: 1, unverified: 0, blocked: 0, inflight: 1 },
+    items: [
+      { id: '02-ui', title: 'Booking form', stage: 'fixing', agent: 'worker', checks: { pass: 1, total: 2 }, round: 1, maxRounds: 2, verdict: 'FAIL', note: 'Verifier failed: empty state', dependsOn: ['01-db'] },
+      { id: '01-db', title: 'Tables', stage: 'done', agent: 'worker', round: 0, maxRounds: 2, verdict: 'PASS' },
+    ],
+  },
+  checks: { id: 'checks', type: 'checks', title: 'Checks · 01-db all 2 passed', result: 'PASS', round: 0, maxRounds: 2, items: [{ item: 'Migration runs', pass: true, evidence: 'exit 0' }, { item: 'Rollback works', pass: null }] },
+  uml: { id: 'handoff', type: 'uml', code: 'sequenceDiagram\n  main->>writer: spawn\n  writer-->>main: done', highlight: { writer: 'active' } },
+}
+export const TYPES = Object.keys(EXAMPLES)

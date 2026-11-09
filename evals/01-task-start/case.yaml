@@ -1,0 +1,8 @@
+schema_version: "1.1"
+name: task-start-sets-title-and-why
+description: "Longer multi-step task while the user follows the panel (without that cue a no-files task is answered in one reply, which is fine): the model states once what it is doing and why (task.title + a reasoning task.why); it need not be the first action"
+runs: 3
+execution:
+  max_turns: 6
+  timeout_seconds: 120
+  prompt: "Our upload client is a Python class UploadClient in uploader.py; upload(path) makes one requests.post call and raises on any failure. There are no files in this session, so work from this description. Add retry with exponential backoff to it, then write a test for it. I will be following your progress in the panel."

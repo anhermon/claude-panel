@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Images</title>
+<!--
+  RECIPE assets: an image gallery plus a before/after slider (<p-compare>), all from files in this folder.
+  Use when: showing screenshots, renders, photos, design variants or a visual diff.
+  Adapt: edit SHOTS (file + caption) and the before/after attributes; put your own PNG, JPG, SVG or WebP next to this page.
+    Get assets by generating them with code (SVG, canvas to PNG, a script that writes PNGs), or from the machine: screencapture -x shot.png,
+    sips -Z 1280 big.png --out small.png (resize), sips -s format png in.heic --out out.png, ffmpeg -i clip.mov -vf fps=1 f%02d.png.
+    The files here are generated placeholders so the recipe runs as is.
+  Constraints: images must live in the scene folder: the CSP blocks every remote image and CDN, so download first (curl -o shot.png URL) and
+    reference the relative path. Types served: png jpg jpeg gif webp avif svg. No storage. Keep each file small (resize before you publish).
+-->
+<style>
+  body { padding: 16px 20px; display: grid; gap: 20px; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); align-items: start; }
+  h2 { font-size: 15px; margin: 0 0 8px; }
+  figure { margin: 0; }
+  figcaption { color: var(--panel-muted); font-size: 13px; margin-top: 6px; }
+  #main { display: block; width: 100%; height: auto; max-height: 360px; object-fit: contain; border-radius: var(--panel-radius); }
+  .thumbs { display: flex; gap: 8px; margin-top: 10px; }
+  .thumbs button { width: 72px; padding: 0; border: 2px solid transparent; border-radius: 10px; background: none; cursor: pointer; overflow: hidden; }
+  .thumbs button[aria-pressed="true"] { border-color: var(--panel-accent); }
+  .thumbs img { display: block; width: 100%; }
+  p-compare { border-radius: var(--panel-radius); overflow: hidden; }
+</style>
+</head>
+<body>
+<section aria-labelledby="g"><h2 id="g">Gallery</h2>
+  <figure><img id="main" alt=""><figcaption id="cap"></figcaption></figure>
+  <div class="thumbs" id="thumbs"></div>
+</section>
+<section aria-labelledby="c"><h2 id="c">Before / after</h2>
+  <p-compare before="before.png" after="after.png" before-label="Before: noisy" after-label="After: restored"></p-compare>
+  <p style="color:var(--panel-muted);font-size:13px;margin:6px 0 0">Drag, or use the arrow keys.</p>
+</section>
+<script type="module">
+  import 'panel/components';
+  const SHOTS = [{ file: 'shot-1.svg', caption: 'Variant A: rings' }, { file: 'shot-2.svg', caption: 'Variant B: frame' }, { file: 'shot-3.svg', caption: 'Variant C: peak' }];
+  const main = document.getElementById('main'), cap = document.getElementById('cap'), thumbs = document.getElementById('thumbs');
+  function show(i) {
+    main.src = SHOTS[i].file; main.alt = SHOTS[i].caption; cap.textContent = SHOTS[i].caption;
+    [...thumbs.children].forEach((b, j) => b.setAttribute('aria-pressed', j === i));
+  }
+  SHOTS.forEach((s, i) => {
+    const b = document.createElement('button'), im = document.createElement('img');
+    b.type = 'button'; b.setAttribute('aria-label', 'Show ' + s.caption);
+    im.src = s.file; im.alt = '';
+    b.append(im); b.onclick = () => show(i); thumbs.append(b);
+  });
+  show(0);
+</script>
+</body></html>

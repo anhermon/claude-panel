@@ -1,0 +1,114 @@
+{
+ "frames": [
+  {
+   "id": "idea",
+   "type": "text",
+   "title": "The idea",
+   "size": "m",
+   "text": "Show the shape of the change, not a wall of text.",
+   "sub": "Frames update in place; nothing cycles on a timer."
+  },
+  {
+   "id": "workers",
+   "type": "rings",
+   "title": "Workers",
+   "size": "m",
+   "items": [
+    {
+     "label": "Pulse",
+     "pct": 100,
+     "color": "#7c9cff"
+    },
+    {
+     "label": "Board",
+     "pct": 72,
+     "color": "#c084fc"
+    },
+    {
+     "label": "Mod",
+     "pct": 18,
+     "color": "#fb7185"
+    }
+   ]
+  },
+  {
+   "id": "steps",
+   "type": "steps",
+   "title": "Order of work",
+   "size": "m",
+   "items": [
+    {
+     "t": "Board scene",
+     "state": "doing"
+    },
+    {
+     "t": "Wire the mod",
+     "state": "todo"
+    },
+    {
+     "t": "Pulse lands",
+     "state": "done"
+    },
+    {
+     "t": "Old tabs",
+     "state": "failed"
+    }
+   ]
+  },
+  {
+   "id": "shift",
+   "type": "compare",
+   "title": "What changes",
+   "size": "m",
+   "left": {
+    "title": "Before",
+    "items": [
+     "Tabs and views",
+     "Dense text",
+     "One card at a time"
+    ]
+   },
+   "right": {
+    "title": "After",
+    "items": [
+     "One board of frames",
+     "One idea per frame",
+     "Live where it helps"
+    ]
+   }
+  },
+  {
+   "id": "when",
+   "type": "timeline",
+   "title": "Today",
+   "size": "xl",
+   "items": [
+    {
+     "when": "09:10",
+     "text": "Alert fires",
+     "tone": "danger"
+    },
+    {
+     "when": "09:25",
+     "text": "Cause narrowed to pricing"
+    },
+    {
+     "when": "10:02",
+     "text": "Fix drafted",
+     "tone": "warn"
+    },
+    {
+     "when": "10:40",
+     "text": "Canary healthy",
+     "tone": "ok"
+    },
+    {
+     "when": "11:05",
+     "text": "Full rollout",
+     "tone": "ok"
+    }
+   ]
+  }
+ ],
+ "updatedAt": 1794133809000
+}

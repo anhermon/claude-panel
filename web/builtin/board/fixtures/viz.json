@@ -1,0 +1,384 @@
+{
+ "frames": [
+  {
+   "id": "viz-demo-1",
+   "type": "viz",
+   "kind": "river",
+   "title": "Work over the session",
+   "caption": "tool calls per kind of work, 10 min buckets (233 min, 525 spans)",
+   "data": {
+    "unit": "tool calls",
+    "x": [
+     "0m",
+     "10m",
+     "20m",
+     "30m",
+     "40m",
+     "50m",
+     "60m",
+     "70m",
+     "80m",
+     "90m",
+     "100m",
+     "110m",
+     "120m",
+     "130m",
+     "140m",
+     "150m",
+     "160m",
+     "170m",
+     "180m",
+     "190m",
+     "200m",
+     "210m",
+     "220m",
+     "230m"
+    ],
+    "layers": [
+     {
+      "name": "working",
+      "values": [
+       36,
+       42,
+       5,
+       0,
+       9,
+       0,
+       3,
+       2,
+       0,
+       4,
+       0,
+       8,
+       18,
+       0,
+       18,
+       7,
+       6,
+       16,
+       20,
+       25,
+       66,
+       71,
+       17,
+       2
+      ]
+     },
+     {
+      "name": "reading",
+      "values": [
+       79,
+       31,
+       10,
+       0,
+       2,
+       0,
+       0,
+       0,
+       0,
+       1,
+       3,
+       0,
+       5,
+       0,
+       21,
+       24,
+       8,
+       23,
+       55,
+       83,
+       63,
+       72,
+       36,
+       4
+      ]
+     },
+     {
+      "name": "tests",
+      "values": [
+       5,
+       9,
+       0,
+       0,
+       0,
+       0,
+       0,
+       1,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       6,
+       0,
+       1,
+       0,
+       3,
+       16,
+       5,
+       3,
+       1
+      ]
+     },
+     {
+      "name": "visual",
+      "values": [
+       5,
+       9,
+       9,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       1,
+       17,
+       1,
+       4,
+       2,
+       5,
+       34,
+       63,
+       22,
+       0
+      ]
+     },
+     {
+      "name": "delegating",
+      "values": [
+       3,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       1,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       1,
+       3,
+       15,
+       1,
+       0,
+       0,
+       0
+      ]
+     },
+     {
+      "name": "other",
+      "values": [
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       7,
+       0,
+       6,
+       8,
+       13,
+       4,
+       0,
+       0
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "id": "viz-demo-2",
+   "type": "viz",
+   "kind": "sankey",
+   "title": "Who spent time on what",
+   "caption": "active minutes, top 7 agents by time",
+   "data": {
+    "unit": "min",
+    "links": [
+     {
+      "from": "T47 Flexible",
+      "to": "reading",
+      "value": 1.7
+     },
+     {
+      "from": "T47 Flexible",
+      "to": "working",
+      "value": 49.8
+     },
+     {
+      "from": "T47 Flexible",
+      "to": "tests",
+      "value": 19.5
+     },
+     {
+      "from": "T40 Deep",
+      "to": "reading",
+      "value": 7.6
+     },
+     {
+      "from": "T40 Deep",
+      "to": "working",
+      "value": 45.8
+     },
+     {
+      "from": "T40 Deep",
+      "to": "tests",
+      "value": 6.3
+     },
+     {
+      "from": "T40 Deep",
+      "to": "visual",
+      "value": 2.7
+     },
+     {
+      "from": "T49 /agents-info",
+      "to": "reading",
+      "value": 12.1
+     },
+     {
+      "from": "T49 /agents-info",
+      "to": "working",
+      "value": 12.4
+     },
+     {
+      "from": "T49 /agents-info",
+      "to": "tests",
+      "value": 9.7
+     },
+     {
+      "from": "T49 /agents-info",
+      "to": "visual",
+      "value": 0.1
+     },
+     {
+      "from": "T49 /agents-info",
+      "to": "other",
+      "value": 0.4
+     },
+     {
+      "from": "T52 Freeform",
+      "to": "working",
+      "value": 9.2
+     },
+     {
+      "from": "T52 Freeform",
+      "to": "reading",
+      "value": 7.4
+     },
+     {
+      "from": "T52 Freeform",
+      "to": "visual",
+      "value": 2.5
+     },
+     {
+      "from": "T52 Freeform",
+      "to": "delegating",
+      "value": 0.9
+     },
+     {
+      "from": "T52 Freeform",
+      "to": "tests",
+      "value": 2.5
+     },
+     {
+      "from": "T51 One",
+      "to": "working",
+      "value": 10.4
+     },
+     {
+      "from": "T51 One",
+      "to": "reading",
+      "value": 9
+     },
+     {
+      "from": "T51 One",
+      "to": "other",
+      "value": 0.6
+     },
+     {
+      "from": "T51 One",
+      "to": "visual",
+      "value": 0.5
+     },
+     {
+      "from": "T51 One",
+      "to": "tests",
+      "value": 0.6
+     },
+     {
+      "from": "T50 Workflow",
+      "to": "reading",
+      "value": 3.2
+     },
+     {
+      "from": "T50 Workflow",
+      "to": "working",
+      "value": 8.9
+     },
+     {
+      "from": "T50 Workflow",
+      "to": "other",
+      "value": 0.4
+     },
+     {
+      "from": "T50 Workflow",
+      "to": "visual",
+      "value": 1.4
+     },
+     {
+      "from": "T50 Workflow",
+      "to": "tests",
+      "value": 4.4
+     },
+     {
+      "from": "T54 Fleet",
+      "to": "reading",
+      "value": 6.4
+     },
+     {
+      "from": "T54 Fleet",
+      "to": "working",
+      "value": 4.2
+     },
+     {
+      "from": "T54 Fleet",
+      "to": "visual",
+      "value": 0.8
+     },
+     {
+      "from": "T54 Fleet",
+      "to": "tests",
+      "value": 2
+     }
+    ]
+   }
+  }
+ ],
+ "updatedAt": 1794133809000
+}

@@ -1,0 +1,55 @@
+/* router-frames.css - tickets and checks (frames/router-dom.js). Rides on the .ix skeleton of insight-frames.css.
+   Nothing here is set below 1em (the text floor is the board's --fs). Colour never stands alone: every state also has a glyph and words. */
+
+.rt-chip { display: inline-block; padding: 0 .5em; border-radius: 1em; border: 1px solid var(--line-hi); color: var(--mut); white-space: nowrap; font-weight: 600; }
+.rt-chip[data-tone="warn"] { color: var(--warn); border-color: color-mix(in srgb, var(--warn) 50%, transparent); }
+.rt-chip[data-tone="danger"] { color: var(--danger); border-color: color-mix(in srgb, var(--danger) 50%, transparent); }
+.rt-chip[data-tone="acc"] { color: var(--acc); border-color: color-mix(in srgb, var(--acc) 50%, transparent); }
+
+/* tickets: header story, then one row per ticket */
+.tk-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: .15em .5em; }
+.tk-story { font-weight: 750; color: var(--fg); }
+.tk-story[data-all="yes"] { color: var(--ok); }
+.tk-list { display: flex; flex-direction: column; gap: calc(.5em + var(--spread, 0px)); }
+.tk-row { --tc: var(--mut); display: grid; grid-template-columns: 1.3em minmax(0, 1fr) auto; column-gap: .45em; row-gap: .2em; align-items: baseline; padding: .35em .6em .4em .5em; background: var(--card-hi); border-left: .22em solid var(--tc); border-radius: 0 .4em .4em 0; }
+.tk-row[data-tone="ok"] { --tc: var(--ok); }
+.tk-row[data-tone="warn"] { --tc: var(--warn); }
+.tk-row[data-tone="danger"] { --tc: var(--danger); }
+.tk-row[data-tone="acc"] { --tc: var(--acc); }
+.tk-mark { font-style: normal; font-weight: 800; color: var(--tc); text-align: center; }
+.tk-title { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 650; }
+.tk-stage { color: var(--tc); font-weight: 700; white-space: nowrap; }
+/* a claim that nobody checked is loud: filled amber band, and a verified one is a quiet green tick */
+.tk-row[data-look="unverified"] { background: color-mix(in srgb, var(--warn) 14%, var(--card-hi)); }
+.tk-row[data-look="blocked"] { background: color-mix(in srgb, var(--danger) 14%, var(--card-hi)); }
+.tk-row[data-look="verified"] .tk-mark { background: var(--ok); color: #0b0e1a; border-radius: 50%; line-height: 1.3em; width: 1.3em; height: 1.3em; }
+.tk-meta { grid-column: 2 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: .15em .6em; color: var(--mut); }
+.tk-meter { display: inline-flex; align-items: center; gap: .4em; }
+.tk-meter b { color: var(--fg); font-variant-numeric: tabular-nums; }
+.tk-bar { width: 3.2em; height: .5em; border-radius: .25em; background: #151826; overflow: hidden; }
+.tk-bar > i { display: block; height: 100%; background: var(--tc); border-radius: .25em; min-width: 2px; }
+.tk-row[data-look="verified"] .tk-bar > i { background: var(--ok); }
+.tk-after { white-space: nowrap; }
+/* the proof of a done ticket: one green line with the eval that passed; a done ticket without one is amber (never green) */
+.tk-proof { grid-column: 2 / -1; margin: 0; color: var(--ok); font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tk-proof > i { font-style: normal; margin-right: .4em; }
+.tk-row[data-look="unproven"], .tk-row[data-look="done"] { background: color-mix(in srgb, var(--warn) 10%, var(--card-hi)); }
+.tk-note { grid-column: 2 / -1; margin: 0; color: var(--mut); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.ix[data-fit="compact"] .tk-note, .ix[data-fit="compact"] .tk-meta .tk-after { display: none; }
+
+/* checks: result badge + counts + round, then a mark and an evidence line per check */
+.ck-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: .15em .6em; color: var(--mut); }
+.ck-badge { padding: 0 .6em; border-radius: .4em; font-weight: 800; letter-spacing: .04em; background: #1d2130; color: var(--mut); }
+.ck-badge[data-state="pass"] { background: var(--ok); color: #0b0e1a; }
+.ck-badge[data-state="fail"] { background: var(--danger); color: #0b0e1a; }
+.ck-round { color: var(--warn); font-weight: 650; }
+.ck-list { display: flex; flex-direction: column; gap: calc(.5em + var(--spread, 0px)); }
+.ck-row { display: grid; grid-template-columns: 1.3em minmax(0, 1fr); column-gap: .45em; row-gap: .1em; align-items: baseline; }
+.rt-mark { font-style: normal; font-weight: 800; text-align: center; }
+.rt-pass { color: var(--ok); }
+.rt-fail { color: var(--danger); }
+.rt-pending { color: var(--mut); }
+.ck-item { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 650; }
+.ck-row[data-state="fail"] .ck-item { color: var(--danger); }
+.ck-evidence { grid-column: 2; margin: 0; color: var(--mut); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.ix[data-fit="compact"] .ck-evidence { display: none; }

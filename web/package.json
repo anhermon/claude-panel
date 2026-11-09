@@ -1,0 +1,5 @@
+{
+  "private": true,
+  "description": "Panel web server and browser UI (zero dependencies). `main` exists only so `node --test web/` finds the tests.",
+  "main": "run-tests.mjs"
+}

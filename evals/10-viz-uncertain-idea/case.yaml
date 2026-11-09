@@ -1,0 +1,8 @@
+schema_version: "1.1"
+name: viz-uncertain-idea-uses-sketch-or-ranges
+description: "A design idea that is not settled is shown as a sketch or an uncertainty asset (viz frame), not a precise diagram frame"
+runs: 3
+execution:
+  max_turns: 6
+  timeout_seconds: 300
+  prompt: "We are not sure yet how a cache should sit between the API and the database: maybe a write-through layer, maybe a sidecar next to each API pod. I need to see the rough idea and what is still uncertain about it; nothing is decided or measured. There are no files in this session; build whatever you need from scratch. (File-writing tools are disabled in this test session, so a folder you would write does not exist; use the panel tool the way you normally would anyway.)"

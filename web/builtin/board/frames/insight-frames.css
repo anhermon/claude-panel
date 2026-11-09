@@ -1,0 +1,74 @@
+/* insight-frames.css - kindstack, sinks, repeats and hints (frames/insight-dom.js). Loaded by those modules; board.css is not touched.
+   Nothing here is set below 1em (the text floor is the board's --fs): hierarchy comes from weight and colour, not from small type. */
+
+.ix { height: 100%; overflow: hidden; font-size: var(--fs); container-type: inline-size; line-height: 1.25; }
+.ix-body { display: flex; flex-direction: column; gap: calc(.5em + var(--spread, 0px)); }
+.ix ol, .ix ul { list-style: none; margin: 0; padding: 0; }
+.ix-caption { margin: 0; color: var(--mut); }
+.ix-headline { color: var(--fg); font-weight: 650; line-height: 1.3; }
+.ix-foot { margin: 0; color: var(--mut); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ix[data-fit="compact"] .ix-foot { display: none; }
+.ix-sub { display: block; color: var(--fg); font-weight: 650; margin-bottom: .2em; }
+
+/* the key of the kinds' colours */
+.ix-key { margin: 0; display: flex; flex-wrap: wrap; gap: .1em 1em; color: var(--mut); }
+.ix-key-item { display: inline-flex; gap: .3em; align-items: baseline; }
+.ix-key-item > i, .ks-d > i { font-style: normal; font-weight: 800; color: var(--kc); line-height: 1; }
+
+/* kindstack: name | total, the stacked bar, the three biggest kinds in words */
+.ks-list { display: flex; flex-direction: column; gap: calc(.55em + var(--spread, 0px)); }
+.ks-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: .6em; row-gap: .2em; }
+.ks-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 650; }
+.ks-total { color: var(--fg); font-weight: 650; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.ks-bar { grid-column: 1 / -1; display: flex; gap: 2px; height: 1.55em; border-radius: .3em; overflow: hidden; background: #151826; }
+.ks-slice { display: flex; align-items: center; justify-content: center; min-width: 3px; background: var(--kc); color: #0b0e1a; font-style: normal; font-weight: 700; overflow: hidden; white-space: nowrap; }
+.ks-detail { grid-column: 1 / -1; margin: 0; color: var(--mut); }
+.ks-d { white-space: nowrap; }
+.ks-d > i { margin-right: .3em; }
+.ks-tok { white-space: nowrap; }
+.ix[data-fit="compact"] .ks-detail { display: none; }
+
+/* sinks: kind + share, the bar, one plain line; then the longest stretches */
+.sk-list { display: flex; flex-direction: column; gap: calc(.5em + var(--spread, 0px)); }
+.sk-row { display: grid; grid-template-columns: 1.4em minmax(0, 1fr) auto; column-gap: .45em; row-gap: .15em; align-items: baseline; }
+.sk-name { min-width: 0; display: flex; gap: .6em; align-items: baseline; overflow: hidden; }
+.sk-meta { color: var(--mut); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.sk-fig { display: inline-flex; gap: .6em; align-items: baseline; white-space: nowrap; }
+.sk-time { color: var(--fg); font-variant-numeric: tabular-nums; }
+.sk-glyph { font-style: normal; font-weight: 800; color: var(--kc); text-align: center; }
+.sk-kind { flex: none; white-space: nowrap; font-weight: 650; }
+.sk-pct { font-weight: 700; font-variant-numeric: tabular-nums; color: var(--kc); }
+.sk-bar { grid-column: 1 / -1; height: .5em; border-radius: .25em; background: #151826; overflow: hidden; }
+.sk-bar > i { display: block; height: 100%; background: var(--kc); border-radius: .25em; min-width: 2px; }
+.sk-text { grid-column: 2 / -1; margin: 0; color: var(--mut); }
+.sk-notes ul { display: flex; flex-direction: column; gap: .3em; }
+.sk-notes li { padding-left: .8em; position: relative; }
+.sk-notes li::before { content: ""; position: absolute; left: 0; top: .55em; width: .35em; height: .35em; border-radius: 50%; background: var(--acc); }
+.ix[data-fit="compact"] .sk-text, .ix[data-fit="compact"] .sk-notes, .ix[data-fit="compact"] .sk-meta { display: none; }
+
+/* repeats: file x agent matrix (darker = more touches), the agents' key, sentences */
+.rp-grid { display: grid; grid-template-columns: minmax(0, 1fr) repeat(var(--cols), 2.1em); gap: 3px; align-items: stretch; }
+.rp-corner, .rp-col { color: var(--mut); font-weight: 650; text-align: center; align-self: end; }
+.rp-corner { text-align: left; }
+.rp-file { display: flex; flex-direction: column; min-width: 0; justify-content: center; }
+.rp-file > b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 650; }
+.rp-file > span { color: var(--mut); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rp-cell { display: flex; align-items: center; justify-content: center; border-radius: .25em; font-weight: 700; font-variant-numeric: tabular-nums; background: #151826; }
+.rp-cell[data-level="1"] { background: #2a3566; }
+.rp-cell[data-level="2"] { background: #3b4c93; }
+.rp-cell[data-level="3"] { background: #5a72d6; color: #fff; }
+.rp-cell[data-level="4"] { background: #7c9cff; color: #0b0e1a; }
+.rp-key { margin: 0; color: var(--mut); display: flex; flex-wrap: wrap; gap: .1em 1em; }
+.rp-key-item b { color: var(--fg); }
+.rp-notes { display: flex; flex-direction: column; gap: .3em; }
+.rp-notes li { padding-left: .8em; position: relative; }
+.rp-notes li::before { content: ""; position: absolute; left: 0; top: .55em; width: .35em; height: .35em; border-radius: 50%; background: var(--warn); }
+.ix[data-fit="compact"] .rp-key, .ix[data-fit="compact"] .rp-file > span, .ix[data-fit="compact"] .rp-notes { display: none; }
+
+/* hints: one card per suggestion */
+.hn-list { display: flex; flex-direction: column; gap: calc(.6em + var(--spread, 0px)); }
+.hn-card { border-left: .22em solid var(--ok); background: var(--card-hi); border-radius: 0 .4em .4em 0; padding: .45em .7em .5em; display: flex; flex-direction: column; gap: .2em; }
+.hn-card p { margin: 0; }
+.hn-evidence { font-weight: 700; color: var(--fg); }
+.hn-text { color: var(--mut); }
+.ix[data-fit="compact"] .hn-text { display: none; }

@@ -1,0 +1,431 @@
+{
+ "overall": "working",
+ "mainKind": "delegating",
+ "agents": [
+  {
+   "id": "main",
+   "name": "Me",
+   "short": "Me",
+   "state": "working",
+   "pct": null,
+   "startedAgoMs": 88620000,
+   "endedAgoMs": null,
+   "tokens": 310000,
+   "kind": "delegating",
+   "kindLabel": "Delegating",
+   "kindColor": "#a78bfa",
+   "kindGlyph": "⇉",
+   "headline": "Delegating to seven workers",
+   "files": [],
+   "calls": 14,
+   "segs": [
+    {
+     "k": "reading",
+     "aAgoMs": 88620000,
+     "bAgoMs": 87600000
+    },
+    {
+     "k": "logic",
+     "aAgoMs": 87600000,
+     "bAgoMs": 72000000
+    },
+    {
+     "k": "tests",
+     "aAgoMs": 72000000,
+     "bAgoMs": 70800000
+    },
+    {
+     "k": "thinking",
+     "aAgoMs": 70800000,
+     "bAgoMs": 28800000
+    },
+    {
+     "k": "visual",
+     "aAgoMs": 28800000,
+     "bAgoMs": 25200000
+    },
+    {
+     "k": "reading",
+     "aAgoMs": 7200000,
+     "bAgoMs": 6000000
+    },
+    {
+     "k": "logic",
+     "aAgoMs": 6000000,
+     "bAgoMs": 4320000
+    },
+    {
+     "k": "delegating",
+     "aAgoMs": 4320000,
+     "bAgoMs": 3300000
+    },
+    {
+     "k": "thinking",
+     "aAgoMs": 3300000,
+     "bAgoMs": 3060000
+    },
+    {
+     "k": "delegating",
+     "aAgoMs": 3060000,
+     "bAgoMs": 2400000
+    },
+    {
+     "k": "reading",
+     "aAgoMs": 2400000,
+     "bAgoMs": 1980000
+    },
+    {
+     "k": "delegating",
+     "aAgoMs": 1980000,
+     "bAgoMs": 720000
+    },
+    {
+     "k": "thinking",
+     "aAgoMs": 720000,
+     "bAgoMs": 240000
+    },
+    {
+     "k": "delegating",
+     "aAgoMs": 240000,
+     "bAgoMs": 0
+    }
+   ],
+   "isMain": true
+  },
+  {
+   "id": "w-axis",
+   "name": "Wire the gantt axis",
+   "short": "C1",
+   "state": "working",
+   "pct": null,
+   "startedAgoMs": 3000000,
+   "endedAgoMs": null,
+   "tokens": 24000,
+   "kind": "logic",
+   "kindLabel": "Logic",
+   "kindColor": "#34d399",
+   "kindGlyph": "λ",
+   "headline": "Writing logic",
+   "files": [
+    "gantt-logic.mjs"
+   ],
+   "calls": 14,
+   "segs": [
+    {
+     "k": "reading",
+     "aAgoMs": 3000000,
+     "bAgoMs": 2640000
+    },
+    {
+     "k": "logic",
+     "aAgoMs": 2640000,
+     "bAgoMs": 1800000
+    },
+    {
+     "k": "tests",
+     "aAgoMs": 1800000,
+     "bAgoMs": 1500000
+    },
+    {
+     "k": "logic",
+     "aAgoMs": 1500000,
+     "bAgoMs": 840000
+    },
+    {
+     "k": "visual",
+     "aAgoMs": 840000,
+     "bAgoMs": 540000
+    },
+    {
+     "k": "logic",
+     "aAgoMs": 540000,
+     "bAgoMs": 0
+    }
+   ],
+   "model": "sonnet",
+   "effort": "high",
+   "role": "worker",
+   "agentType": "savvy-flow:savvy-careful"
+  },
+  {
+   "id": "w-parser",
+   "name": "Fix the parser edge cases",
+   "short": "X1",
+   "state": "testing",
+   "pct": 55,
+   "startedAgoMs": 2040000,
+   "endedAgoMs": null,
+   "tokens": 24000,
+   "kind": "tests",
+   "kindLabel": "Tests",
+   "kindColor": "#fbbf24",
+   "kindGlyph": "✓",
+   "headline": "Running tests",
+   "files": [],
+   "calls": 14,
+   "segs": [
+    {
+     "k": "reading",
+     "aAgoMs": 2040000,
+     "bAgoMs": 1800000
+    },
+    {
+     "k": "logic",
+     "aAgoMs": 1800000,
+     "bAgoMs": 960000
+    },
+    {
+     "k": "tests",
+     "aAgoMs": 960000,
+     "bAgoMs": 540000
+    },
+    {
+     "k": "logic",
+     "aAgoMs": 540000,
+     "bAgoMs": 360000
+    },
+    {
+     "k": "tests",
+     "aAgoMs": 360000,
+     "bAgoMs": 0
+    }
+   ],
+   "model": "gpt-6.1-sol",
+   "effort": "high",
+   "role": "codex-worker"
+  },
+  {
+   "id": "w-copy",
+   "name": "Draft the landing copy",
+   "short": "A1",
+   "state": "done",
+   "pct": 100,
+   "startedAgoMs": 2520000,
+   "endedAgoMs": 1080000,
+   "tokens": 24000,
+   "kind": "docs",
+   "kindLabel": "Docs",
+   "kindColor": "#fb923c",
+   "kindGlyph": "¶",
+   "headline": "Writing docs",
+   "files": [],
+   "calls": 14,
+   "segs": [
+    {
+     "k": "reading",
+     "aAgoMs": 2520000,
+     "bAgoMs": 2280000
+    },
+    {
+     "k": "docs",
+     "aAgoMs": 2280000,
+     "bAgoMs": 1320000
+    },
+    {
+     "k": "thinking",
+     "aAgoMs": 1320000,
+     "bAgoMs": 1200000
+    },
+    {
+     "k": "docs",
+     "aAgoMs": 1200000,
+     "bAgoMs": 1080000
+    }
+   ],
+   "model": "gemini-2.5-pro",
+   "effort": "low",
+   "role": "agy-worker"
+  },
+  {
+   "id": "w-matrix",
+   "name": "Check the build matrix",
+   "short": "O1",
+   "state": "waiting",
+   "pct": null,
+   "startedAgoMs": 720000,
+   "endedAgoMs": null,
+   "tokens": 24000,
+   "kind": "reading",
+   "kindLabel": "Reading",
+   "kindColor": "#60a5fa",
+   "kindGlyph": "∷",
+   "headline": "Waiting for your answer",
+   "files": [],
+   "calls": 14,
+   "segs": [
+    {
+     "k": "reading",
+     "aAgoMs": 720000,
+     "bAgoMs": 480000
+    },
+    {
+     "k": "tests",
+     "aAgoMs": 480000,
+     "bAgoMs": 300000
+    },
+    {
+     "k": "thinking",
+     "aAgoMs": 300000,
+     "bAgoMs": 0
+    }
+   ],
+   "harness": "opencode",
+   "model": "oc-large",
+   "effort": "medium",
+   "role": "worker"
+  },
+  {
+   "id": "w-log",
+   "name": "Review the changelog",
+   "short": "C2",
+   "state": "done",
+   "pct": 100,
+   "startedAgoMs": 1560000,
+   "endedAgoMs": 540000,
+   "tokens": 24000,
+   "kind": "docs",
+   "kindLabel": "Docs",
+   "kindColor": "#fb923c",
+   "kindGlyph": "¶",
+   "headline": "Writing docs",
+   "files": [],
+   "calls": 14,
+   "segs": [
+    {
+     "k": "reading",
+     "aAgoMs": 1560000,
+     "bAgoMs": 1320000
+    },
+    {
+     "k": "docs",
+     "aAgoMs": 1320000,
+     "bAgoMs": 840000
+    },
+    {
+     "k": "tests",
+     "aAgoMs": 840000,
+     "bAgoMs": 540000
+    }
+   ],
+   "model": "sonnet",
+   "effort": "medium",
+   "role": "verifier",
+   "ticket": {
+    "id": "r-9",
+    "stage": "failed",
+    "text": "failed 1/4",
+    "title": "Review the changelog",
+    "harness": "claude"
+   },
+   "agentType": "pstack:poteto-agent"
+  },
+  {
+   "id": "w-proof",
+   "name": "Verify the eval proof",
+   "short": "X2",
+   "state": "working",
+   "pct": null,
+   "startedAgoMs": 600000,
+   "endedAgoMs": null,
+   "tokens": 24000,
+   "kind": "visual",
+   "kindLabel": "Visual",
+   "kindColor": "#22d3ee",
+   "kindGlyph": "◉",
+   "headline": "Checking visually",
+   "files": [],
+   "calls": 14,
+   "segs": [
+    {
+     "k": "reading",
+     "aAgoMs": 600000,
+     "bAgoMs": 480000
+    },
+    {
+     "k": "visual",
+     "aAgoMs": 480000,
+     "bAgoMs": 180000
+    },
+    {
+     "k": "ui",
+     "aAgoMs": 180000,
+     "bAgoMs": 0
+    }
+   ],
+   "model": "gpt-6.1-sol",
+   "effort": "medium",
+   "role": "codex-worker"
+  },
+  {
+   "id": "w-new",
+   "name": "Draft the release note",
+   "short": "C3",
+   "state": "working",
+   "pct": null,
+   "startedAgoMs": 36000,
+   "endedAgoMs": null,
+   "tokens": 1800,
+   "kind": "reading",
+   "kindLabel": "Reading",
+   "kindColor": "#60a5fa",
+   "kindGlyph": "∷",
+   "headline": "Reading code",
+   "files": [],
+   "calls": 14,
+   "segs": [
+    {
+     "k": "reading",
+     "aAgoMs": 36000,
+     "bAgoMs": 0
+    }
+   ],
+   "model": "haiku",
+   "effort": "high*",
+   "role": "worker",
+   "agentType": "general-purpose"
+  }
+ ],
+ "kinds": {
+  "logic": {
+   "label": "Logic",
+   "color": "#34d399",
+   "glyph": "λ"
+  },
+  "tests": {
+   "label": "Tests",
+   "color": "#fbbf24",
+   "glyph": "✓"
+  },
+  "reading": {
+   "label": "Reading",
+   "color": "#60a5fa",
+   "glyph": "∷"
+  },
+  "visual": {
+   "label": "Visual",
+   "color": "#22d3ee",
+   "glyph": "◉"
+  },
+  "delegating": {
+   "label": "Delegating",
+   "color": "#a78bfa",
+   "glyph": "⇉"
+  },
+  "thinking": {
+   "label": "Thinking",
+   "color": "#94a3b8",
+   "glyph": "…"
+  },
+  "docs": {
+   "label": "Docs",
+   "color": "#fb923c",
+   "glyph": "¶"
+  },
+  "ui": {
+   "label": "UI",
+   "color": "#f472b6",
+   "glyph": "▣"
+  }
+ },
+ "events": []
+}

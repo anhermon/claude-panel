@@ -1,0 +1,50 @@
+/* The Pulse scene: the canvas is the picture; this is the type around it. Dark on purpose (it is a light show),
+   with the panel's dark tokens spelled out so it does not follow the page's light mode. */
+:root {
+  color-scheme: dark;
+  --bg: #0b0b0d;
+  --fg: #ecebe8;
+  --muted: #a19d95;
+  --line: #2f2d2a;
+  --accent: #7aa2ff;
+  --ok: #4ade80;
+  --font: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --gutter: clamp(16px, 3.1vw, 30px);
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; background: var(--bg); color: var(--fg); font-family: var(--font); overflow: hidden; }
+canvas { position: fixed; inset: 0; width: 100vw; height: 100vh; display: block; }
+
+.hud {
+  position: fixed; top: clamp(12px, 2.4vh, 22px); left: var(--gutter); right: var(--gutter);
+  display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; pointer-events: none;
+}
+.brand { display: flex; align-items: center; gap: 10px; min-width: 0; padding-top: 4px; }
+.mark {
+  width: 9px; height: 9px; border-radius: 50%; flex: none; background: var(--muted);
+  box-shadow: 0 0 0 0 transparent; transition: background-color 400ms;
+}
+.mark.on { background: var(--ok); animation: beat 1.9s ease-in-out infinite; }
+@keyframes beat { 50% { box-shadow: 0 0 0 6px rgba(74, 222, 128, 0.0); transform: scale(1.18); } 0%, 100% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.45); } }
+.name { font-size: 11px; font-weight: 700; letter-spacing: 0.22em; text-transform: uppercase; color: var(--fg); }
+.state { font-size: 12.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-variant-numeric: tabular-nums; }
+
+.stats { display: flex; gap: clamp(16px, 3vw, 34px); margin: 0; }
+.stats > div { display: flex; flex-direction: column; align-items: flex-end; }
+.stats dd {
+  margin: 0; font-size: clamp(22px, 4.4vmin, 42px); line-height: 1; font-weight: 600; letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums; font-feature-settings: "tnum"; color: var(--fg);
+}
+.stats dt { order: 2; margin-top: 4px; font-size: 9.5px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted); }
+
+.legend {
+  position: fixed; left: 50%; transform: translateX(-50%); bottom: clamp(5px, 1.3vh, 12px); margin: 0; padding: 0; list-style: none;
+  display: flex; gap: clamp(10px, 1.8vw, 18px); font-size: 10px; color: var(--muted); pointer-events: none;
+}
+.legend li { display: flex; align-items: center; gap: 6px; white-space: nowrap; }
+.legend i { width: 7px; height: 7px; border-radius: 50%; display: block; box-shadow: 0 0 8px currentColor; background: currentColor; }
+
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+@media (max-width: 620px) { .legend { display: none; } .state { max-width: 40vw; } }
+@media (prefers-reduced-motion: reduce) { .mark.on { animation: none; } }

@@ -1,0 +1,12 @@
+{
+ "frames": [
+  { "id": "now", "type": "now", "title": "Now", "text": "Shipping the release: tests run, deploy waits", "status": "working" },
+  { "id": "flow", "type": "uml", "title": "Release pipeline", "size": "l",
+    "code": "flowchart LR\n  build[Build] --> test[Test]\n  test --> stage[Stage]\n  stage --> prod[Prod]\n  test -. flaky .-> build",
+    "highlight": { "build": "done", "test": "active", "stage": "todo", "prod": "todo" } },
+  { "id": "seq", "type": "uml", "title": "Who hands what", "size": "l",
+    "code": "sequenceDiagram\n  participant M as main\n  participant R as researcher\n  participant W as writer\n  M->>R: spawn\n  R-->>M: done\n  M->>W: spawn\n  W-->>M: failed",
+    "highlight": { "W": "active", "R": "done" } }
+ ],
+ "updatedAt": 1794133809000
+}

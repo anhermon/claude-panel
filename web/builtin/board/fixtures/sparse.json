@@ -1,0 +1,35 @@
+{
+ "frames": [
+  {
+   "id": "now",
+   "type": "now",
+   "title": "Now",
+   "text": "Waiting on CI for the release branch",
+   "status": "waiting"
+  },
+  {
+   "id": "plan",
+   "type": "steps",
+   "title": "Release",
+   "items": [
+    {
+     "t": "Cut the branch",
+     "state": "done"
+    },
+    {
+     "t": "Run the suite",
+     "state": "doing"
+    },
+    {
+     "t": "Tag v2.4",
+     "state": "todo"
+    },
+    {
+     "t": "Publish notes",
+     "state": "todo"
+    }
+   ]
+  }
+ ],
+ "updatedAt": 1794133809000
+}

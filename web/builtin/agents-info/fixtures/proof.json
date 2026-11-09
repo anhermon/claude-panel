@@ -1,0 +1,159 @@
+{
+ "overall": "working",
+ "mainKind": "delegating",
+ "agents": [
+  {
+   "id": "main",
+   "loop": "main",
+   "isMain": true,
+   "name": "Me",
+   "short": "Me",
+   "state": "working",
+   "pct": null,
+   "startedAgoMs": 900000,
+   "endedAgoMs": null,
+   "tokens": 120000,
+   "kind": "delegating",
+   "kindLabel": "Delegating",
+   "kindColor": "#c084fc",
+   "kindGlyph": "⇉",
+   "headline": "Delegating: 3 tickets",
+   "files": [],
+   "role": null,
+   "ticket": null,
+   "proof": null
+  },
+  {
+   "id": "p1",
+   "loop": "p1",
+   "isMain": false,
+   "name": "T70 Login with email link",
+   "short": "T70 Login with",
+   "state": "done",
+   "pct": 100,
+   "startedAgoMs": 900000,
+   "endedAgoMs": 600000,
+   "tokens": 30000,
+   "kind": "logic",
+   "kindLabel": "Logic",
+   "kindColor": "#7c9cff",
+   "kindGlyph": "ƒ",
+   "headline": "Editing logic: p1.ts",
+   "files": [
+    "p1.ts"
+   ],
+   "role": null,
+   "ticket": null,
+   "proof": {
+    "eval": "Run the login tests; pass means 0 failures",
+    "what": "Run the login tests",
+    "result": "pass"
+   }
+  },
+  {
+   "id": "p2",
+   "loop": "p2",
+   "isMain": false,
+   "name": "T71 Export bookings to CSV",
+   "short": "T71 Export boo",
+   "state": "done",
+   "pct": 100,
+   "startedAgoMs": 800000,
+   "endedAgoMs": 500000,
+   "tokens": 30000,
+   "kind": "tests",
+   "kindLabel": "Tests",
+   "kindColor": "#4ade80",
+   "kindGlyph": "✓",
+   "headline": "Editing logic: p2.ts",
+   "files": [
+    "p2.ts"
+   ],
+   "role": null,
+   "ticket": null,
+   "proof": {
+    "eval": "",
+    "what": "",
+    "result": "none"
+   }
+  },
+  {
+   "id": "p3",
+   "loop": "p3",
+   "isMain": false,
+   "name": "T72 Invoice PDF layout",
+   "short": "T72 Invoice PD",
+   "state": "done",
+   "pct": 100,
+   "startedAgoMs": 700000,
+   "endedAgoMs": 300000,
+   "tokens": 30000,
+   "kind": "logic",
+   "kindLabel": "Logic",
+   "kindColor": "#7c9cff",
+   "kindGlyph": "ƒ",
+   "headline": "Editing logic: p3.ts",
+   "files": [
+    "p3.ts"
+   ],
+   "role": null,
+   "ticket": null,
+   "proof": {
+    "eval": "Render the PDF and check it fits one page",
+    "what": "Render the PDF and check it fits one page",
+    "result": "fail"
+   }
+  },
+  {
+   "id": "p4",
+   "loop": "p4",
+   "isMain": false,
+   "name": "Survey the docs",
+   "short": "Survey the doc",
+   "state": "done",
+   "pct": 100,
+   "startedAgoMs": 600000,
+   "endedAgoMs": 200000,
+   "tokens": 30000,
+   "kind": "tests",
+   "kindLabel": "Tests",
+   "kindColor": "#4ade80",
+   "kindGlyph": "✓",
+   "headline": "Editing logic: p4.ts",
+   "files": [
+    "p4.ts"
+   ],
+   "role": null,
+   "ticket": null,
+   "proof": null
+  },
+  {
+   "id": "p5",
+   "loop": "p5",
+   "isMain": false,
+   "name": "T73 Search by title",
+   "short": "T73 Search by ",
+   "state": "working",
+   "pct": 50,
+   "startedAgoMs": 300000,
+   "endedAgoMs": null,
+   "tokens": 30000,
+   "kind": "logic",
+   "kindLabel": "Logic",
+   "kindColor": "#7c9cff",
+   "kindGlyph": "ƒ",
+   "headline": "Editing logic: p5.ts",
+   "files": [
+    "p5.ts"
+   ],
+   "role": null,
+   "ticket": null,
+   "proof": {
+    "eval": "Run the search tests",
+    "what": "Run the search tests",
+    "result": "none"
+   }
+  }
+ ],
+ "events": []
+}

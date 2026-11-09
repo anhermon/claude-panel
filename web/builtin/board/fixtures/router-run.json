@@ -1,0 +1,199 @@
+{
+ "frames": [
+  {
+   "id": "now",
+   "type": "now",
+   "title": "Now",
+   "size": "m",
+   "text": "Router run: build the booking flow in 5 tickets",
+   "status": "working"
+  },
+  {
+   "id": "tickets",
+   "type": "tickets",
+   "title": "Tickets · 1 of 5 verified, 1 unverified",
+   "size": "l",
+   "summary": {
+    "total": 5,
+    "verified": 1,
+    "unverified": 1,
+    "blocked": 1,
+    "inflight": 2,
+    "unproven": 0
+   },
+   "items": [
+    {
+     "id": "03-ui",
+     "title": "Booking form UI",
+     "stage": "fixing",
+     "agent": "codex-worker",
+     "checks": {
+      "pass": 2,
+      "total": 4
+     },
+     "round": 1,
+     "maxRounds": 2,
+     "verdict": "FAIL",
+     "note": "Verifier failed: Empty state shown with no bookings; Error toast on a failed request",
+     "dependsOn": [
+      "01-schema"
+     ],
+     "eval": {
+      "present": false,
+      "result": "none"
+     }
+    },
+    {
+     "id": "02-api",
+     "title": "Booking API endpoints",
+     "stage": "verifying",
+     "agent": "worker",
+     "round": 0,
+     "maxRounds": 2,
+     "verdict": null,
+     "note": "Worker reported done; the verifier is checking",
+     "dependsOn": [
+      "01-schema"
+     ],
+     "eval": {
+      "present": false,
+      "result": "none"
+     }
+    },
+    {
+     "id": "04-auth",
+     "title": "Session auth for bookings",
+     "stage": "unverified",
+     "agent": "worker",
+     "checks": {
+      "pass": 3,
+      "total": 5
+     },
+     "round": 2,
+     "maxRounds": 2,
+     "verdict": "FAIL",
+     "note": "Claimed done, but 2 checks still fail after 2 fix rounds",
+     "dependsOn": [
+      "02-api"
+     ],
+     "eval": {
+      "present": true,
+      "what": "Logout clears the session and CSRF is checked",
+      "result": "fail",
+      "evidence": "cookie still set after logout"
+     }
+    },
+    {
+     "id": "05-deploy",
+     "title": "Deploy booking to staging",
+     "stage": "blocked",
+     "agent": "worker",
+     "round": 0,
+     "maxRounds": 2,
+     "verdict": null,
+     "note": "Waiting on Booking form UI, Session auth for bookings",
+     "dependsOn": [
+      "03-ui",
+      "04-auth"
+     ],
+     "eval": {
+      "present": false,
+      "result": "none"
+     }
+    },
+    {
+     "id": "01-schema",
+     "title": "Booking tables and migration",
+     "stage": "done",
+     "agent": "worker",
+     "checks": {
+      "pass": 4,
+      "total": 4
+     },
+     "round": 0,
+     "maxRounds": 2,
+     "verdict": "PASS",
+     "eval": {
+      "present": true,
+      "what": "Migration runs and the booking tables exist",
+      "result": "pass",
+      "evidence": "4 of 4 checks passed"
+     }
+    }
+   ]
+  },
+  {
+   "id": "checks",
+   "type": "checks",
+   "title": "Checks · 2 of 4 failed · Booking form UI",
+   "size": "m",
+   "result": "FAIL",
+   "round": 1,
+   "maxRounds": 2,
+   "items": [
+    {
+     "item": "Form validates required fields",
+     "pass": true,
+     "evidence": "tests/booking-form.test.tsx: 6 passed"
+    },
+    {
+     "item": "Submit posts to /api/bookings",
+     "pass": true,
+     "evidence": "network log shows POST 201"
+    },
+    {
+     "item": "Empty state shown with no bookings",
+     "pass": false,
+     "evidence": "screenshot shows a blank list"
+    },
+    {
+     "item": "Error toast on a failed request",
+     "pass": false,
+     "evidence": "no toast element after a 500"
+    }
+   ]
+  },
+  {
+   "id": "router-events",
+   "type": "timeline",
+   "title": "Router events",
+   "size": "m",
+   "items": [
+    {
+     "when": "15 min ago",
+     "text": "Session auth for bookings · verify_fail",
+     "tone": "danger"
+    },
+    {
+     "when": "9 min ago",
+     "text": "Session auth for bookings · verify_fail",
+     "tone": "danger"
+    },
+    {
+     "when": "7 min ago",
+     "text": "Session auth for bookings · escalated",
+     "tone": "danger"
+    },
+    {
+     "when": "5 min ago",
+     "text": "Booking form UI · verify_fail",
+     "tone": "danger"
+    },
+    {
+     "when": "4 min ago",
+     "text": "Booking form UI · fix_sent: round 1 of 2",
+     "tone": "warn"
+    },
+    {
+     "when": "2 min ago",
+     "text": "Booking API endpoints · worker_reported"
+    }
+   ]
+  }
+ ],
+ "lanes": [],
+ "now": {
+  "title": "Router run: build the booking flow in 5 tickets",
+  "status": "working"
+ }
+}

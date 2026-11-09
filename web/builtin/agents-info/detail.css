@@ -1,0 +1,51 @@
+/* Drilldown tab Metrics (Progress and Struggles: detail-progress.css). Tokens come from agents-info.css (:root); dark scheme like the rest of the tile. */
+.detail-body { container-type: inline-size; }
+.m-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 0 0 12px; }
+@container (min-width: 620px) { .m-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.m-stat { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-width: 0; padding: 8px 10px; border-radius: 10px; background: var(--card-hi); border: 1px solid var(--line); }
+.m-stat-text { display: flex; flex-direction: column; min-width: 0; }
+.m-stat-label { color: var(--mut); font-size: max(12px, .8em); }
+.m-stat-val { font-size: 1.25em; font-variant-numeric: tabular-nums; line-height: 1.2; overflow-wrap: anywhere; }
+.m-stat-sub { color: var(--mut); font-size: max(12px, .8em); overflow-wrap: anywhere; }
+.m-stat-wide .m-stat-val { font-size: 1em; font-weight: 600; }
+.m-stat[data-tone="ok"] .m-stat-val { color: var(--s-done); }
+.m-stat[data-tone="warn"] .m-stat-val { color: var(--s-waiting); }
+.m-stat[data-tone="bad"] .m-stat-val { color: var(--s-blocked); }
+.m-ring { width: 44px; height: 44px; flex: none; }
+.m-ring-track { fill: none; stroke: var(--line); }
+.m-ring-arc { fill: none; stroke: var(--acc); stroke-linecap: butt; }
+.m-spark { width: 70px; height: 28px; flex: none; }
+.m-spark-line { fill: none; stroke: var(--acc); stroke-width: 1.8; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+.m-sec { margin: 0 0 12px; min-width: 0; }
+.m-head { margin: 0 0 6px; font-size: 1em; display: flex; align-items: baseline; gap: 8px; }
+.m-head small { color: var(--mut); font-weight: 400; font-size: max(12px, .8em); }
+.m-empty { margin: 0; color: var(--mut); font-size: max(12px, .9em); }
+.m-two { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0 18px; }
+@container (min-width: 620px) { .m-two { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
+.m-bars, .m-files { list-style: none; margin: 0; padding: 0; display: grid; gap: 5px; }
+.m-bars li { display: grid; grid-template-columns: minmax(56px, 28%) minmax(0, 1fr) 2.2em; gap: 8px; align-items: center; font-size: max(12px, .9em); }
+.m-bar-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.m-bar { height: 8px; border-radius: 4px; background: var(--line); overflow: hidden; }
+.m-bar i { display: block; height: 100%; background: var(--acc); }
+.m-bar-n { text-align: right; font-variant-numeric: tabular-nums; }
+.m-files li { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 10px; font-size: max(12px, .9em); align-items: baseline; }
+.m-file { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.m-rw { color: var(--mut); font-variant-numeric: tabular-nums; text-align: right; }
+.m-rw.edit { color: var(--s-waiting); }
+/* The facts of a run of another harness (detail-external.js) and the new transcript lines (thinking, a call's result note). */
+.x-tokens { margin: 0 0 8px; }
+.x-bar { display: flex; height: 10px; border-radius: 5px; overflow: hidden; background: var(--line); gap: 1px; }
+.x-bar i, .x-legend li::before { background: var(--acc); }
+.x-bar i[data-part="cached"], .x-legend li[data-part="cached"]::before { background: var(--s-done); }
+.x-bar i[data-part="out"], .x-legend li[data-part="out"]::before { background: var(--s-waiting); }
+.x-legend { list-style: none; margin: 6px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: max(12px, .88em); }
+.x-legend li { display: flex; align-items: center; gap: 6px; }
+.x-legend li::before { content: ""; width: 8px; height: 8px; border-radius: 2px; }
+.x-legend span { color: var(--mut); }
+.x-context { margin: 0 0 8px; }
+.x-meter { display: block; height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; }
+.x-meter i { display: block; height: 100%; background: var(--acc); }
+.x-facts dd { overflow-wrap: anywhere; }
+.entry-note { color: var(--mut); font-size: max(12px, .86em); overflow-wrap: anywhere; }
+.entry-think .entry-text { color: var(--mut); font-style: italic; }
+.entry-think .entry-who { color: var(--mut); }

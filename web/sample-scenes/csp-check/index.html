@@ -1,0 +1,178 @@
+<!doctype html>
+<!--
+  Browser acceptance page for the scene sandbox + CSP (T9). It is NOT part of the sample fixture.
+  Run:   node web/server.mjs web/acceptance/csp-check-state.json --token acceptance --port 4718
+  Open:  http://127.0.0.1:4718/acceptance/            (inside the sandboxed iframe, as the panel shows it)
+         http://127.0.0.1:4718/acceptance/s/csp-check/   (top level: the CSP `sandbox` header gives the same opaque origin)
+  Every row ends up as `PASS ...` or `FAIL ...` in the text of #check-<name>; #summary says ALL PASS or FAILED;
+  <html data-done="1"> is set when every check has finished.
+  check-script is flag-aware (ALLOW_CDN in scene-files.mjs): with the flag on it needs internet and dayjs must load;
+  with the flag off (v4 kit only) it passes only when the browser reports a script-src violation for jsdelivr.
+  Offline with the flag on it FAILs, it never passes by accident: check-blocked only passes when the browser ALSO
+  reports a connect-src CSP violation for the blocked URL. (extra) check-kit imports `d3` through the importmap the
+  server injects (kit module + CORS from the opaque origin); it needs web/kit to be vendored.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CSP check</title>
+<style>
+  :root { color-scheme: light dark; --text: #1c1b1a; --muted: #6b6760; --pass: #15803d; --fail: #b91c1c; --line: #e4e1db; }
+  @media (prefers-color-scheme: dark) { :root { --text: #ecebe8; --muted: #a19d95; --pass: #4ade80; --fail: #f87171; --line: #2f2d2a; } }
+  html, body { margin: 0; background: transparent; }
+  body { padding: 12px 16px 16px; color: var(--text); font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  h1 { margin: 0 0 4px; font-size: 17px; }
+  p.lead { margin: 0 0 12px; color: var(--muted); font-size: 13px; }
+  ul { list-style: none; margin: 0; padding: 0; }
+  li { display: grid; grid-template-columns: 11em 1fr; gap: 12px; padding: 7px 0; border-top: 1px solid var(--line); }
+  .label { color: var(--muted); font-size: 13px; }
+  .result { font-weight: 600; overflow-wrap: anywhere; }
+  .result.pass { color: var(--pass); }
+  .result.fail { color: var(--fail); }
+  .result.pending { color: var(--muted); font-weight: 400; }
+  #summary { margin-top: 10px; font-weight: 700; }
+  img.probe { width: 16px; height: 16px; vertical-align: middle; margin-right: 6px; }
+</style>
+<script>
+  // First thing in the document: violations of resources the parser starts fetching (images, scripts) fire before
+  // any later script could listen.
+  window.cspViolations = [];
+  document.addEventListener('securitypolicyviolation', function (e) {
+    window.cspViolations.push({ directive: e.violatedDirective, uri: e.blockedURI });
+  });
+</script>
+</head>
+<body>
+<h1>Scene sandbox acceptance</h1>
+<p class="lead">Runs under the real scene CSP in a sandboxed iframe (opaque origin).</p>
+<ul>
+  <li><span class="label">image from scene file</span><span class="result pending" id="check-img">PENDING</span></li>
+  <li><span class="label">fetch scene JSON</span><span class="result pending" id="check-fetch">PENDING</span></li>
+  <li><span class="label">script from jsdelivr</span><span class="result pending" id="check-script">PENDING</span></li>
+  <li><span class="label">fetch other origin blocked</span><span class="result pending" id="check-blocked">PENDING</span></li>
+  <li><span class="label">(extra) remote image blocked</span><span class="result pending" id="check-remote-img">PENDING</span></li>
+  <li><span class="label">(extra) opaque origin</span><span class="result pending" id="check-opaque">PENDING</span></li>
+  <li><span class="label">(extra) panel.fit helper</span><span class="result pending" id="check-helper">PENDING</span></li>
+  <li><span class="label">(extra) kit module via importmap</span><span class="result pending" id="check-kit">PENDING</span></li>
+</ul>
+<p id="summary" class="result pending">PENDING</p>
+<img class="probe" id="probe-img" src="pixel.png" alt="" hidden>
+<img class="probe" id="probe-remote" src="https://example.com/should-be-blocked.png" alt="" hidden>
+<script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.10/dayjs.min.js" id="probe-script"></script>
+<script>
+(function () {
+  var BLOCKED_URL = 'https://example.com/';
+  var SETTLE_MS = 300;
+  var REQUIRED = ['check-img', 'check-fetch', 'check-script', 'check-blocked'];
+  var EXTRA = ['check-remote-img', 'check-opaque', 'check-helper', 'check-kit'];
+  var outcome = {};
+  var violations = window.cspViolations;
+
+  function report(id, ok, detail) {
+    var node = document.getElementById(id);
+    outcome[id] = ok;
+    node.textContent = (ok ? 'PASS' : 'FAIL') + (detail ? ' — ' + detail : '');
+    node.className = 'result ' + (ok ? 'pass' : 'fail');
+    node.setAttribute('data-result', ok ? 'PASS' : 'FAIL');
+  }
+  function violationFor(urlPrefix, directivePrefix) {
+    for (var i = 0; i < violations.length; i++) {
+      var v = violations[i];
+      if (v.uri.indexOf(urlPrefix) === 0 && v.directive.indexOf(directivePrefix) === 0) return v;
+    }
+    return null;
+  }
+  function finish() {
+    var all = REQUIRED.concat(EXTRA);
+    var failed = all.filter(function (id) { return outcome[id] !== true; });
+    var requiredFailed = REQUIRED.filter(function (id) { return outcome[id] !== true; });
+    var summary = document.getElementById('summary');
+    summary.textContent = failed.length === 0 ? 'ALL PASS' : 'FAILED: ' + failed.join(', ');
+    summary.className = 'result ' + (failed.length === 0 ? 'pass' : 'fail');
+    summary.setAttribute('data-result', failed.length === 0 ? 'PASS' : 'FAIL');
+    summary.setAttribute('data-required-failed', String(requiredFailed.length));
+    document.documentElement.setAttribute('data-done', '1');
+    if (window.panel && window.panel.fit) window.panel.fit();
+  }
+
+  function checkImage() {
+    var img = document.getElementById('probe-img');
+    var ok = img.complete && img.naturalWidth > 0;
+    report('check-img', ok, ok ? 'pixel.png ' + img.naturalWidth + 'x' + img.naturalHeight : 'pixel.png did not load');
+    if (ok) { img.hidden = false; }
+  }
+  function checkRemoteImage() {
+    var img = document.getElementById('probe-remote');
+    var v = violationFor('https://example.com', 'img-src');
+    var loaded = img.complete && img.naturalWidth > 0;
+    report('check-remote-img', !loaded && !!v, v ? 'blocked by ' + v.directive : loaded ? 'REMOTE IMAGE LOADED' : 'not loaded, but no img-src violation seen');
+  }
+  function checkScript() {
+    var ok = typeof window.dayjs === 'function';
+    if (ok) {
+      report('check-script', true, 'CDN allowed: dayjs@1.11.10 from cdn.jsdelivr.net, dayjs() works: ' + typeof window.dayjs().format());
+      return;
+    }
+    var v = violationFor('https://cdn.jsdelivr.net', 'script-src');
+    report('check-script', !!v, v ? 'CDN not allowed (ALLOW_CDN off): blocked by ' + v.directive : 'dayjs global missing and no script-src violation seen (offline or CDN down)');
+  }
+  function checkOpaque() {
+    try {
+      void document.cookie;
+      report('check-opaque', false, 'document.cookie was readable');
+    } catch (e) {
+      report('check-opaque', true, e.name + ' on document.cookie');
+    }
+  }
+  function checkHelper() {
+    var ok = !!(window.panel && typeof window.panel.fit === 'function');
+    report('check-helper', ok, ok ? 'window.panel.fit exists' : 'window.panel missing');
+  }
+
+  // The server injects an importmap with the kit; d3 is a core lib. A dynamic import() from the opaque origin only
+  // works when the kit file is served with CORS, which is exactly what is being checked.
+  function checkKit() {
+    return import('d3').then(function (m) {
+      var ok = typeof m.select === 'function';
+      report('check-kit', ok, ok ? "import('d3') resolved through the kit importmap" : "import('d3') loaded but has no select()");
+    }, function (e) {
+      report('check-kit', false, "import('d3') failed: " + String(e));
+    });
+  }
+  function checkFetchJson() {
+    return fetch('data.json').then(function (r) {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    }).then(function (data) {
+      report('check-fetch', data.answer === 42, 'data.json -> ' + JSON.stringify(data));
+    }, function (e) {
+      report('check-fetch', false, String(e));
+    });
+  }
+  // The block must be real: the fetch rejects AND the browser reports a connect-src violation for that URL.
+  function checkBlockedFetch() {
+    return fetch(BLOCKED_URL).then(function (r) {
+      report('check-blocked', false, 'fetch to ' + BLOCKED_URL + ' SUCCEEDED (status ' + r.status + ')');
+    }, function (e) {
+      return new Promise(function (resolve) { setTimeout(resolve, SETTLE_MS); }).then(function () {
+        var v = violationFor(BLOCKED_URL.replace(/\/$/, ''), 'connect-src');
+        report('check-blocked', !!v, v ? 'rejected (' + e.name + ') and reported as ' + v.directive : 'rejected (' + e.name + ') but no connect-src violation seen: offline?');
+      });
+    });
+  }
+
+  window.addEventListener('load', function () {
+    checkImage();
+    checkScript();
+    checkOpaque();
+    checkHelper();
+    Promise.all([checkFetchJson(), checkBlockedFetch(), checkKit()]).then(function () {
+      checkRemoteImage();
+      finish();
+    });
+  });
+})();
+</script>
+</body>
+</html>

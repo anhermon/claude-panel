@@ -1,0 +1,6 @@
+{
+  "name": "claude-panel",
+  "owner": { "name": "anhermon" },
+  "description": "A live panel beside the Claude Code chat, mirrored to a local browser view.",
+  "plugins": [{ "name": "panel", "source": "./", "license": "MIT" }]
+}

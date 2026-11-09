@@ -1,0 +1,172 @@
+{
+ "overall": "working",
+ "mainKind": "delegating",
+ "agents": [
+  {
+   "id": "main",
+   "loop": "main",
+   "isMain": true,
+   "name": "Me",
+   "short": "Me",
+   "state": "working",
+   "pct": null,
+   "startedAgoMs": 900000,
+   "endedAgoMs": null,
+   "tokens": 120000,
+   "kind": "delegating",
+   "kindLabel": "Delegating",
+   "kindColor": "#c084fc",
+   "kindGlyph": "⇉",
+   "headline": "Delegating: 02-is-palindrome",
+   "files": [],
+   "role": "router",
+   "ticket": null
+  },
+  {
+   "id": "w1",
+   "loop": "w1",
+   "isMain": false,
+   "name": "Worker 01-slugify",
+   "short": "01",
+   "state": "done",
+   "pct": 100,
+   "startedAgoMs": 800000,
+   "endedAgoMs": 520000,
+   "tokens": 31000,
+   "kind": "logic",
+   "kindLabel": "Logic",
+   "kindColor": "#7c9cff",
+   "kindGlyph": "ƒ",
+   "headline": "Editing logic: textutil.py",
+   "files": [
+    "textutil.py"
+   ],
+   "role": "worker",
+   "ticket": {
+    "id": "01-slugify",
+    "stage": "verified",
+    "text": "verified 4/4"
+   }
+  },
+  {
+   "id": "t40",
+   "loop": "t40",
+   "isMain": false,
+   "name": "Verify 01-slugify",
+   "short": "V 01",
+   "state": "done",
+   "pct": 100,
+   "startedAgoMs": 500000,
+   "endedAgoMs": 300000,
+   "tokens": 22000,
+   "kind": "tests",
+   "kindLabel": "Tests",
+   "kindColor": "#4ade80",
+   "kindGlyph": "✓",
+   "headline": "Running tests: test_textutil.py",
+   "files": [
+    "test_textutil.py"
+   ],
+   "role": "verifier",
+   "ticket": {
+    "id": "01-slugify",
+    "stage": "verified",
+    "text": "verified 4/4"
+   }
+  },
+  {
+   "id": "w2",
+   "loop": "w2",
+   "isMain": false,
+   "name": "Worker 02-is-palindrome",
+   "short": "02",
+   "state": "working",
+   "pct": 60,
+   "startedAgoMs": 420000,
+   "endedAgoMs": null,
+   "tokens": 18000,
+   "kind": "logic",
+   "kindLabel": "Logic",
+   "kindColor": "#7c9cff",
+   "kindGlyph": "ƒ",
+   "headline": "Editing logic: textutil.py",
+   "files": [
+    "textutil.py"
+   ],
+   "role": "worker",
+   "ticket": {
+    "id": "02-is-palindrome",
+    "stage": "building",
+    "text": "building"
+   }
+  },
+  {
+   "id": "cx",
+   "loop": "cx",
+   "isMain": false,
+   "name": "Codex 03-reverse-words",
+   "short": "03",
+   "state": "testing",
+   "pct": null,
+   "startedAgoMs": 200000,
+   "endedAgoMs": null,
+   "tokens": 6000,
+   "kind": "tests",
+   "kindLabel": "Tests",
+   "kindColor": "#4ade80",
+   "kindGlyph": "✓",
+   "headline": "Running tests: test_reverse.py",
+   "files": [
+    "test_reverse.py"
+   ],
+   "role": "codex-worker",
+   "ticket": {
+    "id": "03-reverse-words",
+    "stage": "verifying",
+    "text": "verifying 1/3"
+   }
+  },
+  {
+   "id": "ex",
+   "loop": "ex",
+   "isMain": false,
+   "name": "Survey the docs folder",
+   "short": "Survey",
+   "state": "working",
+   "pct": null,
+   "startedAgoMs": 90000,
+   "endedAgoMs": null,
+   "tokens": 4000,
+   "kind": "reading",
+   "kindLabel": "Reading",
+   "kindColor": "#38bdf8",
+   "kindGlyph": "◉",
+   "headline": "Reading: README.md",
+   "files": [
+    "README.md"
+   ],
+   "role": null,
+   "ticket": null
+  }
+ ],
+ "events": [
+  {
+   "id": 101,
+   "agent": "w1",
+   "kind": "state",
+   "from": "working",
+   "to": "done",
+   "text": "01 done · 4 min",
+   "ago": 300000
+  },
+  {
+   "id": 102,
+   "agent": "cx",
+   "kind": "handoff",
+   "from": "main",
+   "to": "cx",
+   "text": "main → 03",
+   "ago": 20000
+  }
+ ]
+}

@@ -1,0 +1,8 @@
+schema_version: "1.1"
+name: restraint-one-line-answer
+description: "Restraint: a one-line factual question gets no panel call"
+runs: 3
+execution:
+  max_turns: 6
+  timeout_seconds: 120
+  prompt: "What does HTTP status 503 mean?"

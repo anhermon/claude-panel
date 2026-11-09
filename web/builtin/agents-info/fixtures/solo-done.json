@@ -1,0 +1,25 @@
+{
+ "overall": "done",
+ "mainKind": null,
+ "agents": [
+  {
+   "id": "t38",
+   "name": "T38 Visual baseline",
+   "short": "T38",
+   "state": "done",
+   "pct": 100,
+   "startedAgoMs": 4200000,
+   "endedAgoMs": 1080000,
+   "tokens": 64000,
+   "kind": "visual",
+   "kindLabel": "Visual",
+   "kindColor": "#fb7185",
+   "kindGlyph": "◐",
+   "headline": "Checked 3 screenshots",
+   "files": [
+    "board-1280.png"
+   ]
+  }
+ ],
+ "events": []
+}

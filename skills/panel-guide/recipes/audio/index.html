@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Audio</title>
+<!--
+  RECIPE audio: two ways to make sound. (1) <p-audio> plays a file from this folder with a waveform and a seek bar (the house element).
+    (2) a WebAudio synth arpeggio with live level bars drawn on a canvas.
+  Use when: sound is the point: narration, an alert tone, a rhythm, a filter sweep. NEVER autoplay: browsers need a user gesture, so
+    both start from a button, and the first click is also what unlocks the deck engine's data-audio narration.
+  Adapt: narration on macOS: say -o clip.aiff "Your text" && afconvert clip.aiff clip.m4a -f m4af, then <p-audio src="clip.m4a" wave>
+    (or data-audio="clip.m4a" on a deck <section>). Synth: edit NOTES (Hz) and TEMPO_MS; swap the oscillator type or add a BiquadFilter.
+    chime.wav here is generated (an A minor arpeggio), so the recipe runs as is.
+  Constraints: kit only; media-src allows the scene folder, data: and blob:, nothing remote; no storage. Volume starts low on purpose.
+-->
+<style>
+  body { padding: 16px 20px; }
+  h1 { margin: 0; font-size: 18px; }
+  canvas { width: 100%; height: 130px; border-bottom: 1px solid var(--panel-line); }
+  label { display: flex; align-items: center; gap: 8px; color: var(--panel-muted); font-size: 13px; }
+  #s { color: var(--panel-muted); font-size: 13px; }
+</style>
+</head>
+<body class="p-stack">
+<h1>Clip from a file</h1>
+<p-audio src="chime.wav" title="chime.wav (generated A minor arpeggio)" wave></p-audio>
+<h1>Live synth</h1>
+<div class="p-row">
+  <button class="p-btn" id="go" type="button" aria-pressed="false">Play</button>
+  <label>Volume <input id="vol" type="range" min="0" max="100" value="30" aria-label="Volume"></label>
+  <span id="s" aria-live="polite">Press Play to start (browsers need a click for sound).</span>
+</div>
+<canvas id="cv" role="img" aria-label="Live frequency level bars"></canvas>
+<script type="module">
+  import 'panel/components';
+  const NOTES = [220, 261.63, 329.63, 392, 440, 392, 329.63, 261.63];   // A minor arpeggio, Hz
+  const TEMPO_MS = 220, BARS = 24;
+  const go = document.getElementById('go'), vol = document.getElementById('vol'), stat = document.getElementById('s');
+  const cv = document.getElementById('cv'), g = cv.getContext('2d');
+  let ctx, master, analyser, timer, step = 0, playing = false;
+
+  function note(freq) {                                   // one enveloped oscillator per note
+    const t = ctx.currentTime, o = ctx.createOscillator(), e = ctx.createGain();
+    o.type = 'triangle'; o.frequency.value = freq;
+    e.gain.setValueAtTime(0.0001, t);
+    e.gain.exponentialRampToValueAtTime(0.6, t + 0.02);
+    e.gain.exponentialRampToValueAtTime(0.0001, t + TEMPO_MS / 1000 * 1.6);
+    o.connect(e).connect(master);
+    o.start(t); o.stop(t + 0.5);
+  }
+  async function toggle() {
+    if (!ctx) {                                           // created inside the click handler = allowed
+      ctx = new AudioContext();
+      master = ctx.createGain(); analyser = ctx.createAnalyser(); analyser.fftSize = 128;
+      master.connect(analyser); analyser.connect(ctx.destination);
+      vol.oninput();
+    }
+    playing = !playing;
+    if (playing) { await ctx.resume(); timer = setInterval(() => note(NOTES[step++ % NOTES.length]), TEMPO_MS); }
+    else clearInterval(timer);
+    go.textContent = playing ? 'Stop' : 'Play'; go.setAttribute('aria-pressed', playing);
+    stat.textContent = playing ? 'Playing an A minor arpeggio.' : 'Stopped.';
+  }
+  go.onclick = toggle;
+  vol.oninput = () => { if (master) master.gain.value = (vol.value / 100) ** 2 * 0.5; };
+
+  function draw() {
+    const d = devicePixelRatio, w = cv.width = cv.clientWidth * d, h = cv.height = cv.clientHeight * d;
+    const fq = new Uint8Array(analyser ? analyser.frequencyBinCount : BARS);
+    if (analyser) analyser.getByteFrequencyData(fq);
+    g.clearRect(0, 0, w, h);
+    g.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--panel-accent');
+    const bw = w / BARS;
+    for (let i = 0; i < BARS; i++) {
+      const v = fq[Math.floor(i * fq.length / BARS)] / 255, bh = Math.max(3 * d, v * h);
+      g.fillRect(i * bw + bw * 0.15, h - bh, bw * 0.7, bh);
+    }
+    requestAnimationFrame(draw);
+  }
+  draw();
+</script>
+</body></html>

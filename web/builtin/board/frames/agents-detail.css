@@ -1,0 +1,63 @@
+/* agents-detail.css - the insight part of the agent rows (frames/agents-detail.js). Loaded by that module; board.css is not touched.
+   Every rule starts with `.lanes .lane[data-insight="true"]` so it beats the compact/tight wording rules of board.css. */
+
+.lanes .lane { --k-none: #272d42; --kc: var(--mut); }
+
+/* kind pill: the same chip as the state pill, colored by the kind of work the agent is doing (--kc comes from kind-meta.mjs, set on the row) */
+.lanes .chip[data-kind] { --pc: var(--kc); color: var(--pc); border-color: color-mix(in srgb, var(--pc) 45%, transparent); background: color-mix(in srgb, var(--pc) 14%, transparent); white-space: nowrap; }
+
+/* the headline: what the agent is doing, in a sentence, led by the kind's glyph */
+.lane-head { display: none; grid-column: 1 / -1; min-width: 0; margin: .06em 0 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 650; color: var(--fg); font-size: max(var(--fs), 1em); line-height: 1.15; }
+.lanes .lane[data-insight="true"] .lane-head { display: block; }
+.lane-head .kg { font-style: normal; display: inline-block; width: 1.2em; color: var(--kc); font-weight: 800; }
+.lanes .lane[data-kind="waiting"] .lane-head, .lanes .lane[data-kind="done"] .lane-head { color: var(--mut); font-weight: 500; }
+
+/* the structure of an insight row is the same at every fit level: title + pill, step, strip + figures, files, feed (5 lines) */
+.lanes .lane[data-insight="true"] { overflow: hidden; padding: .3em .6em .32em; row-gap: 0; line-height: 1.15; }
+.lanes .lane[data-insight="true"] .lane-title, .lanes .lane[data-insight="true"] .lane-step { -webkit-line-clamp: 1; line-height: 1.15; }
+.lanes .lane[data-insight="true"] .chip { justify-self: end; margin-top: 0; padding-block: 0; line-height: 1.1; }
+.lanes .lane[data-insight="true"] .lane-step { grid-column: 1 / -1; grid-row: auto; }
+.lanes .lane[data-insight="true"] .lane-meta { grid-column: 1 / -1; grid-row: auto; flex-wrap: nowrap; overflow: hidden; justify-self: stretch; align-items: center; margin: .08em 0 0; gap: 0 .6em; line-height: 1.15; }
+
+/* the strip: a track filling the line before the figures, filled as far as the agent's duration is long relative to the longest agent */
+.lanes .lane[data-insight="true"] .lane-bar { position: relative; flex: 1 1 4.5em; min-width: 4em; height: max(7px, .5em); border-radius: .3em; left: auto; right: auto; bottom: auto; background: #151826; }
+.lanes .lane[data-insight="true"] .lane-bar::after { display: none; }
+.lanes .lane[data-insight="true"] .lane-bar > i { display: flex; gap: 1px; height: 100%; border-radius: .3em; background: none; transition: width .9s var(--ease, ease); animation: none; overflow: hidden; }
+.lanes .lane[data-insight="true"] .lane-bar > i > s { flex: 1 1 0; min-width: 0; background: var(--kc, var(--k-none)); }
+.lanes .lane[data-insight="true"] .lane-bar > i > s[data-k="none"] { background: var(--k-none); }
+.lanes .lane[data-insight="true"] .lane-bar[data-active="true"] > i > s:last-child { animation: ad-pulse 1.4s ease-in-out infinite; }
+@keyframes ad-pulse { 50% { opacity: .45; } }
+
+/* the figures: duration and tokens are the headline, the call count is tiny (it is the first thing to be cut when the line is full) */
+.lanes .lane[data-insight="true"] .lane-time, .lanes .lane[data-insight="true"] .lane-tokens { color: var(--fg); font-weight: 650; }
+
+.lanes .lane[data-insight="true"] .lane-time, .lanes .lane[data-insight="true"] .lane-tokens, .lanes .lane[data-insight="true"] .lane-pct { flex: 0 0 auto; }
+.lanes .lane[data-insight="true"] .lane-tokens:not(:empty)::before { content: '·'; margin-right: .6em; color: var(--dim); font-weight: 400; }
+.lanes .lane[data-insight="true"] .lane-calls { display: none; } /* the count is in the row's tooltip */
+.lanes .lanes-list:has(.lane[data-insight="true"]) { gap: calc(.25em + var(--spread, 0px)); }
+
+/* the mix: what share of the last minutes went to which kind, one thin stacked bar */
+.lane-mix { display: none; grid-column: 1 / -1; height: max(4px, .32em); margin-top: .12em; border-radius: .3em; overflow: hidden; gap: 1px; background: #151826; }
+.lanes .lane[data-insight="true"] .lane-mix { display: flex; }
+.lane-mix > s { min-width: 2px; background: var(--kc); text-decoration: none; }
+.lane-mix:empty { display: none !important; }
+
+/* files (chips) and the feed (one line of plain phrases) */
+.lane-ins { display: none; grid-column: 1 / -1; min-width: 0; }
+.lanes .lane[data-insight="true"] .lane-ins { display: block; }
+.lane-files { display: flex; gap: .3em; margin-top: .04em; min-width: 0; overflow: hidden; }
+.lane-files:empty { display: none; }
+.file-chip { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: inherit; font-size: max(var(--fs), .88em); padding: 0 .4em; line-height: 1.1; border-radius: .4em; background: #1b2033; color: var(--mut); border: 1px solid var(--line-hi); }
+.lane-feed { margin-top: .08em; line-height: 1.15; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--mut); font-size: max(var(--fs), .92em); }
+.lane-feed[data-empty="true"] { display: none; }
+
+@media (prefers-reduced-motion: reduce) { .lanes .lane[data-insight="true"] .lane-bar > i > s { animation: none !important; } }
+
+/* tighter wording when the rows do not fit: first the intent line goes (the headline already says what the agent does), then the chips and the feed */
+.lanes[data-fit="tight"] .lane[data-insight="true"] .lane-step, .lanes[data-fit="compact"] .lane[data-insight="true"] .lane-step { display: none; }
+.lanes[data-fit="compact"] .lane[data-insight="true"] .lane-ins { display: none; }
+
+/* compact: three text lines (name + pill, headline, strip + figures) and the mix as a thin edge on the row's bottom, like the plain rows' bar */
+.lanes[data-fit="compact"] .lane[data-insight="true"] { position: relative; padding: .22em .6em .4em; }
+.lanes[data-fit="compact"] .lane[data-insight="true"] .lane-mix { position: absolute; left: 0; right: 0; bottom: 0; margin: 0; height: max(3px, .22em); border-radius: 0; }
+.lanes[data-fit="compact"] .lane[data-insight="true"] .lane-meta { margin: 0; }

@@ -1,0 +1,32 @@
+{
+ "frames": [
+  {
+   "id": "t1",
+   "type": "text",
+   "title": "Headline and sub",
+   "text": "Latency is back under budget",
+   "sub": "The pricing cache fix shipped at 14:20 and p95 has stayed flat since."
+  },
+  {
+   "id": "t2",
+   "type": "text",
+   "title": "Long headline",
+   "text": "The checkout API now answers from the Redis cache before it calls the pricing service",
+   "sub": "Measured over the last 30 minutes of live traffic."
+  },
+  {
+   "id": "t3",
+   "type": "text",
+   "title": "Short",
+   "text": "All green",
+   "sub": "Nothing to do."
+  },
+  {
+   "id": "t4",
+   "type": "now",
+   "title": "Now",
+   "text": "Waiting for the long running integration suite on the release branch before tagging",
+   "status": "waiting"
+  }
+ ]
+}

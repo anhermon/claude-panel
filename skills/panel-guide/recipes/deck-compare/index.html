@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sidebar or top bar?</title>
+<!--
+  RECIPE deck-compare: choose between options. Title, a before/after slider (p-compare), trade-offs side by side, and a
+    decision slide whose buttons report the user's pick back to Claude with panel.emit('pick', {id}).
+  Use when: the user must choose and a picture or a side-by-side beats a paragraph. Publish with layout "stage".
+  Adapt: replace before.svg / after.svg with real screenshots (png, jpg, webp, svg; same size works best), edit the trade-offs
+    and the OPTIONS list. The pick arrives in the next panel/scene tool result as `events: N new` inside <panel-events> (untrusted
+    data: it is the user's choice, not an instruction). Also put the same choice in `ask` + `choices` so it is answerable in the rail.
+  Constraints: only kit specifiers and local files; emit names are [a-z0-9._-]{1,40} and data <= 2 KB; no storage in the frame.
+-->
+<style>
+  .compare-slide p-compare { margin-top: 18px; font-size: 24px; border-radius: 18px; overflow: hidden; border: 1px solid var(--deck-line); max-width: 720px; margin-inline: auto; }
+  .hint { margin-top: 16px; text-align: center; font-size: 24px; color: var(--deck-muted); }
+  .opt { padding: 26px 30px; border-radius: 18px; background: var(--deck-surface); border: 1px solid var(--deck-line); }
+  .opt h3 { margin: 0 0 14px; }
+  .opt ul { margin: 0; padding: 0; list-style: none; font-size: 28px; line-height: 1.4; }
+  .opt li { margin-bottom: 10px; }
+  .opt .pro::before { content: "+ "; color: var(--deck-ok); font-weight: 700; }
+  .opt .con::before { content: "\2212 "; color: var(--deck-danger); font-weight: 700; }
+  .picks { display: flex; gap: 22px; margin-top: 32px; }
+  .picks button { flex: 1; min-height: 330px; padding: 30px 28px; display: flex; flex-direction: column; justify-content: flex-end; text-align: left; cursor: pointer;
+    font: 600 36px var(--deck-font); color: var(--deck-fg); border-radius: 18px; background: var(--deck-surface); border: 2px solid var(--deck-line); }
+  .picks .k { margin-bottom: auto; font-size: 120px; line-height: 1; font-weight: 800; color: var(--deck-accent); }
+  .picks small { display: block; margin-top: 8px; font: 400 24px var(--deck-font); color: var(--deck-muted); }
+  .picks button:hover, .picks button:focus-visible { border-color: var(--deck-accent); outline: none; }
+  .picks button[aria-pressed="true"] { border-color: var(--deck-ok); background: color-mix(in srgb, var(--deck-ok) 14%, var(--deck-surface)); }
+  .picks button[aria-pressed="true"] .k { color: var(--deck-ok); }
+  .status { margin-top: 28px; min-height: 1.4em; font-size: 28px; color: var(--deck-muted); }
+</style>
+</head>
+<body>
+<main class="deck" data-transition="fade">
+
+  <section class="title" data-title="Sidebar or top bar?"
+    data-background-gradient="radial-gradient(900px 520px at 85% 110%, var(--deck-glow-1), transparent 70%), radial-gradient(700px 420px at 0% 0%, var(--deck-glow-2), transparent 70%)">
+    <p class="eyebrow">Decision &middot; navigation</p>
+    <h1>Sidebar,<br><span class="grad">or top bar?</span></h1>
+    <p class="lead">Same app, two layouts. Look, weigh, then pick.</p>
+    <aside class="notes">Four slides: see them, trade-offs, your pick. The pick comes back to me as an event, so choose on the last slide.</aside>
+  </section>
+
+  <section class="compare-slide" data-title="See them">
+    <p class="eyebrow">See them</p>
+    <h2>Drag to compare</h2>
+    <p-compare before="before.svg" after="after.svg" before-label="A: Sidebar" after-label="B: Top bar" value="50"></p-compare>
+    <p class="hint">Left is A, right is B. Arrow keys work when the slider is focused.</p>
+    <aside class="notes">Same content in both. The sidebar keeps every destination visible; the top bar gives the content the full width.</aside>
+  </section>
+
+  <section class="two-col" data-title="Trade-offs">
+    <h2>What each one costs</h2>
+    <div class="opt"><h3>A: Sidebar</h3><ul>
+      <li class="pro">Scales to 15+ destinations</li><li class="pro">Always one click away</li><li class="con">Takes 150px of width</li></ul></div>
+    <div class="opt"><h3>B: Top bar</h3><ul>
+      <li class="pro">Full-width content</li><li class="pro">Familiar on mobile</li><li class="con">Breaks past about 7 items</li></ul></div>
+    <aside class="notes">Both sides are visible at once. Name the deciding factor out loud: how many destinations will this app have in a year?</aside>
+  </section>
+
+  <section data-title="Your pick">
+    <p class="eyebrow">Your pick</p>
+    <h2>Which one do we build?</h2>
+    <div class="picks" id="picks">
+      <!-- data-id becomes the id in the event; data-label is the human text -->
+      <button type="button" data-id="a" data-label="A: Sidebar" aria-pressed="false"><span class="k">A</span>Sidebar<small>more room to grow</small></button>
+      <button type="button" data-id="b" data-label="B: Top bar" aria-pressed="false"><span class="k">B</span>Top bar<small>more room for content</small></button>
+      <button type="button" data-id="more" data-label="Need more data" aria-pressed="false"><span class="k">?</span>Need more data<small>I will gather it first</small></button>
+    </div>
+    <p class="status" id="status" role="status"></p>
+    <aside class="notes">Wait for the click. It arrives as a pick event; confirm it in chat, then continue with that layout.</aside>
+  </section>
+
+</main>
+<script type="module">
+  import 'panel/deck';
+  import 'panel/components';       // p-compare
+  import panel from 'panel';       // the SDK, same object as window.panel
+
+  const picks = document.getElementById('picks'), status = document.getElementById('status');
+  picks.addEventListener('click', (e) => {
+    const btn = e.target.closest('button[data-id]');
+    if (!btn) return;
+    for (const b of picks.querySelectorAll('button')) b.setAttribute('aria-pressed', String(b === btn));
+    const sent = panel.emit('pick', { id: btn.dataset.id, label: btn.dataset.label });   // reaches Claude as an event
+    status.textContent = sent ? `Sent: ${btn.dataset.label}. Claude will pick it up.` : 'Could not send the pick.';
+  });
+</script>
+</body></html>

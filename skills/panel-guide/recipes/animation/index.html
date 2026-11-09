@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Animation</title>
+<!--
+  RECIPE animation: a requestAnimationFrame canvas sketch (a Lissajous ribbon with a fading trail) with Pause and Speed controls.
+  Use when: a process or system should move (waves, particles, a simulation you control). For physics use matter-js (see stage-demo),
+    for data-driven shapes use d3; both are in the kit.
+  Adapt: replace position(t, i) with your own model; keep the loop, the DPR scaling, the dt clamp and the visibility pause.
+    State lives in plain variables; the Speed slider shows how to expose a parameter.
+  Constraints: kit only; colours come from the --panel-* tokens (they follow light and dark); no storage. panel.on('visible') pauses the
+    sketch when the host hides the frame; prefers-reduced-motion starts it paused on a still frame.
+-->
+<style>
+  html, body { height: 100%; margin: 0; }
+  body { display: flex; flex-direction: column; gap: 10px; padding: 12px 20px; box-sizing: border-box; }
+  label { display: flex; align-items: center; gap: 8px; color: var(--panel-muted); font-size: 13px; }
+  canvas { flex: 1; min-height: 120px; width: 100%; }
+</style>
+</head>
+<body>
+<div class="p-row">
+  <button class="p-btn" id="pp" type="button" aria-pressed="false">Pause</button>
+  <label>Speed <input id="spd" type="range" min="0.2" max="3" step="0.1" value="1" aria-label="Animation speed"></label>
+</div>
+<canvas id="cv" role="img" aria-label="Animated Lissajous curves tracing a glowing ribbon"></canvas>
+<script type="module">
+  import panel from 'panel';
+  const cv = document.getElementById('cv'), g = cv.getContext('2d');
+  const pp = document.getElementById('pp'), spd = document.getElementById('spd');
+  const N = 90;                                           // points in the ribbon
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const css = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  let t = 0, last = 0, paused = reduced, hidden = false, w = 0, h = 0, d = 1;
+
+  function size() { d = devicePixelRatio; w = cv.width = cv.clientWidth * d; h = cv.height = cv.clientHeight * d; }
+  addEventListener('resize', size); size();
+  panel.on('visible', (e) => { hidden = e.visible === false; });
+
+  // Your model goes here: position of point i at time t, in [-1, 1] x [-1, 1].
+  const position = (t, i) => {
+    const p = t + i * 0.045;
+    return [Math.sin(3 * p + 1.2), Math.sin(2 * p)];
+  };
+
+  function frame(now) {
+    if (!paused && !hidden) t += Math.min(50, now - last) / 1000 * spd.value;   // dt clamp: no jump after a tab switch
+    last = now;
+    g.clearRect(0, 0, w, h);
+    g.strokeStyle = css('--panel-line'); g.lineWidth = d;
+    g.strokeRect(d, d, w - 2 * d, h - 2 * d);
+    const RX = w * 0.42, RY = h * 0.42, cx = w / 2, cy = h / 2;
+    g.fillStyle = css('--panel-accent');
+    for (let i = N - 1; i >= 0; i--) {                     // oldest first so the head draws on top
+      const [x, y] = position(t, -i), a = 1 - i / N;
+      g.globalAlpha = a * a;
+      g.beginPath(); g.arc(cx + x * RX, cy + y * RY, (2 + 5 * a) * d, 0, 6.2832); g.fill();
+    }
+    g.globalAlpha = 1;
+    requestAnimationFrame(frame);
+  }
+  const label = () => { pp.textContent = paused ? 'Play' : 'Pause'; pp.setAttribute('aria-pressed', paused); };
+  pp.onclick = () => { paused = !paused; label(); };
+  label(); requestAnimationFrame(frame);
+</script>
+</body></html>

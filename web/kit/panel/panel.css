@@ -1,0 +1,250 @@
+/* panel.css - tokens, a minimal reset and utility classes for scenes. Auto-injected by the panel server
+ * (opt out with <meta name="panel-css" content="off">). Everything below the tokens is :where()-scoped, so any
+ * CSS you write wins without specificity fights. Component styles (p-chart, p-3d ...) are at the end. */
+
+/* ---- tokens: dark by default, light under prefers-color-scheme (or when the host sends {dark:false}) ---- */
+:root {
+  color-scheme: dark light;
+  --panel-bg: #141413;
+  --panel-surface: #1c1b1a;
+  --panel-fg: #ecebe8;
+  --panel-muted: #a19d95;
+  --panel-line: #2f2d2a;
+  --panel-accent: #7aa2ff;
+  --panel-accent-2: #c084fc;
+  --panel-ok: #4ade80;
+  --panel-warn: #fbbf24;
+  --panel-danger: #f87171;
+  --panel-cyan: #22d3ee;
+  --panel-on-accent: #0b1020;
+  --panel-code-bg: #121211;
+  --panel-radius: 12px;
+  --panel-font: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --panel-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  /* syntax colours used by <p-code> / <p-md> (highlight.js classes) */
+  --panel-hl-keyword: #c792ea;
+  --panel-hl-string: #a5e075;
+  --panel-hl-number: #f78c6c;
+  --panel-hl-comment: #7d8590;
+  --panel-hl-title: #82aaff;
+  --panel-hl-type: #ffcb6b;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --panel-bg: #fafaf9;
+    --panel-surface: #ffffff;
+    --panel-fg: #1c1b1a;
+    --panel-muted: #6b6760;
+    --panel-line: #e4e1db;
+    --panel-accent: #2f5bd0;
+    --panel-accent-2: #7c3aed;
+    --panel-ok: #15803d;
+    --panel-warn: #b45309;
+    --panel-danger: #b91c1c;
+    --panel-cyan: #0e7490;
+    --panel-on-accent: #ffffff;
+    --panel-code-bg: #f1efeb;
+    --panel-hl-keyword: #7c3aed;
+    --panel-hl-string: #15803d;
+    --panel-hl-number: #c2410c;
+    --panel-hl-comment: #6b6760;
+    --panel-hl-title: #2f5bd0;
+    --panel-hl-type: #a16207;
+  }
+}
+:root[data-theme="light"] {
+  color-scheme: light;
+  --panel-bg: #fafaf9;
+  --panel-surface: #ffffff;
+  --panel-fg: #1c1b1a;
+  --panel-muted: #6b6760;
+  --panel-line: #e4e1db;
+  --panel-accent: #2f5bd0;
+  --panel-accent-2: #7c3aed;
+  --panel-ok: #15803d;
+  --panel-warn: #b45309;
+  --panel-danger: #b91c1c;
+  --panel-cyan: #0e7490;
+  --panel-on-accent: #ffffff;
+  --panel-code-bg: #f1efeb;
+  --panel-hl-keyword: #7c3aed;
+  --panel-hl-string: #15803d;
+  --panel-hl-number: #c2410c;
+  --panel-hl-comment: #6b6760;
+  --panel-hl-title: #2f5bd0;
+  --panel-hl-type: #a16207;
+}
+:root[data-theme="dark"] { color-scheme: dark; }
+
+/* ---- reset (all :where, zero specificity) ---- */
+:where(*, *::before, *::after) { box-sizing: border-box; }
+:where(html) { -webkit-text-size-adjust: 100%; }
+:where(body) {
+  margin: 0;
+  background: transparent;
+  color: var(--panel-fg);
+  font: 16px/1.5 var(--panel-font);
+  -webkit-font-smoothing: antialiased;
+}
+:where(h1, h2, h3, h4) { margin: 0 0 0.5em; line-height: 1.15; letter-spacing: -0.015em; font-weight: 650; }
+:where(h1) { font-size: 2em; }
+:where(h2) { font-size: 1.5em; }
+:where(h3) { font-size: 1.2em; }
+:where(p, ul, ol, pre, figure, blockquote) { margin: 0 0 1em; }
+:where(a) { color: var(--panel-accent); }
+:where(code, kbd, samp, pre) { font-family: var(--panel-mono); font-size: 0.92em; }
+:where(pre) { overflow: auto; padding: 0.9em 1.1em; background: var(--panel-code-bg); border-radius: 8px; }
+:where(img, svg, video) { max-width: 100%; }
+:where(button, input, select, textarea) { font: inherit; color: inherit; }
+:where(table) { border-collapse: collapse; }
+:where(th, td) { padding: 0.4em 0.8em; border-bottom: 1px solid var(--panel-line); text-align: left; }
+:where(:focus-visible) { outline: 2px solid var(--panel-accent); outline-offset: 2px; }
+
+/* ---- utility classes ---- */
+.p-stack { display: flex; flex-direction: column; gap: var(--p-gap, 16px); }
+.p-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--p-gap, 12px); }
+.p-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(var(--p-min, 220px), 1fr)); gap: var(--p-gap, 16px); }
+.p-card {
+  background: var(--panel-surface);
+  border: 1px solid var(--panel-line);
+  border-radius: var(--panel-radius);
+  padding: 16px;
+}
+.p-pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 2px 10px; border-radius: 99px;
+  border: 1px solid var(--panel-line); background: var(--panel-surface);
+  color: var(--panel-muted); font-size: 0.85em; line-height: 1.6;
+}
+.p-btn {
+  appearance: none; cursor: pointer;
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 0.55em 1.1em; border: 0; border-radius: 10px;
+  background: var(--panel-accent); color: var(--panel-on-accent);
+  font-weight: 650; line-height: 1.2;
+  transition: filter 0.15s, transform 0.15s;
+}
+.p-btn:hover { filter: brightness(1.1); }
+.p-btn:active { transform: translateY(1px); }
+.p-btn.ghost { background: transparent; color: var(--panel-fg); border: 1px solid var(--panel-line); }
+.p-btn:disabled { opacity: 0.5; cursor: default; }
+
+/* the deck engine reveals the deck once deck.css is in; until then nothing flashes unstyled */
+main.deck:not(.deck-ready) { visibility: hidden; animation: p-unhide 0s 3s forwards; } /* 3 s later show it anyway: unstyled beats blank */
+@keyframes p-unhide { to { visibility: visible; } }
+
+/* ====================== house elements (components.js) ====================== */
+:where(p-chart, p-3d, p-audio, p-code, p-md, p-compare, p-timeline, p-diagram) { display: block; position: relative; }
+:where(p-math) { display: inline-block; position: relative; }
+:where(p-math[data-display="block"]) { display: block; text-align: center; margin: 0.6em 0; }
+:where(p-chart) { height: var(--p-chart-h, 340px); }
+:where(p-3d) { height: var(--p-3d-h, 360px); border-radius: var(--panel-radius); overflow: hidden; }
+:where(.p-loading) { min-height: 3em; min-width: 3em; }
+.p-skel {
+  position: absolute; inset: 0; border-radius: var(--panel-radius); pointer-events: none;
+  background: linear-gradient(100deg, transparent 20%, color-mix(in srgb, var(--panel-fg) 9%, transparent) 50%, transparent 80%) 0 0 / 200% 100%,
+    color-mix(in srgb, var(--panel-fg) 4%, transparent);
+  animation: p-shimmer 1.4s linear infinite;
+}
+@keyframes p-shimmer { to { background-position: -200% 0, 0 0; } }
+.p-error {
+  padding: 0.7em 1em; border-radius: 10px; font: 0.85em/1.5 var(--panel-mono);
+  color: var(--panel-danger); border: 1px solid color-mix(in srgb, var(--panel-danger) 45%, transparent);
+  background: color-mix(in srgb, var(--panel-danger) 9%, transparent);
+}
+
+/* p-chart / p-3d */
+.p-chart-box { position: relative; width: 100%; height: 100%; }
+.p-3d-box { position: absolute; inset: 0; }
+
+/* p-code (+ highlight.js classes, also used by p-md) */
+p-code pre, .p-md-box pre {
+  position: relative; margin: 0; padding: 1em 1.2em; overflow: auto; font-size: 0.875em; line-height: 1.55;
+  background: var(--panel-code-bg); border: 1px solid var(--panel-line); border-radius: var(--panel-radius);
+}
+p-code pre code, .p-md-box pre code { background: none; padding: 0; font-size: 1em; }
+p-code pre[data-lang]::after {
+  content: attr(data-lang); position: absolute; top: 0.5em; right: 0.9em;
+  font: 600 0.7em/1 var(--panel-mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--panel-muted); opacity: 0.8;
+}
+.hljs-keyword, .hljs-selector-tag, .hljs-doctag, .hljs-meta .hljs-keyword { color: var(--panel-hl-keyword); }
+.hljs-string, .hljs-regexp, .hljs-addition, .hljs-template-variable { color: var(--panel-hl-string); }
+.hljs-number, .hljs-literal, .hljs-symbol, .hljs-bullet { color: var(--panel-hl-number); }
+.hljs-comment, .hljs-quote, .hljs-deletion { color: var(--panel-hl-comment); font-style: italic; }
+.hljs-title, .hljs-section, .hljs-function .hljs-title, .hljs-selector-id { color: var(--panel-hl-title); }
+.hljs-type, .hljs-built_in, .hljs-class .hljs-title, .hljs-attr, .hljs-attribute, .hljs-name { color: var(--panel-hl-type); }
+.hljs-emphasis { font-style: italic; }
+.hljs-strong { font-weight: 700; }
+
+/* p-md */
+.p-md-box > :first-child { margin-top: 0; }
+.p-md-box > :last-child { margin-bottom: 0; }
+.p-md-box blockquote { margin-left: 0; padding-left: 1em; border-left: 3px solid var(--panel-line); color: var(--panel-muted); }
+.p-md-box code:not(pre code) { padding: 0.1em 0.35em; border-radius: 5px; background: var(--panel-code-bg); }
+.p-md-box img { border-radius: 8px; }
+
+/* p-compare */
+.p-compare-box { position: relative; overflow: hidden; max-height: 100%; border-radius: var(--panel-radius); aspect-ratio: 16 / 9; user-select: none; touch-action: pan-y; --p-pos: 50%; cursor: ew-resize; }
+.p-compare-box img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; max-width: none; pointer-events: none; }
+.p-compare-after { clip-path: inset(0 0 0 var(--p-pos)); }
+.p-compare-handle { position: absolute; top: 0; bottom: 0; left: var(--p-pos); width: 3px; margin-left: -1.5px; background: #fff; box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.25); pointer-events: none; }
+.p-compare-handle::after {
+  content: "\2194"; position: absolute; top: 50%; left: 50%; width: 2.6em; height: 2.6em; margin: -1.3em 0 0 -1.3em;
+  display: grid; place-items: center; border-radius: 50%; background: #fff; color: #111; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
+}
+.p-compare-box:has(:focus-visible) .p-compare-handle::after { outline: 3px solid var(--panel-accent); outline-offset: 2px; }
+.p-compare-range { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; pointer-events: none; }
+.p-compare-tag { position: absolute; top: 12px; padding: 2px 12px; border-radius: 99px; background: rgba(0, 0, 0, 0.58); color: #fff; font-size: 0.7em; font-weight: 600; pointer-events: none; }
+.p-compare-tag-before { left: 12px; }
+.p-compare-tag-after { right: 12px; }
+
+/* p-timeline */
+.p-tl { --tone: var(--panel-accent); position: relative; margin: 0; padding: 0 0 0 1.7em; list-style: none; }
+.p-tl::before {
+  content: ""; position: absolute; left: 0.42em; top: 0.7em; bottom: 0.7em; width: 2px; background: var(--panel-line);
+  transform: scaleY(0); transform-origin: top; transition: transform 0.9s ease;
+}
+.p-tl.in::before { transform: none; }
+.p-tl-item {
+  position: relative; margin: 0 0 0.75em; padding: 0.15em 0;
+  opacity: 0; transform: translateX(-14px);
+  transition: opacity 0.5s ease var(--d, 0s), transform 0.5s cubic-bezier(0.2, 0.7, 0.2, 1) var(--d, 0s);
+}
+.p-tl.in .p-tl-item { opacity: 1; transform: none; }
+.p-tl-item::before {
+  content: ""; position: absolute; left: -1.7em; top: 0.55em; width: 0.9em; height: 0.9em; border-radius: 50%;
+  background: var(--tone); box-shadow: 0 0 0 4px var(--panel-bg);
+}
+.p-tl-item[data-tone="ok"] { --tone: var(--panel-ok); }
+.p-tl-item[data-tone="warn"] { --tone: var(--panel-warn); }
+.p-tl-item[data-tone="danger"] { --tone: var(--panel-danger); }
+.p-tl-when { display: block; font: 600 0.62em/1.6 var(--panel-mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--tone); }
+
+/* p-audio */
+.p-audio-box { display: flex; align-items: center; gap: 16px; padding: 14px 16px; background: var(--panel-surface); border: 1px solid var(--panel-line); border-radius: var(--panel-radius); }
+.p-audio-play { flex: none; width: 3em; height: 3em; padding: 0; justify-content: center; border-radius: 50%; font-size: 1em; }
+.p-audio-main { flex: 1; min-width: 0; }
+.p-audio-title { margin-bottom: 6px; font-weight: 650; }
+.p-audio-canvas { display: block; max-width: none; border-radius: 8px; }
+.p-audio-meta { display: flex; justify-content: space-between; gap: 12px; margin-top: 6px; color: var(--panel-muted); font-size: 0.8em; font-variant-numeric: tabular-nums; }
+
+/* p-diagram */
+.p-diagram-box { display: flex; justify-content: center; }
+svg.p-dg { width: 100%; height: auto; overflow: visible; font: 500 16px/1 var(--panel-font); max-width: none; }
+.p-dg text { fill: var(--panel-fg); }
+.p-dg-box { fill: var(--panel-surface); stroke: var(--panel-line); stroke-width: 1.5; }
+.p-dg-rough .p-dg-box { stroke: none; }
+.p-dg-rough .p-dg-node path { stroke: var(--panel-fg); stroke-width: 1.4; fill: none; }
+.p-dg-edge path { fill: none; stroke: var(--panel-muted); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 1 1; stroke-dashoffset: 1; transition: stroke-dashoffset 0.8s ease var(--d, 0s); }
+.p-dg.in .p-dg-edge path { stroke-dashoffset: 0; }
+.p-dg .p-dg-label { fill: var(--panel-muted); font-size: 13px; stroke: var(--panel-bg); stroke-width: 5px; paint-order: stroke; opacity: 0; transition: opacity 0.4s ease calc(var(--d, 0s) + 0.6s); }
+.p-dg.in .p-dg-label { opacity: 1; }
+.p-dg-node { opacity: 0; transition: opacity 0.5s ease var(--d, 0s); }
+.p-dg.in .p-dg-node { opacity: 1; }
+.p-dg-dot { fill: var(--panel-accent); opacity: 0; transition: opacity 0.4s ease calc(var(--d, 0s) + 1s); }
+.p-dg.in .p-dg-dot { opacity: 1; }
+
+@media (prefers-reduced-motion: reduce) {
+  .p-skel { animation: none; }
+  .p-tl::before, .p-tl-item, .p-dg-edge path, .p-dg .p-dg-label, .p-dg-node, .p-dg-dot { transition: none; }
+}

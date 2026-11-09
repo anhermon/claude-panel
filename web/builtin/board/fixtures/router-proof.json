@@ -1,0 +1,105 @@
+{
+ "now": {
+  "title": "Every finished ticket shows its proof",
+  "status": "working"
+ },
+ "frames": [
+  {
+   "id": "now",
+   "type": "now",
+   "title": "Now",
+   "size": "m",
+   "text": "Every finished ticket shows its proof",
+   "status": "working"
+  },
+  {
+   "id": "tickets",
+   "type": "tickets",
+   "title": "Tickets · 1 of 4 verified, 2 unproven",
+   "size": "l",
+   "summary": {
+    "total": 4,
+    "verified": 1,
+    "unproven": 2,
+    "unverified": 0,
+    "blocked": 0,
+    "inflight": 1
+   },
+   "items": [
+    {
+     "id": "04-search",
+     "title": "Search by title",
+     "stage": "verifying",
+     "agent": "worker",
+     "round": 0,
+     "maxRounds": 2,
+     "verdict": null,
+     "note": "Worker reported done; the verifier is checking",
+     "eval": {
+      "present": true,
+      "what": "Typing a title lists matching books",
+      "result": "none"
+     }
+    },
+    {
+     "id": "02-export",
+     "title": "Export bookings to CSV",
+     "stage": "unproven",
+     "agent": "worker",
+     "checks": {
+      "pass": 3,
+      "total": 3
+     },
+     "round": 0,
+     "maxRounds": 2,
+     "verdict": "PASS",
+     "note": "Done, but it has no eval that proves it",
+     "eval": {
+      "present": false,
+      "result": "none"
+     }
+    },
+    {
+     "id": "03-invoice",
+     "title": "Invoice PDF layout",
+     "stage": "unproven",
+     "agent": "codex-worker",
+     "checks": {
+      "pass": 2,
+      "total": 3
+     },
+     "round": 1,
+     "maxRounds": 2,
+     "verdict": "PASS",
+     "note": "Done, but its eval has not passed",
+     "eval": {
+      "present": true,
+      "what": "Invoice PDF fits one page with the totals",
+      "result": "fail",
+      "evidence": "second page has the totals"
+     }
+    },
+    {
+     "id": "01-login",
+     "title": "Login with email link",
+     "stage": "done",
+     "agent": "worker",
+     "checks": {
+      "pass": 4,
+      "total": 4
+     },
+     "round": 0,
+     "maxRounds": 2,
+     "verdict": "PASS",
+     "eval": {
+      "present": true,
+      "what": "Magic link signs in and expires after use",
+      "result": "pass",
+      "evidence": "4 of 4 checks passed"
+     }
+    }
+   ]
+  }
+ ],
+ "lanes": []
+}

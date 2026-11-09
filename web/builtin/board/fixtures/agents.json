@@ -1,0 +1,164 @@
+{
+ "frames": [
+  {
+   "id": "now",
+   "type": "now",
+   "title": "Now",
+   "size": "m",
+   "text": "Make the board show what each agent is doing · Writing UI",
+   "sub": "Polishing the board so every agent row says what it is for",
+   "status": "working",
+   "who": "1 agent working · 1 testing · 1 blocked",
+   "for": "working for 14 min",
+   "last": "Last finished: Survey the panel scenes"
+  },
+  {
+   "id": "lanes",
+   "type": "lanes",
+   "title": "Agents",
+   "size": "l"
+  },
+  {
+   "id": "dod-t34",
+   "type": "steps",
+   "title": "Make the board show what each agent is doing",
+   "size": "m",
+   "owner": "Board polish agent",
+   "since": "14 min",
+   "items": [
+    {
+     "t": "Agent rows: goal, step, bar, pill",
+     "state": "done"
+    },
+    {
+     "t": "Tool-call bars get room beside the rows",
+     "state": "done"
+    },
+    {
+     "t": "Steps and lanes fill their frame without gaps",
+     "state": "doing"
+    },
+    {
+     "t": "Headline shrinks instead of clipping at 720 wide, long checklist items wrap to two lines",
+     "state": "todo"
+    },
+    {
+     "t": "Render every fixture at four sizes, no overflow",
+     "state": "todo"
+    }
+   ]
+  },
+  {
+   "id": "bars",
+   "type": "bars",
+   "title": "Tool calls per agent",
+   "size": "s",
+   "unit": "calls",
+   "items": [
+    {
+     "label": "Board polish",
+     "value": 47,
+     "color": "#38bdf8"
+    },
+    {
+     "label": "Workspace scene",
+     "value": 23,
+     "color": "#38bdf8"
+    },
+    {
+     "label": "Pulse feed hook",
+     "value": 12,
+     "color": "#64748b"
+    },
+    {
+     "label": "Panel survey",
+     "value": 9,
+     "color": "#64748b"
+    }
+   ]
+  }
+ ],
+ "lanes": [
+  {
+   "id": "t34",
+   "label": "Board polish",
+   "goal": "Make the board show what each agent is doing",
+   "state": "working",
+   "pct": null,
+   "step": "Rewriting the agent rows so goal, step and progress read at a glance",
+   "note": "",
+   "dod": [
+    {
+     "t": "Agent rows: goal, step, bar, pill",
+     "state": "done"
+    },
+    {
+     "t": "Tool-call bars get room beside the rows",
+     "state": "done"
+    },
+    {
+     "t": "Steps and lanes fill their frame without gaps",
+     "state": "todo"
+    },
+    {
+     "t": "Headline shrinks instead of clipping at 720 wide, long checklist items wrap to two lines",
+     "state": "todo"
+    },
+    {
+     "t": "Render every fixture at four sizes, no overflow",
+     "state": "todo"
+    }
+   ],
+   "at": 2,
+   "calls": 47,
+   "startedAgoMs": 840000,
+   "updatedAgoMs": 4000
+  },
+  {
+   "id": "t33",
+   "label": "Workspace scene",
+   "state": "testing",
+   "pct": 80,
+   "step": "Running the workspace suite against the live server",
+   "note": "",
+   "goal": "",
+   "dod": [],
+   "at": null,
+   "calls": 23,
+   "startedAgoMs": 540000,
+   "updatedAgoMs": 9000
+  },
+  {
+   "id": "t31",
+   "label": "Hook the pulse feed into the mod without blocking the main loop",
+   "state": "blocked",
+   "pct": 35,
+   "step": "Needs a decision: should idle agents stay on the board?",
+   "note": "",
+   "goal": "",
+   "dod": [],
+   "at": null,
+   "calls": 12,
+   "startedAgoMs": 1860000,
+   "updatedAgoMs": 360000
+  },
+  {
+   "id": "t30",
+   "label": "Survey the panel scenes",
+   "state": "done",
+   "pct": 100,
+   "step": "Report written",
+   "note": "",
+   "goal": "",
+   "dod": [],
+   "at": null,
+   "calls": 9,
+   "startedAgoMs": 1320000,
+   "updatedAgoMs": 1020000
+  }
+ ],
+ "now": {
+  "title": "Polishing the board so every agent row says what it is for",
+  "status": "working"
+ }
+}

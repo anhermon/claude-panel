@@ -1,0 +1,8 @@
+schema_version: "1.1"
+name: agent-time-breakdown-is-automatic
+description: "Asked where agent time goes, the model relies on the automatic time-by-kind and time-sinks frames and does not hand-draw its own breakdown with a made-up id"
+runs: 3
+execution:
+  max_turns: 6
+  timeout_seconds: 120
+  prompt: "Four agents are running in this session. The panel already draws a per-agent breakdown of their time by kind of work. I want to see where their time is going. What do you put on the panel for that? Answer in one sentence; make a panel call only if something is really missing."

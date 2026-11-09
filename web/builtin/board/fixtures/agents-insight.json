@@ -1,0 +1,528 @@
+{
+ "frames": [
+  {
+   "id": "now",
+   "type": "now",
+   "title": "Now",
+   "size": "m",
+   "text": "Deep per-agent activity insight",
+   "status": "working"
+  },
+  {
+   "id": "now-doing",
+   "type": "doing",
+   "title": "Doing now",
+   "size": "s"
+  },
+  {
+   "id": "lanes",
+   "type": "lanes",
+   "title": "Agents",
+   "size": "l"
+  },
+  {
+   "id": "bars",
+   "type": "bars",
+   "title": "Tokens per agent",
+   "size": "s",
+   "items": [
+    {
+     "label": "Implement the strip",
+     "value": 121,
+     "color": "#38bdf8"
+    },
+    {
+     "label": "Survey the repo",
+     "value": 43,
+     "color": "#38bdf8"
+    },
+    {
+     "label": "Run the checks",
+     "value": 4,
+     "color": "#38bdf8"
+    }
+   ],
+   "unit": "k tokens"
+  },
+  {
+   "id": "activity-timeline",
+   "type": "swimlane",
+   "title": "Activity",
+   "size": "m",
+   "items": [
+    {
+     "label": "main",
+     "state": "working",
+     "from": 0,
+     "to": 3600,
+     "segs": [
+      {
+       "k": "delegating",
+       "a": 3180,
+       "b": 3200
+      },
+      {
+       "k": "delegating",
+       "a": 3280,
+       "b": 3300
+      },
+      {
+       "k": "delegating",
+       "a": 3510,
+       "b": 3530
+      },
+      {
+       "k": "delegating",
+       "a": 3560,
+       "b": 3580
+      }
+     ]
+    },
+    {
+     "label": "Survey the repo",
+     "state": "working",
+     "from": 3180,
+     "to": 3600,
+     "segs": [
+      {
+       "k": "reading",
+       "a": 3245,
+       "b": 3266
+      },
+      {
+       "k": "reading",
+       "a": 3267,
+       "b": 3288
+      },
+      {
+       "k": "reading",
+       "a": 3289,
+       "b": 3310
+      },
+      {
+       "k": "reading",
+       "a": 3311,
+       "b": 3332
+      },
+      {
+       "k": "reading",
+       "a": 3333,
+       "b": 3354
+      },
+      {
+       "k": "reading",
+       "a": 3355,
+       "b": 3376
+      },
+      {
+       "k": "reading",
+       "a": 3377,
+       "b": 3398
+      },
+      {
+       "k": "reading",
+       "a": 3399,
+       "b": 3420
+      },
+      {
+       "k": "reading",
+       "a": 3421,
+       "b": 3442
+      },
+      {
+       "k": "reading",
+       "a": 3443,
+       "b": 3464
+      },
+      {
+       "k": "reading",
+       "a": 3465,
+       "b": 3486
+      },
+      {
+       "k": "reading",
+       "a": 3487,
+       "b": 3508
+      },
+      {
+       "k": "reading",
+       "a": 3509,
+       "b": 3530
+      },
+      {
+       "k": "reading",
+       "a": 3531,
+       "b": 3552
+      },
+      {
+       "k": "reading",
+       "a": 3553,
+       "b": 3574
+      },
+      {
+       "k": "reading",
+       "a": 3575,
+       "b": 3596
+      },
+      {
+       "k": "reading",
+       "a": 3597,
+       "b": 3600
+      }
+     ]
+    },
+    {
+     "label": "Implement the strip",
+     "state": "working",
+     "from": 3280,
+     "to": 3600,
+     "segs": [
+      {
+       "k": "reading",
+       "a": 3378,
+       "b": 3399
+      },
+      {
+       "k": "reading",
+       "a": 3402,
+       "b": 3423
+      },
+      {
+       "k": "logic",
+       "a": 3426,
+       "b": 3447
+      },
+      {
+       "k": "logic",
+       "a": 3450,
+       "b": 3471
+      },
+      {
+       "k": "ui",
+       "a": 3474,
+       "b": 3495
+      },
+      {
+       "k": "tests",
+       "a": 3498,
+       "b": 3519
+      },
+      {
+       "k": "logic",
+       "a": 3522,
+       "b": 3543
+      },
+      {
+       "k": "logic",
+       "a": 3546,
+       "b": 3567
+      },
+      {
+       "k": "tests",
+       "a": 3570,
+       "b": 3591
+      },
+      {
+       "k": "logic",
+       "a": 3594,
+       "b": 3600
+      }
+     ]
+    },
+    {
+     "label": "Run the checks",
+     "state": "working",
+     "from": 3510,
+     "to": 3600,
+     "segs": [
+      {
+       "k": "tests",
+       "a": 3550,
+       "b": 3586
+      },
+      {
+       "k": "working",
+       "a": 3586,
+       "b": 3598
+      },
+      {
+       "k": "tests",
+       "a": 3598,
+       "b": 3600
+      }
+     ]
+    },
+    {
+     "label": "Review the patch",
+     "state": "working",
+     "from": 3560,
+     "to": 3600,
+     "segs": [
+      {
+       "k": "reading",
+       "a": 3551,
+       "b": 3565
+      },
+      {
+       "k": "delegating",
+       "a": 3565,
+       "b": 3572
+      },
+      {
+       "k": "reading",
+       "a": 3572,
+       "b": 3593
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "delegation",
+   "type": "uml",
+   "title": "Handoffs",
+   "size": "l",
+   "code": "sequenceDiagram\n  participant main as main\n  participant na1 as Survey the re…\n  participant na2 as Implement the…\n  participant na3 as Run the checks\n  participant na4 as Review the pa…\n  main->>na1: spawn Survey the re…\n  main->>na2: spawn Implement the…\n  main->>na3: spawn Run the checks\n  main->>na4: spawn Review the pa…",
+   "highlight": {
+    "na1": "active",
+    "na2": "active",
+    "na3": "active",
+    "na4": "active"
+   }
+  },
+  {
+   "id": "pipeline",
+   "type": "uml",
+   "title": "Pipeline",
+   "size": "l",
+   "code": "flowchart LR\n  la1[\"Survey the repo\"]\n  la2[\"Implement the str…\"]\n  la3[\"Run the checks\"]\n  la4[\"Review the patch\"]\n  classDef active stroke:#38bdf8,stroke-width:2px\n  classDef done stroke:#4ade80,stroke-width:2px\n  classDef blocked stroke:#f87171,stroke-width:2px\n  classDef todo stroke:#64748b,stroke-width:2px\n  class la1,la2,la3,la4 active",
+   "highlight": {
+    "la1": "active",
+    "la2": "active",
+    "la3": "active",
+    "la4": "active"
+   }
+  }
+ ],
+ "lanes": [
+  {
+   "id": "main",
+   "label": "main",
+   "state": "working",
+   "pct": null,
+   "step": "Deep per-agent activity insight",
+   "note": "",
+   "goal": "",
+   "dod": [],
+   "at": null,
+   "by": "main",
+   "loop": "main",
+   "calls": 0,
+   "startedAgoMs": 3600000,
+   "updatedAgoMs": 0,
+   "insight": {
+    "kind": "thinking",
+    "headline": "Thinking",
+    "strip": "..gg.............ggg.gg.",
+    "mix": [
+     {
+      "kind": "delegating",
+      "pct": 100
+     }
+    ],
+    "files": [],
+    "feed": [
+     "handed work to an agent"
+    ],
+    "tokens": null,
+    "isBusy": false,
+    "isMain": true,
+    "lastCallAgoMs": 40000
+   }
+  },
+  {
+   "id": "a1",
+   "label": "Survey the repo",
+   "state": "working",
+   "pct": null,
+   "step": "T41 · Map the live view.",
+   "note": "",
+   "goal": "",
+   "dod": [],
+   "at": null,
+   "by": "a1",
+   "loop": "a1",
+   "calls": 17,
+   "startedAgoMs": 420000,
+   "updatedAgoMs": 2500,
+   "insight": {
+    "kind": "reading",
+    "headline": "Reading code",
+    "strip": "xxxxxxxxxxxxxxxxxxxxxxxx",
+    "mix": [
+     {
+      "kind": "reading",
+      "pct": 100
+     }
+    ],
+    "files": [
+     "grid-plan.mjs",
+     "board.js",
+     "pane.tsx"
+    ],
+    "feed": [
+     "read 4 files",
+     "browsed files",
+     "searched the code"
+    ],
+    "tokens": 43000,
+    "isBusy": false,
+    "isMain": false,
+    "lastCallAgoMs": 3000
+   }
+  },
+  {
+   "id": "a2",
+   "label": "Implement the strip",
+   "state": "working",
+   "pct": null,
+   "step": "T40 · Per-agent activity insight.",
+   "note": "",
+   "goal": "",
+   "dod": [],
+   "at": null,
+   "by": "a2",
+   "loop": "a2",
+   "calls": 10,
+   "startedAgoMs": 320000,
+   "updatedAgoMs": 5000,
+   "insight": {
+    "kind": "logic",
+    "headline": "Writing logic · insight-logic.mjs, board-logic.mjs",
+    "strip": ".......xxxxllluuttlllltl",
+    "mix": [
+     {
+      "kind": "logic",
+      "pct": 45
+     },
+     {
+      "kind": "tests",
+      "pct": 22
+     },
+     {
+      "kind": "reading",
+      "pct": 22
+     },
+     {
+      "kind": "ui",
+      "pct": 11
+     }
+    ],
+    "files": [
+     "insight-logic.mjs",
+     "board-logic.mjs",
+     "agents-detail.js"
+    ],
+    "feed": [
+     "edited insight-logic.mjs",
+     "ran tests",
+     "edited 2 files"
+    ],
+    "tokens": 121200,
+    "isBusy": false,
+    "isMain": false,
+    "lastCallAgoMs": 6000
+   }
+  },
+  {
+   "id": "a3",
+   "label": "Run the checks",
+   "state": "working",
+   "pct": null,
+   "step": "T42 · Run tsc and the plugin tests.",
+   "note": "",
+   "goal": "",
+   "dod": [],
+   "at": null,
+   "by": "a3",
+   "loop": "a3",
+   "calls": 5,
+   "startedAgoMs": 90000,
+   "updatedAgoMs": 1500,
+   "insight": {
+    "kind": "tests",
+    "headline": "Running tests",
+    "strip": "..........ttttttttttwwwt",
+    "mix": [
+     {
+      "kind": "tests",
+      "pct": 76
+     },
+     {
+      "kind": "working",
+      "pct": 24
+     }
+    ],
+    "files": [],
+    "feed": [
+     "ran tests",
+     "used git",
+     "ran tests"
+    ],
+    "tokens": 3590,
+    "isBusy": false,
+    "isMain": false,
+    "lastCallAgoMs": 2000
+   }
+  },
+  {
+   "id": "a4",
+   "label": "Review the patch",
+   "state": "working",
+   "pct": null,
+   "step": "T43 · Review the diff for regressions.",
+   "note": "",
+   "goal": "",
+   "dod": [],
+   "at": null,
+   "by": "a4",
+   "loop": "a4",
+   "calls": 4,
+   "startedAgoMs": 40000,
+   "updatedAgoMs": 27500,
+   "insight": {
+    "kind": "thinking",
+    "headline": "Thinking",
+    "strip": "xxxggggxxxxxxxxxxxxx....",
+    "mix": [
+     {
+      "kind": "reading",
+      "pct": 83
+     },
+     {
+      "kind": "delegating",
+      "pct": 17
+     }
+    ],
+    "files": [
+     "pulse-model.ts",
+     "board-agents.ts",
+     "agent-insight.ts"
+    ],
+    "feed": [
+     "read pulse-model.ts",
+     "handed work to an agent",
+     "read 2 files"
+    ],
+    "tokens": null,
+    "isBusy": false,
+    "isMain": false,
+    "lastCallAgoMs": 28000
+   }
+  }
+ ],
+ "now": {
+  "title": "Deep per-agent activity insight",
+  "status": "working"
+ }
+}

@@ -1,0 +1,49 @@
+{
+ "frames": [
+  {
+   "id": "now",
+   "type": "now",
+   "title": "Now",
+   "size": "m",
+   "text": "Workflow insight: where does agent time go?",
+   "status": "working"
+  },
+  {
+   "id": "time-by-kind",
+   "type": "kindstack",
+   "title": "Time by kind of work, per agent",
+   "size": "l",
+   "caption": "Update README and guide spent 4 min 31 s, mostly Tests",
+   "items": [
+    {
+     "label": "Update README and guide",
+     "total": "4 min 31 s",
+     "tokens": "42k tokens",
+     "segs": [
+      {
+       "k": "docs",
+       "s": 189,
+       "text": "3 min 9 s"
+      },
+      {
+       "k": "reading",
+       "s": 62,
+       "text": "1 min 2 s"
+      },
+      {
+       "k": "thinking",
+       "s": 20,
+       "text": "20 s"
+      }
+     ]
+    }
+   ],
+   "foot": "Thinking = pauses of 20 s or more between actions"
+  }
+ ],
+ "lanes": [],
+ "now": {
+  "title": "Workflow insight: where does agent time go?",
+  "status": "working"
+ }
+}

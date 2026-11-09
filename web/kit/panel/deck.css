@@ -1,0 +1,150 @@
+/* deck.css - theme, transitions and layouts for `panel/deck` (loaded by deck.js).
+ * Structural rules (slide states, scaling) are normal CSS; everything cosmetic is wrapped in :where() so a rule you
+ * write in your own <style> always wins, whatever its specificity.
+ * Tokens: --deck-bg --deck-fg --deck-muted --deck-accent --deck-accent-2 --deck-font (+ sizes, see :root). */
+:root {
+  --deck-bg: var(--panel-bg, #141413);
+  --deck-fg: var(--panel-fg, #ecebe8);
+  --deck-muted: var(--panel-muted, #a19d95);
+  --deck-line: var(--panel-line, #2f2d2a);
+  --deck-surface: var(--panel-surface, #1c1b1a);
+  --deck-accent: var(--panel-accent, #7aa2ff);
+  --deck-accent-2: var(--panel-accent-2, #c084fc);
+  --deck-ok: var(--panel-ok, #4ade80);
+  --deck-danger: var(--panel-danger, #f87171);
+  --deck-font: var(--panel-font, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif);
+  --deck-mono: var(--panel-mono, ui-monospace, Menlo, Consolas, monospace);
+  --deck-glow-1: color-mix(in srgb, var(--deck-accent) 34%, transparent);
+  --deck-glow-2: color-mix(in srgb, var(--deck-accent-2) 30%, transparent);
+  --deck-pad-x: 96px;
+  --deck-pad-y: 72px;
+  --deck-h1: 84px;
+  --deck-h2: 52px;
+  --deck-h3: 34px;
+  --deck-body: 28px;
+  --deck-shift: 48px; /* distance a slide travels while fading in/out */
+  --deck-ms: 450ms;
+  --deck-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+html, body { height: 100%; margin: 0; overflow: hidden; background: var(--deck-bg); color: var(--deck-fg); font-family: var(--deck-font); }
+
+/* ---- the 1280x720 canvas, scaled to the viewport by deck.js (--deck-scale) ---- */
+main.deck {
+  position: fixed; z-index: 1; left: 50%; top: 50%;
+  width: 1280px; height: 720px; margin: -360px 0 0 -640px;
+  transform: scale(var(--deck-scale, 1)); transform-origin: center;
+  font: 400 var(--deck-body) / 1.4 var(--deck-font);
+}
+main.deck section.stack { display: contents; }
+main.deck aside.notes { display: none; }
+
+/* ---- slide states (data-state set by deck.js) + transitions (data-active-transition set per navigation) ---- */
+main.deck section.slide {
+  position: absolute; inset: 0; box-sizing: border-box;
+  padding: var(--deck-pad-y) var(--deck-pad-x);
+  opacity: 0; visibility: hidden; pointer-events: none;
+  transition: opacity var(--deck-ms) ease, transform var(--deck-ms) var(--deck-ease), visibility 0s linear var(--deck-ms);
+}
+main.deck section.slide[data-state="present"] { opacity: 1; visibility: visible; pointer-events: auto; transform: none; transition-delay: 0s; }
+main.deck section.slide[data-state="past"] { transform: var(--out-past, none); }
+main.deck section.slide[data-state="future"] { transform: var(--out-future, none); }
+main.deck section.slide[data-state="above"] { transform: var(--out-above, none); }
+main.deck section.slide[data-state="below"] { transform: var(--out-below, none); }
+main.deck[data-active-transition="slide"] {
+  --out-past: translateX(calc(var(--deck-shift) * -1)); --out-future: translateX(var(--deck-shift));
+  --out-above: translateY(calc(var(--deck-shift) * -1)); --out-below: translateY(var(--deck-shift));
+}
+main.deck[data-active-transition="zoom"] { --out-past: scale(0.9); --out-above: scale(0.9); --out-future: scale(1.1); --out-below: scale(1.1); }
+main.deck[data-active-transition="none"] section.slide,
+main.deck.deck-snap section.slide { transition: none !important; }
+/* auto-animate: the old slide only fades (shared elements are tweened by deck.js on the new one) */
+main.deck.deck-snap section.slide.aa-out { transition: opacity 0.35s ease !important; }
+
+/* ---- full-viewport backgrounds (data-background-*), one per slide, cross-faded ---- */
+.deck-backgrounds { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
+.deck-bg { position: absolute; inset: 0; opacity: 0; background-size: cover; background-position: center; transition: opacity 0.6s ease; }
+.deck-bg.present { opacity: var(--deck-bg-opacity, 1); }
+
+/* ---- fragments ---- */
+.deck .fragment { opacity: 0; visibility: hidden; transform: translateY(14px); transition: opacity 0.4s ease, transform 0.4s var(--deck-ease), visibility 0s linear 0.4s; }
+.deck .fragment.visible { opacity: 1; visibility: visible; transform: none; transition-delay: 0s; }
+.deck .fragment.fade-in { transform: none; }
+.deck .fragment.fade-up { transform: translateY(40px); }
+.deck .fragment.fade-up.visible { transform: none; }
+.deck .fragment.grow { transform: scale(0.85); }
+.deck .fragment.grow.visible { transform: none; }
+.deck .fragment.fade-out { opacity: 1; visibility: visible; transform: none; }
+.deck .fragment.fade-out.visible { opacity: 0; }
+.deck .fragment.highlight-accent { opacity: 1; visibility: visible; transform: none; color: var(--deck-muted); }
+.deck .fragment.highlight-accent.visible { color: var(--deck-accent); }
+
+/* ---- type scale ---- */
+:where(main.deck h1) { margin: 0 0 0.3em; font-size: var(--deck-h1); line-height: 1.02; letter-spacing: -0.03em; font-weight: 700; }
+:where(main.deck h2) { margin: 0 0 0.4em; font-size: var(--deck-h2); line-height: 1.08; letter-spacing: -0.02em; font-weight: 700; }
+:where(main.deck h3) { margin: 0 0 0.4em; font-size: var(--deck-h3); line-height: 1.15; letter-spacing: -0.01em; font-weight: 650; }
+:where(main.deck p) { margin: 0 0 0.6em; font-size: var(--deck-body); }
+:where(main.deck ul, main.deck ol) { margin: 0 0 0.6em; padding-left: 1.1em; }
+:where(main.deck li) { margin: 0.3em 0; }
+:where(main.deck .lead) { max-width: 760px; margin-top: 20px; font-size: 30px; color: var(--deck-muted); }
+:where(main.deck .muted) { color: var(--deck-muted); }
+:where(main.deck .eyebrow) { margin: 0; font-size: 18px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--deck-accent); }
+:where(main.deck .grad) {
+  background: linear-gradient(120deg, var(--deck-accent), var(--deck-accent-2) 55%, var(--deck-danger));
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+:where(main.deck code, main.deck kbd) { font-family: var(--deck-mono); font-size: 0.85em; }
+:where(main.deck a) { color: var(--deck-accent); }
+
+/* ---- layouts: .title .two-col .big-number .image-full ---- */
+:where(main.deck section.title) { display: flex; flex-direction: column; justify-content: center; }
+:where(main.deck section.title h1) { font-size: 96px; margin-top: 28px; }
+:where(main.deck section.two-col) { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 64px; align-content: start; }
+:where(main.deck section.two-col > *) { min-width: 0; }
+:where(main.deck section.two-col > :is(h1, h2, h3, .span-all)) { grid-column: 1 / -1; }
+:where(main.deck section.big-number) { display: flex; flex-direction: column; justify-content: center; }
+:where(main.deck section.big-number .num) {
+  margin: 0; font-size: 240px; font-weight: 700; line-height: 0.95; letter-spacing: -0.05em;
+  background: linear-gradient(120deg, var(--deck-accent), var(--deck-accent-2));
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+:where(main.deck section.big-number .label) { margin: 8px 0 0; font-size: 38px; color: var(--deck-muted); }
+:where(main.deck section.image-full) { display: flex; flex-direction: column; justify-content: flex-end; padding-bottom: 64px; color: #fff; }
+:where(main.deck section.image-full > :is(img, video, picture, .media)) {
+  position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: -1;
+}
+:where(main.deck section.image-full::before) {
+  content: ""; position: absolute; inset: 0; z-index: -1;
+  background: linear-gradient(to bottom, transparent 40%, rgba(0, 0, 0, 0.7));
+}
+
+/* ---- overview grid (key o) ---- */
+main.deck.overview { left: 0; top: 0; width: 100%; height: 100%; margin: 0; transform: none; overflow: auto; }
+main.deck.overview section.slide {
+  inset: auto; left: 0; top: 0; width: 1280px; height: 720px;
+  opacity: 1; visibility: visible; pointer-events: auto; cursor: pointer;
+  transform: translate(var(--ov-x), var(--ov-y)) scale(var(--ov-s)); transform-origin: 0 0;
+  border-radius: 24px; background: var(--deck-bg); outline: 1px solid var(--deck-line);
+  transition: outline-color 0.2s, box-shadow 0.2s;
+}
+main.deck.overview section.slide * { pointer-events: none; }
+main.deck.overview section.slide[data-state="present"] { outline: 6px solid var(--deck-accent); }
+main.deck.overview .fragment { opacity: 1; visibility: visible; transform: none; }
+/* house elements that draw themselves in when their slide is current show their finished state in the grid */
+main.deck.overview .p-tl::before { transform: none; }
+main.deck.overview .p-tl-item { opacity: 1; transform: none; }
+main.deck.overview .p-dg-edge path { stroke-dashoffset: 0; }
+main.deck.overview .p-dg .p-dg-label, main.deck.overview .p-dg-node, main.deck.overview .p-dg-dot { opacity: 1; }
+
+/* ---- hints ---- */
+.deck-hint {
+  position: fixed; left: 16px; bottom: 12px; z-index: 3; padding: 4px 12px; border-radius: 99px;
+  background: var(--deck-surface); border: 1px solid var(--deck-line); color: var(--deck-muted);
+  font: 500 13px/1.6 var(--deck-font);
+}
+.deck-hint[hidden] { display: none; }
+.deck-live { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+@media (prefers-reduced-motion: reduce) {
+  main.deck section.slide, .deck-bg, .deck .fragment { transition: none !important; }
+}

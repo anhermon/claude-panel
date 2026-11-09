@@ -1,0 +1,153 @@
+{
+ "overall": "working",
+ "mainKind": "thinking",
+ "counts": {
+  "total": 2,
+  "working": 1,
+  "waiting": 0,
+  "blocked": 0,
+  "done": 1
+ },
+ "agents": [
+  {
+   "id": "main",
+   "loop": "main",
+   "isMain": true,
+   "name": "Me",
+   "short": "Me",
+   "state": "working",
+   "pct": null,
+   "tokens": null,
+   "kind": "thinking",
+   "kindLabel": "Thinking",
+   "kindColor": "#94a3b8",
+   "kindGlyph": "…",
+   "headline": "Thinking",
+   "files": [],
+   "agentType": null,
+   "role": null,
+   "ticket": null,
+   "proof": null,
+   "startedAgoMs": 600000,
+   "endedAgoMs": null,
+   "segs": [
+    {
+     "k": "delegating",
+     "aAgoMs": 410000,
+     "bAgoMs": 380000
+    }
+   ]
+  },
+  {
+   "id": "run-run-aaa111",
+   "loop": "run-run-aaa111",
+   "isMain": false,
+   "name": "Add the json flag",
+   "short": "Add the json…",
+   "state": "done",
+   "pct": null,
+   "tokens": 17135,
+   "kind": "done",
+   "kindLabel": "Done",
+   "kindColor": "#475569",
+   "kindGlyph": "■",
+   "headline": "Finished",
+   "files": [
+    "report.py",
+    "report_json.py"
+   ],
+   "agentType": null,
+   "model": "gpt-6.1-sol",
+   "effort": "medium",
+   "role": null,
+   "ticket": null,
+   "proof": {
+    "eval": "python3 bin/report_selftest.py exits 0",
+    "what": "python3 bin/report_selftest.py exits 0",
+    "result": "pass"
+   },
+   "harness": "codex",
+   "calls": 5,
+   "startedAgoMs": 115591,
+   "endedAgoMs": 40000,
+   "segs": [
+    {
+     "k": "working",
+     "aAgoMs": 107249,
+     "bAgoMs": 74149
+    },
+    {
+     "k": "logic",
+     "aAgoMs": 74149,
+     "bAgoMs": 73049
+    },
+    {
+     "k": "working",
+     "aAgoMs": 73049,
+     "bAgoMs": 46249
+    }
+   ]
+  },
+  {
+   "id": "run-run-bbb222",
+   "loop": "run-run-bbb222",
+   "isMain": false,
+   "name": "Harder autonomy traps",
+   "short": "Harder autono…",
+   "state": "working",
+   "pct": null,
+   "tokens": 12995,
+   "kind": "thinking",
+   "kindLabel": "Thinking",
+   "kindColor": "#94a3b8",
+   "kindGlyph": "…",
+   "headline": "Thinking",
+   "files": [
+    "report.py",
+    "report_json.py"
+   ],
+   "agentType": null,
+   "model": "gpt-6.1-sol",
+   "effort": "high",
+   "role": null,
+   "ticket": null,
+   "proof": null,
+   "harness": "codex",
+   "calls": 4,
+   "confidence": "guessed",
+   "note": "log matched by folder and time",
+   "startedAgoMs": 80000,
+   "endedAgoMs": null,
+   "segs": [
+    {
+     "k": "working",
+     "aAgoMs": 80000,
+     "bAgoMs": 74149
+    },
+    {
+     "k": "logic",
+     "aAgoMs": 74149,
+     "bAgoMs": 50000
+    }
+   ]
+  }
+ ],
+ "kinds": {
+  "delegating": {
+   "label": "Delegating",
+   "color": "#a78bfa",
+   "glyph": "⇉"
+  },
+  "working": {
+   "label": "Working",
+   "color": "#64748b",
+   "glyph": "•"
+  },
+  "logic": {
+   "label": "Logic",
+   "color": "#34d399",
+   "glyph": "λ"
+  }
+ },
+ "events": []
+}

@@ -1,0 +1,14 @@
+/* The proof under a finished ticket agent's title: a passed eval is a green line, a missing or failed one an amber / red chip. */
+.proof { display: inline-block; max-width: 100%; margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: max(12px, .82em); line-height: 1.45; font-weight: 600; color: var(--proof, var(--s-done)); }
+.proof[data-tone="ok"] { --proof: var(--s-done); }
+.proof[data-tone="warn"] { --proof: var(--s-waiting); }
+.proof[data-tone="danger"] { --proof: var(--s-blocked); }
+.proof[data-kind="chip"] { align-self: flex-start; padding: 0 6px; border-radius: 6px; border: 1px solid var(--proof); white-space: normal; }
+/* A passed line may take two lines before it is cut; its full eval is the tooltip. */
+.proof[data-kind="passed"] { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; white-space: normal; overflow-wrap: anywhere; }
+/* Done, but not proven: not dimmed like finished work, and its state word is amber. */
+.row[data-proof="unproven"] { opacity: 1; }
+.row[data-proof="unproven"] .pill { --s: var(--s-waiting); }
+.crew-card[data-proof="unproven"] { opacity: 1; }
+.crew-card[data-proof="unproven"] { border-color: var(--s-waiting); }
+.crew-card[data-proof="unproven"] .crew-chip { background: var(--s-waiting); }

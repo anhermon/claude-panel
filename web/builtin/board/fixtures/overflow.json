@@ -1,0 +1,81 @@
+{
+ "frames": [
+  {
+   "id": "f1",
+   "type": "text",
+   "title": "Many things",
+   "text": "Ten frames, as many as fit."
+  },
+  {
+   "id": "f2",
+   "type": "hologram",
+   "title": "From the future",
+   "text": "a type this board does not know"
+  },
+  {
+   "id": "m1",
+   "type": "metric",
+   "title": "Metric 1",
+   "size": "s",
+   "value": "111",
+   "label": "units"
+  },
+  {
+   "id": "m2",
+   "type": "metric",
+   "title": "Metric 2",
+   "size": "s",
+   "value": "222",
+   "label": "units"
+  },
+  {
+   "id": "m3",
+   "type": "metric",
+   "title": "Metric 3",
+   "size": "s",
+   "value": "333",
+   "label": "units"
+  },
+  {
+   "id": "m4",
+   "type": "metric",
+   "title": "Metric 4",
+   "size": "s",
+   "value": "444",
+   "label": "units"
+  },
+  {
+   "id": "m5",
+   "type": "metric",
+   "title": "Metric 5",
+   "size": "s",
+   "value": "555",
+   "label": "units"
+  },
+  {
+   "id": "m6",
+   "type": "metric",
+   "title": "Metric 6",
+   "size": "s",
+   "value": "666",
+   "label": "units"
+  },
+  {
+   "id": "m7",
+   "type": "metric",
+   "title": "Metric 7",
+   "size": "s",
+   "value": "777",
+   "label": "units"
+  },
+  {
+   "id": "m8",
+   "type": "metric",
+   "title": "Metric 8",
+   "size": "s",
+   "value": "888",
+   "label": "units"
+  }
+ ],
+ "updatedAt": 1794133809000
+}

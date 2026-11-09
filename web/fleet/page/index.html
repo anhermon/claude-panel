@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fleet: Claude Code sessions</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="fleet.css">
+<script type="module" src="fleet.js"></script>
+</head>
+<body data-detail="closed">
+<header class="fl-top">
+  <div class="fl-top-row">
+    <h1>Fleet</h1>
+    <span id="health" class="fl-health" data-tone="wait" role="status">connecting&hellip;</span>
+  </div>
+  <div class="fl-tools">
+    <label class="fl-field"><span>Filter</span><input id="q" type="search" placeholder="title, folder, model, prompt, id" autocomplete="off" spellcheck="false"></label>
+    <label class="fl-field"><span>Sort by</span><select id="sort"></select></label>
+  </div>
+</header>
+<main class="fl-main">
+  <div class="fl-left">
+    <div id="summary"></div>
+    <div id="list"></div>
+    <footer class="fl-foot"><p id="diag"></p><p>Read-only view of this machine&rsquo;s Claude Code sessions, plus a message box. Text shown comes from transcripts with passwords, keys and tokens masked.</p></footer>
+  </div>
+  <div id="detail-slot" class="fl-right"></div>
+</main>
+<noscript>This page needs JavaScript.</noscript>
+</body>
+</html>

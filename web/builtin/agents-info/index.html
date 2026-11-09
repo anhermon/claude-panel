@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="panel-css" content="off">
+<title>Agents</title>
+<link rel="stylesheet" href="agents-info.css">
+<link rel="stylesheet" href="detail.css">
+<link rel="stylesheet" href="detail-progress.css">
+<link rel="stylesheet" href="gantt.css">
+</head>
+<body>
+<main id="app" data-layout="stack" data-mode="loading" data-view="list">
+  <section id="stage" class="stage" aria-label="Team state">
+    <div id="avatar" class="avatar"></div>
+    <p id="overall" class="overall"><i></i><b id="mood">No agents yet</b><span id="summary"></span></p>
+    <ol id="ticker" class="ticker" aria-live="polite" aria-label="Status changes"></ol>
+  </section>
+  <section class="side" aria-label="Agents">
+    <p id="legend" class="legend" hidden></p>
+    <p id="empty" class="empty">Agents appear here as they start.</p>
+    <div id="gantt" class="gantt">
+      <div id="g-head" class="g-head" hidden></div>
+      <ul id="list" class="list" hidden></ul>
+    </div>
+    <section id="detail" class="detail" aria-label="Agent detail" hidden></section>
+  </section>
+</main>
+<script type="module" src="agents-info.js"></script>
+</body>
+</html>

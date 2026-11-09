@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="panel-css" content="off">
+<title>Pulse</title>
+<link rel="stylesheet" href="pulse.css">
+</head>
+<body>
+<canvas id="stage" aria-hidden="true"></canvas>
+<header class="hud">
+  <div class="brand">
+    <span class="mark" id="mark" aria-hidden="true"></span>
+    <span class="name">Pulse</span>
+    <span class="state" id="state">Waiting for the first pulse</span>
+  </div>
+  <dl class="stats">
+    <div><dt>calls</dt><dd id="n-calls">0</dd></div>
+    <div><dt>files</dt><dd id="n-files">0</dd></div>
+    <div><dt>agents</dt><dd id="n-agents">0</dd></div>
+  </dl>
+</header>
+<ul class="legend" id="legend" aria-hidden="true"></ul>
+<p class="sr" id="sr" role="status"></p>
+<script type="module" src="pulse.js"></script>
+</body>
+</html>

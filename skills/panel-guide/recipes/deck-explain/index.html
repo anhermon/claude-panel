@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Hash maps, collisions included</title>
+<!--
+  RECIPE deck-explain: a 6-slide explainer deck (stage layout): title, idea (p-diagram), the problem (fragments),
+    the cost (p-chart), the rule of thumb (big number), takeaways. Every slide has one point and speaker notes.
+  Use when: you teach or explain how something works. Publish with layout "stage"; check each slide with shot_at "#/1".."#/5".
+  Adapt: keep the section skeleton, swap the topic. One idea per slide, at most ~25 words, notes carry the rest.
+    Keep data-title on every slide (it names the slide for assistive tech and the host's rail).
+  Constraints: only kit specifiers (panel/deck, panel/components) and local files; no CDN, no storage.
+-->
+<style>
+  /* Scene-only styling; colours come from --deck-* tokens so light and dark both work. */
+  .buckets { display: flex; gap: 14px; margin-top: 36px; }
+  .bucket { flex: 1; height: 270px; padding: 12px; display: flex; flex-direction: column; gap: 10px; border-radius: 14px;
+    background: var(--deck-surface); border: 1px solid var(--deck-line); }
+  .bucket i { font-style: normal; font-size: 22px; color: var(--deck-muted); }
+  .bucket.hot { border-color: var(--deck-danger); }
+  .key { padding: 6px 14px; border-radius: 10px; font: 26px var(--deck-mono); background: var(--deck-accent); color: #0b1020; width: fit-content; }
+  .key.chain { background: var(--deck-danger); }
+  .callout { margin-top: 28px; font-size: 30px; }
+  .callout b { color: var(--deck-danger); }
+  .chart-slide p-chart { --p-chart-h: 440px; margin-top: 12px; }
+  .src { margin-top: 14px; font-size: 20px; color: var(--deck-muted); }
+  .takeaways li { margin: 0 0 22px; font-size: 38px; list-style: none; }
+  .takeaways li::before { content: "\2713\00a0\00a0"; color: var(--deck-ok); }
+  p-diagram { margin-top: 24px; }
+  .lookup { margin-top: 36px; font-size: 30px; }
+</style>
+</head>
+<body>
+<main class="deck" data-transition="slide">
+
+  <section class="title" data-title="Hash maps, collisions included"
+    data-background-gradient="radial-gradient(900px 520px at 85% 110%, var(--deck-glow-1), transparent 70%), radial-gradient(700px 420px at 0% 0%, var(--deck-glow-2), transparent 70%)">
+    <p class="eyebrow">Data structures</p>
+    <h1>Hash maps,<br><span class="grad">collisions included</span></h1>
+    <p class="lead">How a key finds its value in one step, and what happens when two keys want the same spot.</p>
+    <aside class="notes">Claim to open with: a hash map is an array plus a function. Everything else is handling the case where the function repeats itself.</aside>
+  </section>
+
+  <section data-title="The idea">
+    <p class="eyebrow">The idea</p>
+    <h2>A function turns the key into an array index</h2>
+    <p-diagram direction="lr">
+      <li data-node="key">Key "ada"</li>
+      <li data-node="hash">hash()</li>
+      <li data-node="idx">index 1</li>
+      <li data-node="val">Value</li>
+      <li data-from="key" data-to="hash">any string</li>
+      <li data-from="hash" data-to="idx">mod array size</li>
+      <li data-from="idx" data-to="val">one lookup</li>
+    </p-diagram>
+    <p-code class="lookup" lang="js">
+const index = hash("ada") % buckets.length;   // 4471 % 6 = 1
+return buckets[index];                        // one lookup, no search
+    </p-code>
+    <aside class="notes">No searching: the key itself says where to look. That is why lookup time does not grow with the number of entries, as long as the function spreads keys out.</aside>
+  </section>
+
+  <section data-title="A collision">
+    <p class="eyebrow">The problem</p>
+    <h2>Two keys, one bucket</h2>
+    <div class="buckets" role="img" aria-label="Six buckets. Bucket 1 holds ada; bucket 2 holds bob, and eve joins it in a chain after the next step.">
+      <div class="bucket"><i>0</i></div>
+      <div class="bucket"><i>1</i><span class="key">"ada"</span></div>
+      <div class="bucket hot"><i>2</i><span class="key">"bob"</span><span class="key chain fragment fade-up">"eve"</span></div>
+      <div class="bucket"><i>3</i></div>
+      <div class="bucket"><i>4</i></div>
+      <div class="bucket"><i>5</i></div>
+    </div>
+    <p class="callout fragment fade-up"><b>hash("eve") = 2</b>, same as "bob". Chaining keeps both in the bucket as a short list.</p>
+    <aside class="notes">Click once: eve arrives and lands on top of bob. With a finite array and unlimited keys this is guaranteed to happen, so the design question is how cheaply you handle it. Chaining is one answer; probing the next free slot is the other.</aside>
+  </section>
+
+  <section class="chart-slide" data-title="The cost of a crowded table">
+    <p class="eyebrow">The cost</p>
+    <h2>Crowded tables get slow, fast</h2>
+    <p-chart type="line" x="load" y="chaining,probing" title="Expected comparisons per successful lookup"
+      data='[{"load":"0.1","chaining":1.05,"probing":1.06},{"load":"0.3","chaining":1.15,"probing":1.21},{"load":"0.5","chaining":1.25,"probing":1.5},{"load":"0.7","chaining":1.35,"probing":2.17},{"load":"0.8","chaining":1.4,"probing":3},{"load":"0.9","chaining":1.45,"probing":5.5}]'></p-chart>
+    <p class="src">x: load factor (entries / buckets). Textbook formulas: chaining 1 + a/2, linear probing (1 + 1/(1-a)) / 2.</p>
+    <aside class="notes">Both are fine while the table is mostly empty. Past 0.7 linear probing climbs steeply because filled slots clump together. Chaining degrades gently. The numbers come from the standard average-case formulas, not a benchmark.</aside>
+  </section>
+
+  <section class="big-number" data-title="The rule of thumb">
+    <p class="eyebrow">The rule of thumb</p>
+    <p class="num">0.75</p>
+    <p class="label">grow the array when it is three quarters full</p>
+    <p class="fragment fade-up muted">Java's HashMap resizes at that load factor by default.</p>
+    <aside class="notes">Resizing rehashes every key into a bigger array, which is expensive once, and keeps the load factor low forever after. That trade is why inserts are fast on average.</aside>
+  </section>
+
+  <section data-title="Takeaways">
+    <p class="eyebrow">Takeaways</p>
+    <h2>Three things to keep</h2>
+    <ul class="takeaways">
+      <li class="fragment fade-up">Lookup is one hash and one index, not a search.</li>
+      <li class="fragment fade-up">Collisions are certain, so every design has a plan for them.</li>
+      <li class="fragment fade-up">Keep the table under about 75% full and it stays fast.</li>
+    </ul>
+    <aside class="notes">Close by asking what the audience would pick for a table that must never resize: chaining, for its gentle failure mode.</aside>
+  </section>
+
+</main>
+<script type="module">
+  import 'panel/deck';        // starts the first main.deck
+  import 'panel/components';  // registers p-diagram and p-chart (libraries load on first use)
+</script>
+</body></html>

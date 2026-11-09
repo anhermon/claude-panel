@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 400" role="img" aria-label="Wireframe: top navigation bar above full-width content">
+  <rect width="640" height="400" rx="14" fill="#1c1b1a"/>
+  <rect x="0" y="0" width="640" height="56" rx="14" fill="#2a2926"/>
+  <rect x="20" y="22" width="70" height="12" rx="6" fill="#c084fc"/>
+  <g fill="#55524c"><rect x="130" y="23" width="60" height="10" rx="5"/><rect x="206" y="23" width="52" height="10" rx="5"/><rect x="274" y="23" width="64" height="10" rx="5"/><rect x="354" y="23" width="48" height="10" rx="5"/></g>
+  <rect x="28" y="84" width="220" height="18" rx="9" fill="#ecebe8" opacity=".85"/>
+  <g fill="#3a3835"><rect x="28" y="120" width="584" height="130" rx="10"/><rect x="28" y="268" width="284" height="106" rx="10"/><rect x="328" y="268" width="284" height="106" rx="10"/></g>
+  <polyline points="52,226 140,186 230,206 330,150 440,170 580,134" fill="none" stroke="#c084fc" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

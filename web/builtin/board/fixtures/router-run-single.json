@@ -1,0 +1,30 @@
+{
+ "frames": [
+  {
+   "id": "checks",
+   "type": "checks",
+   "title": "Checks · Booking API endpoints",
+   "size": "l",
+   "result": "PASS",
+   "round": 0,
+   "maxRounds": 2,
+   "items": [
+    {
+     "item": "GET /bookings returns 200",
+     "pass": true,
+     "evidence": "curl -s localhost:3000/bookings -> 200, body is a JSON array of 3 bookings with id, date and status fields, all present"
+    },
+    {
+     "item": "POST /bookings validates the date",
+     "pass": true,
+     "evidence": "400 with message on a past date"
+    },
+    {
+     "item": "Auth header required",
+     "pass": null
+    }
+   ]
+  }
+ ],
+ "updatedAt": 1
+}

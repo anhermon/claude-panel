@@ -1,0 +1,963 @@
+{
+ "frames": [
+  {
+   "id": "now",
+   "type": "now",
+   "title": "Now",
+   "size": "m",
+   "text": "Deep per-agent activity insight",
+   "status": "working"
+  },
+  {
+   "id": "now-doing",
+   "type": "doing",
+   "title": "Doing now",
+   "size": "s"
+  },
+  {
+   "id": "lanes",
+   "type": "lanes",
+   "title": "Agents",
+   "size": "l"
+  },
+  {
+   "id": "bars",
+   "type": "bars",
+   "title": "Tokens per agent",
+   "size": "s",
+   "items": [
+    {
+     "label": "T40 Deep per-agent acti…",
+     "value": 563,
+     "color": "#38bdf8"
+    },
+    {
+     "label": "T43 Scene UI component …",
+     "value": 419,
+     "color": "#64748b"
+    },
+    {
+     "label": "T44 UML-style diagram e…",
+     "value": 375,
+     "color": "#64748b"
+    },
+    {
+     "label": "T49 /agents-info comman…",
+     "value": 220,
+     "color": "#38bdf8"
+    },
+    {
+     "label": "T39 Scrollable board an…",
+     "value": 206,
+     "color": "#64748b"
+    },
+    {
+     "label": "T47 Flexible prompt, sk…",
+     "value": 176,
+     "color": "#38bdf8"
+    }
+   ],
+   "unit": "k tokens"
+  },
+  {
+   "id": "activity-timeline",
+   "type": "swimlane",
+   "title": "Activity",
+   "size": "m",
+   "items": [
+    {
+     "label": "main",
+     "state": "waiting",
+     "from": 0,
+     "to": 22343,
+     "segs": [
+      {
+       "k": "reading",
+       "a": 21192,
+       "b": 21217
+      },
+      {
+       "k": "delegating",
+       "a": 21219,
+       "b": 21239
+      },
+      {
+       "k": "visual",
+       "a": 21247,
+       "b": 21248
+      },
+      {
+       "k": "reading",
+       "a": 21248,
+       "b": 21269
+      },
+      {
+       "k": "reading",
+       "a": 21513,
+       "b": 21534
+      },
+      {
+       "k": "delegating",
+       "a": 21541,
+       "b": 21561
+      },
+      {
+       "k": "delegating",
+       "a": 21650,
+       "b": 21670
+      },
+      {
+       "k": "visual",
+       "a": 22332,
+       "b": 22333
+      },
+      {
+       "k": "working",
+       "a": 22333,
+       "b": 22343
+      }
+     ]
+    },
+    {
+     "label": "T40 Deep per-agent acti…",
+     "state": "working",
+     "from": 20915,
+     "to": 22430,
+     "segs": [
+      {
+       "k": "logic",
+       "a": 21226,
+       "b": 21231
+      },
+      {
+       "k": "reading",
+       "a": 21231,
+       "b": 21264
+      },
+      {
+       "k": "working",
+       "a": 21264,
+       "b": 21284
+      },
+      {
+       "k": "working",
+       "a": 21289,
+       "b": 21310
+      },
+      {
+       "k": "working",
+       "a": 21329,
+       "b": 21390
+      },
+      {
+       "k": "tests",
+       "a": 21390,
+       "b": 21396
+      },
+      {
+       "k": "reading",
+       "a": 21396,
+       "b": 21416
+      },
+      {
+       "k": "reading",
+       "a": 21426,
+       "b": 21450
+      },
+      {
+       "k": "working",
+       "a": 21450,
+       "b": 21484
+      },
+      {
+       "k": "reading",
+       "a": 21484,
+       "b": 21505
+      },
+      {
+       "k": "working",
+       "a": 21505,
+       "b": 21521
+      },
+      {
+       "k": "reading",
+       "a": 21521,
+       "b": 21542
+      },
+      {
+       "k": "reading",
+       "a": 21545,
+       "b": 21565
+      },
+      {
+       "k": "reading",
+       "a": 21566,
+       "b": 21586
+      },
+      {
+       "k": "tests",
+       "a": 21658,
+       "b": 21711
+      },
+      {
+       "k": "reading",
+       "a": 21711,
+       "b": 21735
+      },
+      {
+       "k": "working",
+       "a": 21735,
+       "b": 21756
+      },
+      {
+       "k": "working",
+       "a": 21822,
+       "b": 21842
+      },
+      {
+       "k": "reading",
+       "a": 21881,
+       "b": 21915
+      },
+      {
+       "k": "reading",
+       "a": 21915,
+       "b": 21944
+      },
+      {
+       "k": "reading",
+       "a": 21974,
+       "b": 22015
+      },
+      {
+       "k": "working",
+       "a": 22015,
+       "b": 22054
+      },
+      {
+       "k": "visual",
+       "a": 22054,
+       "b": 22101
+      },
+      {
+       "k": "reading",
+       "a": 22101,
+       "b": 22102
+      },
+      {
+       "k": "visual",
+       "a": 22102,
+       "b": 22122
+      },
+      {
+       "k": "reading",
+       "a": 22176,
+       "b": 22213
+      },
+      {
+       "k": "working",
+       "a": 22213,
+       "b": 22236
+      },
+      {
+       "k": "tests",
+       "a": 22236,
+       "b": 22241
+      },
+      {
+       "k": "reading",
+       "a": 22241,
+       "b": 22249
+      },
+      {
+       "k": "ui",
+       "a": 22249,
+       "b": 22254
+      },
+      {
+       "k": "tests",
+       "a": 22254,
+       "b": 22281
+      },
+      {
+       "k": "visual",
+       "a": 22281,
+       "b": 22301
+      },
+      {
+       "k": "reading",
+       "a": 22301,
+       "b": 22351
+      },
+      {
+       "k": "working",
+       "a": 22351,
+       "b": 22357
+      },
+      {
+       "k": "reading",
+       "a": 22357,
+       "b": 22408
+      },
+      {
+       "k": "visual",
+       "a": 22408,
+       "b": 22429
+      },
+      {
+       "k": "working",
+       "a": 22429,
+       "b": 22430
+      }
+     ]
+    },
+    {
+     "label": "T47 Flexible prompt, sk…",
+     "state": "working",
+     "from": 21219,
+     "to": 22429,
+     "segs": [
+      {
+       "k": "reading",
+       "a": 21223,
+       "b": 21238
+      },
+      {
+       "k": "working",
+       "a": 21238,
+       "b": 21245
+      },
+      {
+       "k": "reading",
+       "a": 21245,
+       "b": 21305
+      },
+      {
+       "k": "working",
+       "a": 21305,
+       "b": 21335
+      },
+      {
+       "k": "tests",
+       "a": 21335,
+       "b": 21392
+      },
+      {
+       "k": "reading",
+       "a": 21392,
+       "b": 21408
+      },
+      {
+       "k": "working",
+       "a": 21408,
+       "b": 21448
+      },
+      {
+       "k": "reading",
+       "a": 21457,
+       "b": 21471
+      },
+      {
+       "k": "working",
+       "a": 21471,
+       "b": 21491
+      },
+      {
+       "k": "reading",
+       "a": 21499,
+       "b": 21523
+      },
+      {
+       "k": "working",
+       "a": 21523,
+       "b": 21527
+      },
+      {
+       "k": "reading",
+       "a": 21527,
+       "b": 21540
+      },
+      {
+       "k": "working",
+       "a": 21540,
+       "b": 21671
+      },
+      {
+       "k": "reading",
+       "a": 21671,
+       "b": 21676
+      },
+      {
+       "k": "working",
+       "a": 21676,
+       "b": 21697
+      },
+      {
+       "k": "working",
+       "a": 21700,
+       "b": 21704
+      },
+      {
+       "k": "reading",
+       "a": 21704,
+       "b": 21717
+      },
+      {
+       "k": "tests",
+       "a": 21717,
+       "b": 21741
+      },
+      {
+       "k": "working",
+       "a": 21818,
+       "b": 21855
+      },
+      {
+       "k": "reading",
+       "a": 21855,
+       "b": 21881
+      },
+      {
+       "k": "working",
+       "a": 21881,
+       "b": 21911
+      },
+      {
+       "k": "working",
+       "a": 21930,
+       "b": 21963
+      },
+      {
+       "k": "reading",
+       "a": 22126,
+       "b": 22132
+      },
+      {
+       "k": "working",
+       "a": 22132,
+       "b": 22349
+      },
+      {
+       "k": "tests",
+       "a": 22349,
+       "b": 22369
+      }
+     ]
+    },
+    {
+     "label": "T49 /agents-info comman…",
+     "state": "working",
+     "from": 21541,
+     "to": 22429,
+     "segs": [
+      {
+       "k": "reading",
+       "a": 21547,
+       "b": 21606
+      },
+      {
+       "k": "reading",
+       "a": 21623,
+       "b": 21660
+      },
+      {
+       "k": "reading",
+       "a": 21732,
+       "b": 21753
+      },
+      {
+       "k": "reading",
+       "a": 21793,
+       "b": 21813
+      },
+      {
+       "k": "logic",
+       "a": 21841,
+       "b": 21853
+      },
+      {
+       "k": "reading",
+       "a": 21853,
+       "b": 21868
+      },
+      {
+       "k": "working",
+       "a": 21868,
+       "b": 21886
+      },
+      {
+       "k": "logic",
+       "a": 21886,
+       "b": 21893
+      },
+      {
+       "k": "working",
+       "a": 21893,
+       "b": 21985
+      },
+      {
+       "k": "reading",
+       "a": 21985,
+       "b": 22006
+      },
+      {
+       "k": "reading",
+       "a": 22010,
+       "b": 22094
+      },
+      {
+       "k": "tests",
+       "a": 22094,
+       "b": 22379
+      }
+     ]
+    },
+    {
+     "label": "T44 UML-style diagram e…",
+     "state": "done",
+     "from": 20268,
+     "to": 22326,
+     "segs": [
+      {
+       "k": "working",
+       "a": 21193,
+       "b": 21230
+      },
+      {
+       "k": "reading",
+       "a": 21230,
+       "b": 21241
+      },
+      {
+       "k": "working",
+       "a": 21241,
+       "b": 21261
+      },
+      {
+       "k": "tests",
+       "a": 21272,
+       "b": 21281
+      },
+      {
+       "k": "working",
+       "a": 21281,
+       "b": 21286
+      },
+      {
+       "k": "reading",
+       "a": 21286,
+       "b": 21383
+      },
+      {
+       "k": "working",
+       "a": 21391,
+       "b": 21411
+      },
+      {
+       "k": "reading",
+       "a": 21468,
+       "b": 21485
+      },
+      {
+       "k": "working",
+       "a": 21485,
+       "b": 21502
+      },
+      {
+       "k": "visual",
+       "a": 21502,
+       "b": 21503
+      },
+      {
+       "k": "working",
+       "a": 21503,
+       "b": 21561
+      },
+      {
+       "k": "reading",
+       "a": 21561,
+       "b": 21579
+      },
+      {
+       "k": "visual",
+       "a": 21579,
+       "b": 21589
+      },
+      {
+       "k": "reading",
+       "a": 21589,
+       "b": 21600
+      },
+      {
+       "k": "visual",
+       "a": 21600,
+       "b": 21604
+      },
+      {
+       "k": "reading",
+       "a": 21604,
+       "b": 21613
+      },
+      {
+       "k": "working",
+       "a": 21613,
+       "b": 21633
+      },
+      {
+       "k": "working",
+       "a": 21801,
+       "b": 21805
+      },
+      {
+       "k": "reading",
+       "a": 21805,
+       "b": 21816
+      },
+      {
+       "k": "working",
+       "a": 21816,
+       "b": 21836
+      },
+      {
+       "k": "working",
+       "a": 22002,
+       "b": 22024
+      },
+      {
+       "k": "reading",
+       "a": 22024,
+       "b": 22030
+      },
+      {
+       "k": "working",
+       "a": 22030,
+       "b": 22036
+      },
+      {
+       "k": "reading",
+       "a": 22036,
+       "b": 22101
+      },
+      {
+       "k": "working",
+       "a": 22101,
+       "b": 22128
+      },
+      {
+       "k": "reading",
+       "a": 22128,
+       "b": 22132
+      },
+      {
+       "k": "visual",
+       "a": 22132,
+       "b": 22138
+      },
+      {
+       "k": "reading",
+       "a": 22138,
+       "b": 22145
+      },
+      {
+       "k": "working",
+       "a": 22145,
+       "b": 22165
+      },
+      {
+       "k": "visual",
+       "a": 22165,
+       "b": 22172
+      },
+      {
+       "k": "working",
+       "a": 22172,
+       "b": 22326
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "delegation",
+   "type": "uml",
+   "title": "Handoffs",
+   "size": "l",
+   "code": "sequenceDiagram\n  participant main as main\n  participant na73ad7514c as T40 Deep per-…\n  participant naa7567880f as T46 Audit pan…\n  participant naf05ed88c9 as T47 Flexible …\n  participant naee486a6c7 as T43 Scene UI …\n  participant nad3fa49e0f as T49 /agents-i…\n  participant nad291000b1 as T44 UML-style…\n  main->>na73ad7514c: spawn T40 Deep per-…\n  main->>naa7567880f: spawn T46 Audit pan…\n  naa7567880f-->>main: done\n  main->>naf05ed88c9: spawn T47 Flexible …\n  naee486a6c7-->>main: done\n  main->>nad3fa49e0f: spawn T49 /agents-i…\n  nad291000b1-->>main: done",
+   "highlight": {
+    "na73ad7514c": "active",
+    "naa7567880f": "done",
+    "naf05ed88c9": "active",
+    "naee486a6c7": "done",
+    "nad3fa49e0f": "active",
+    "nad291000b1": "done"
+   }
+  },
+  {
+   "id": "pipeline",
+   "type": "uml",
+   "title": "Pipeline",
+   "size": "l",
+   "code": "flowchart LR\n  lad291000b1[\"T44 UML-style dia…\"]\n  la73ad7514c[\"T40 Deep per-agen…\"]\n  laf05ed88c9[\"T47 Flexible prom…\"]\n  lad3fa49e0f[\"T49 /agents-info …\"]\n  classDef active stroke:#38bdf8,stroke-width:2px\n  classDef done stroke:#4ade80,stroke-width:2px\n  classDef blocked stroke:#f87171,stroke-width:2px\n  classDef todo stroke:#64748b,stroke-width:2px\n  class la73ad7514c,laf05ed88c9,lad3fa49e0f active\n  class lad291000b1 done",
+   "highlight": {
+    "lad291000b1": "done",
+    "la73ad7514c": "active",
+    "laf05ed88c9": "active",
+    "lad3fa49e0f": "active"
+   }
+  }
+ ],
+ "lanes": [
+  {
+   "id": "main",
+   "label": "main",
+   "state": "waiting",
+   "pct": null,
+   "step": "Deep per-agent activity insight",
+   "note": "",
+   "goal": "",
+   "dod": [],
+   "at": null,
+   "by": "main",
+   "loop": "main",
+   "calls": 213,
+   "startedAgoMs": 22428585,
+   "updatedAgoMs": 85625,
+   "insight": {
+    "kind": "waiting",
+    "headline": "Waiting",
+    "strip": ".......................w",
+    "mix": [
+     {
+      "kind": "working",
+      "pct": 89
+     },
+     {
+      "kind": "visual",
+      "pct": 11
+     }
+    ],
+    "files": [
+     "live-0.png",
+     "ui-catalog-1280x900-dark.png",
+     "report.md"
+    ],
+    "feed": [
+     "ran a command",
+     "read live-0.png"
+    ],
+    "tokens": 156410,
+    "isBusy": false,
+    "isMain": true,
+    "lastCallAgoMs": 95676
+   }
+  },
+  {
+   "id": "ad291000b1f1c904c",
+   "label": "T44 UML-style diagram engine, mermaid-based",
+   "state": "done",
+   "pct": null,
+   "step": "T44 · make UML-style diagrams (sequence, flowchart, state, class, ER, architect…",
+   "note": "",
+   "goal": "",
+   "dod": [],
+   "at": null,
+   "by": "ad291000b1f1c904c",
+   "loop": "ad291000b1f1c904c",
+   "calls": 128,
+   "startedAgoMs": 2160233,
+   "updatedAgoMs": 102965,
+   "insight": {
+    "kind": "done",
+    "headline": "Finished",
+    "strip": "..wwxxxxxwwxwwwwwwwwwwww",
+    "mix": [
+     {
+      "kind": "working",
+      "pct": 70
+     },
+     {
+      "kind": "reading",
+      "pct": 26
+     },
+     {
+      "kind": "visual",
+      "pct": 4
+     }
+    ],
+    "files": [
+     "served.png",
+     "uml-360x730.png",
+     "uml-1280x900.png"
+    ],
+    "feed": [
+     "ran a command",
+     "read served.png",
+     "ran a command"
+    ],
+    "tokens": 374911,
+    "isBusy": false,
+    "isMain": false,
+    "lastCallAgoMs": 256618
+   }
+  },
+  {
+   "id": "a73ad7514cc2d196d",
+   "label": "T40 Deep per-agent activity insight",
+   "state": "working",
+   "pct": null,
+   "step": "T45 (follow-up to T40, same area, you ha · at any moment the user can tell, per…",
+   "note": "",
+   "goal": "",
+   "dod": [],
+   "at": null,
+   "by": "a73ad7514cc2d196d",
+   "loop": "a73ad7514cc2d196d",
+   "calls": 169,
+   "startedAgoMs": 1513780,
+   "updatedAgoMs": 63,
+   "insight": {
+    "kind": "visual",
+    "headline": "Checking visually · reading screenshot",
+    "strip": "vvvv...xxxwxttvxxxxxxxxv",
+    "mix": [
+     {
+      "kind": "reading",
+      "pct": 52
+     },
+     {
+      "kind": "visual",
+      "pct": 23
+     },
+     {
+      "kind": "working",
+      "pct": 17
+     },
+     {
+      "kind": "tests",
+      "pct": 7
+     },
+     {
+      "kind": "ui",
+      "pct": 1
+     }
+    ],
+    "files": [
+     "agents-kinds-360x730-scroll…",
+     "agents-kinds-360x730.png",
+     "agents-kinds-720x730.png"
+    ],
+    "feed": [
+     "ran a script",
+     "read 2 files",
+     "browsed files"
+    ],
+    "tokens": 563228,
+    "isBusy": false,
+    "isMain": false,
+    "lastCallAgoMs": 63
+   }
+  },
+  {
+   "id": "af05ed88c972cde3b",
+   "label": "T47 Flexible prompt, skill, evals and anti-repetition (sonne",
+   "state": "working",
+   "pct": null,
+   "step": "T47 · make the panel's guidance and conventions context-driven instead of repea…",
+   "note": "",
+   "goal": "",
+   "dod": [],
+   "at": null,
+   "by": "af05ed88c972cde3b",
+   "loop": "af05ed88c972cde3b",
+   "calls": 60,
+   "startedAgoMs": 1209889,
+   "updatedAgoMs": 79744,
+   "insight": {
+    "kind": "thinking",
+    "headline": "Thinking",
+    "strip": "...xwwwwwwwwwwwwwwwt....",
+    "mix": [
+     {
+      "kind": "working",
+      "pct": 85
+     },
+     {
+      "kind": "reading",
+      "pct": 9
+     },
+     {
+      "kind": "tests",
+      "pct": 6
+     }
+    ],
+    "files": [
+     "report.md"
+    ],
+    "feed": [
+     "type-checked",
+     "ran a command",
+     "browsed files"
+    ],
+    "tokens": 175757,
+    "isBusy": false,
+    "isMain": false,
+    "lastCallAgoMs": 79744
+   }
+  },
+  {
+   "id": "ad3fa49e0f3cd8cc4",
+   "label": "T49 /agents-info command with 3D avatar scene",
+   "state": "working",
+   "pct": null,
+   "step": "T49 · a new slash command `/agents-info` that opens the panel on an `agents-inf…",
+   "note": "",
+   "goal": "",
+   "dod": [],
+   "at": null,
+   "by": "ad3fa49e0f3cd8cc4",
+   "loop": "ad3fa49e0f3cd8cc4",
+   "calls": 38,
+   "startedAgoMs": 887531,
+   "updatedAgoMs": 69736,
+   "insight": {
+    "kind": "thinking",
+    "headline": "Thinking",
+    "strip": "xxttttttttttttttttttt...",
+    "mix": [
+     {
+      "kind": "tests",
+      "pct": 54
+     },
+     {
+      "kind": "reading",
+      "pct": 22
+     },
+     {
+      "kind": "working",
+      "pct": 20
+     },
+     {
+      "kind": "logic",
+      "pct": 4
+     }
+    ],
+    "files": [
+     "agents-info-host.ts",
+     "agents-info-scene.ts"
+    ],
+    "feed": [
+     "ran tests",
+     "browsed files"
+    ],
+    "tokens": 220006,
+    "isBusy": false,
+    "isMain": false,
+    "lastCallAgoMs": 69736
+   }
+  }
+ ],
+ "now": {
+  "title": "Deep per-agent activity insight",
+  "status": "working"
+ }
+}

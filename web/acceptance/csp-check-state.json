@@ -1,0 +1,26 @@
+{
+  "v": 3,
+  "rev": 1,
+  "updatedAt": 1793870000000,
+  "url": null,
+  "status": "working",
+  "task": { "title": "Scene sandbox acceptance", "why": "Proves the iframe sandbox and the CSP in a real browser: scene files load, jsdelivr loads, every other origin is blocked." },
+  "ask": null,
+  "labels": {},
+  "context": [],
+  "done": [],
+  "next": [],
+  "cards": [],
+  "scenes": [
+    {
+      "id": "csp-check",
+      "title": "CSP check",
+      "dir": "../sample-scenes/csp-check",
+      "entry": "index.html",
+      "span": 3,
+      "height": 420,
+      "alt": "Eight PASS or FAIL rows: scene image, scene JSON, jsdelivr script (flag-aware), blocked fetch, blocked remote image, opaque origin, panel.fit helper, kit module via importmap.",
+      "rev": 1
+    }
+  ]
+}

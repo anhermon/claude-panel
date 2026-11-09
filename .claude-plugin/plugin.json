@@ -1,0 +1,24 @@
+{
+  "name": "panel",
+  "version": "0.1.0",
+  "license": "MIT",
+  "author": { "name": "anhermon" },
+  "description": "A live panel beside the chat: what the task is and why, context, done, next, cards, and sandbox scenes (HTML/JS folders), mirrored to a token-guarded browser view.",
+  "types": "./types/index.d.ts",
+  "userConfig": {
+    "doneRowMinutes": {"type": "number", "title": "Finished agent row (minutes)", "description": "How long a finished agent keeps its row on the board.", "default": 10, "required": false},
+    "dodFramesMax": {"type": "number", "title": "Checklist frames", "description": "At most this many agent checklist frames on the board at once.", "default": 3, "required": false},
+    "stripRoutingSuffix": {"type": "boolean", "title": "Strip routing note from agent names", "description": "Drop a trailing (sonnet/high) style note from an agent's name on the board.", "default": true, "required": false},
+    "goalLabels": {"type": "string", "title": "Goal line labels", "description": "Comma-separated labels of the brief line that states an agent's goal.", "default": "goal,objective", "required": false},
+    "ticketLabels": {"type": "string", "title": "Ticket line labels", "description": "Comma-separated labels of the brief line that names an agent's ticket.", "default": "ticket", "required": false},
+    "insightMinSeconds": {"type": "number", "title": "Insight minimum (seconds)", "description": "The workflow-insight frames wait for this many seconds of agent time before they say anything.", "default": 30, "required": false},
+    "repeatMin": {"type": "number", "title": "Repeat: times", "description": "The same file touched or command run this many times is shown as repeated work.", "default": 4, "required": false},
+    "retryMin": {"type": "number", "title": "Retry: times", "description": "A command run again right after failing this many times is shown as a retry.", "default": 2, "required": false},
+    "similarMin": {"type": "number", "title": "Same task: agents", "description": "This many agents started with the same kind of task are shown as repeated work.", "default": 3, "required": false},
+    "hintTestsPct": {"type": "number", "title": "Hint: tests share (%)", "description": "Suggest running fewer tests when tests and checks take at least this share of agent time.", "default": 35, "required": false},
+    "hintReadingPct": {"type": "number", "title": "Hint: reading share (%)", "description": "Suggest a file map when agents spend at least this share of their time reading before their first edit.", "default": 30, "required": false},
+    "hintSharedFiles": {"type": "number", "title": "Hint: shared files", "description": "Suggest putting files in the brief when at least this many files were each read by several agents.", "default": 3, "required": false},
+    "hintSharedAgents": {"type": "number", "title": "Hint: agents per shared file", "description": "How many agents must read the same file for it to count as shared.", "default": 3, "required": false},
+    "hintRetries": {"type": "number", "title": "Hint: retries", "description": "Suggest checking the cause when commands were re-run right after failing this many times in all.", "default": 3, "required": false}
+  }
+}

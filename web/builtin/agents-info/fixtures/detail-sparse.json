@@ -1,0 +1,259 @@
+{
+ "t40": {
+  "id": "t40",
+  "name": "T63 Quick grep (sonnet/low)",
+  "isMain": false,
+  "state": "waiting",
+  "startedAgoMs": 3441000,
+  "endedAgoMs": null,
+  "brief": "Check where tests are.",
+  "transcript": {
+   "isAvailable": true,
+   "reason": "",
+   "hasMore": false,
+   "pages": 1,
+   "isWhole": true,
+   "entries": [
+    {
+     "agoMs": 3420000,
+     "kind": "tool",
+     "tool": "Bash",
+     "label": "grep tests",
+     "ms": 300,
+     "error": "exit 1"
+    }
+   ]
+  },
+  "metrics": {
+   "elapsedMs": 3441000,
+   "activeMs": 20000,
+   "idleMs": 3421000,
+   "calls": 1,
+   "errors": 1,
+   "retries": 0,
+   "tokens": {
+    "total": null,
+    "steps": 0,
+    "series": []
+   },
+   "kinds": [
+    {
+     "kind": "tests",
+     "label": "Tests",
+     "color": "#fbbf24",
+     "ms": 20000
+    }
+   ],
+   "tools": [
+    {
+     "tool": "Bash",
+     "n": 1
+    }
+   ],
+   "files": []
+  },
+  "struggles": {
+   "headline": "1 failed command still open",
+   "badge": 1,
+   "open": 1,
+   "resolved": 0,
+   "items": [
+    {
+     "kind": "failing-loop",
+     "title": "`grep tests` failed",
+     "evidence": "exit code 1; output ends: (no matches)",
+     "tAgoMs": 3000000,
+     "lastTAgoMs": 3000000,
+     "n": 1,
+     "outcome": "open",
+     "hint": "",
+     "recent": true
+    }
+   ],
+   "calm": []
+  },
+  "progress": {
+   "now": {
+    "say": "",
+    "sayT": null,
+    "call": null,
+    "pace": "",
+    "laneStep": "",
+    "laneNote": ""
+   },
+   "plan": {
+    "source": "none",
+    "label": "",
+    "items": []
+   },
+   "phases": [],
+   "phaseNote": "Phases could not be derived.",
+   "done": {
+    "files": 0,
+    "folders": [],
+    "checks": [],
+    "images": [],
+    "imageCount": 0
+   },
+   "decisions": [],
+   "issues": {
+    "openCount": 1,
+    "summary": "1 open.",
+    "list": [
+     {
+      "kind": "failure",
+      "title": "`grep tests` failed",
+      "evidence": "exit code 1; output ends: (no matches)",
+      "tAgoMs": 3000000,
+      "outcome": "open"
+     }
+    ]
+   }
+  }
+ },
+ "main": {
+  "id": "main",
+  "name": "Me",
+  "isMain": true,
+  "state": "working",
+  "startedAgoMs": 5400000,
+  "endedAgoMs": null,
+  "brief": "Continue with T51: merge the Agents tile with the board's agent rows and add the drill-down.",
+  "transcript": {
+   "isAvailable": true,
+   "reason": "",
+   "hasMore": false,
+   "pages": 1,
+   "isWhole": true,
+   "entries": [
+    {
+     "agoMs": 500000,
+     "kind": "say",
+     "text": "Dispatching three workers for the open tickets."
+    },
+    {
+     "agoMs": 480000,
+     "kind": "tool",
+     "tool": "Agent",
+     "label": "T43 Work-kind classifier",
+     "ms": 1200,
+     "error": ""
+    },
+    {
+     "agoMs": 470000,
+     "kind": "tool",
+     "tool": "Agent",
+     "label": "T40 Deep per-agent insight",
+     "ms": 1100,
+     "error": ""
+    },
+    {
+     "agoMs": 60000,
+     "kind": "say",
+     "text": "Waiting for the workers to report."
+    }
+   ]
+  },
+  "metrics": {
+   "elapsedMs": 5400000,
+   "activeMs": 900000,
+   "idleMs": 4500000,
+   "calls": 24,
+   "errors": 0,
+   "retries": 0,
+   "tokens": {
+    "total": 310000,
+    "steps": 9,
+    "series": [
+     [
+      5300,
+      20000
+     ],
+     [
+      4000,
+      90000
+     ],
+     [
+      2500,
+      180000
+     ],
+     [
+      1000,
+      260000
+     ],
+     [
+      60,
+      310000
+     ]
+    ]
+   },
+   "kinds": [
+    {
+     "kind": "delegating",
+     "label": "Delegating",
+     "color": "#c084fc",
+     "ms": 600000
+    },
+    {
+     "kind": "reading",
+     "label": "Reading",
+     "color": "#94a3b8",
+     "ms": 300000
+    }
+   ],
+   "tools": [
+    {
+     "tool": "Agent",
+     "n": 9
+    },
+    {
+     "tool": "Read",
+     "n": 8
+    },
+    {
+     "tool": "Bash",
+     "n": 7
+    }
+   ],
+   "files": []
+  },
+  "struggles": {
+   "headline": "No failures in 0 tool calls.",
+   "badge": 0,
+   "open": 0,
+   "resolved": 0,
+   "items": [],
+   "calm": []
+  },
+  "progress": {
+   "now": {
+    "say": "",
+    "sayT": null,
+    "call": null,
+    "pace": "",
+    "laneStep": "",
+    "laneNote": ""
+   },
+   "plan": {
+    "source": "none",
+    "label": "",
+    "items": []
+   },
+   "phases": [],
+   "phaseNote": "No tool calls read from the transcript yet, so no phases can be shown.",
+   "done": {
+    "files": 0,
+    "folders": [],
+    "checks": [],
+    "images": [],
+    "imageCount": 0
+   },
+   "decisions": [],
+   "issues": {
+    "openCount": 0,
+    "summary": "No failures so far.",
+    "list": []
+   }
+  }
+ }
+}

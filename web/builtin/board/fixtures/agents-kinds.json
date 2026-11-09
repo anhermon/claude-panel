@@ -1,0 +1,750 @@
+{
+ "frames": [
+  {
+   "id": "now",
+   "type": "now",
+   "title": "Now",
+   "size": "m",
+   "text": "Say what kind of work agents do",
+   "status": "working"
+  },
+  {
+   "id": "now-doing",
+   "type": "doing",
+   "title": "Doing now",
+   "size": "s"
+  },
+  {
+   "id": "lanes",
+   "type": "lanes",
+   "title": "Agents",
+   "size": "l"
+  },
+  {
+   "id": "bars",
+   "type": "bars",
+   "title": "Tokens per agent",
+   "size": "s",
+   "items": [
+    {
+     "label": "Build the board styles",
+     "value": 113,
+     "color": "#38bdf8"
+    },
+    {
+     "label": "Research mermaid options",
+     "value": 36,
+     "color": "#38bdf8"
+    }
+   ],
+   "unit": "k tokens"
+  },
+  {
+   "id": "activity-timeline",
+   "type": "swimlane",
+   "title": "Activity",
+   "size": "m",
+   "items": [
+    {
+     "label": "main",
+     "state": "working",
+     "from": 0,
+     "to": 1620,
+     "segs": [
+      {
+       "k": "reading",
+       "a": 792,
+       "b": 820
+      },
+      {
+       "k": "logic",
+       "a": 820,
+       "b": 848
+      },
+      {
+       "k": "tests",
+       "a": 848,
+       "b": 876
+      },
+      {
+       "k": "visual",
+       "a": 876,
+       "b": 890
+      },
+      {
+       "k": "ui",
+       "a": 890,
+       "b": 904
+      },
+      {
+       "k": "delegating",
+       "a": 904,
+       "b": 918
+      },
+      {
+       "k": "logic",
+       "a": 918,
+       "b": 932
+      },
+      {
+       "k": "reading",
+       "a": 932,
+       "b": 960
+      },
+      {
+       "k": "logic",
+       "a": 960,
+       "b": 988
+      },
+      {
+       "k": "tests",
+       "a": 988,
+       "b": 1016
+      },
+      {
+       "k": "visual",
+       "a": 1016,
+       "b": 1030
+      },
+      {
+       "k": "ui",
+       "a": 1030,
+       "b": 1044
+      },
+      {
+       "k": "delegating",
+       "a": 1044,
+       "b": 1058
+      },
+      {
+       "k": "logic",
+       "a": 1058,
+       "b": 1072
+      },
+      {
+       "k": "reading",
+       "a": 1072,
+       "b": 1100
+      },
+      {
+       "k": "logic",
+       "a": 1100,
+       "b": 1128
+      },
+      {
+       "k": "tests",
+       "a": 1128,
+       "b": 1156
+      },
+      {
+       "k": "visual",
+       "a": 1156,
+       "b": 1170
+      },
+      {
+       "k": "ui",
+       "a": 1170,
+       "b": 1184
+      },
+      {
+       "k": "delegating",
+       "a": 1184,
+       "b": 1198
+      },
+      {
+       "k": "logic",
+       "a": 1198,
+       "b": 1212
+      },
+      {
+       "k": "reading",
+       "a": 1212,
+       "b": 1240
+      },
+      {
+       "k": "logic",
+       "a": 1240,
+       "b": 1268
+      },
+      {
+       "k": "tests",
+       "a": 1268,
+       "b": 1296
+      },
+      {
+       "k": "visual",
+       "a": 1296,
+       "b": 1310
+      },
+      {
+       "k": "ui",
+       "a": 1310,
+       "b": 1324
+      },
+      {
+       "k": "delegating",
+       "a": 1324,
+       "b": 1338
+      },
+      {
+       "k": "logic",
+       "a": 1338,
+       "b": 1352
+      },
+      {
+       "k": "reading",
+       "a": 1352,
+       "b": 1380
+      },
+      {
+       "k": "logic",
+       "a": 1380,
+       "b": 1408
+      },
+      {
+       "k": "tests",
+       "a": 1408,
+       "b": 1436
+      },
+      {
+       "k": "visual",
+       "a": 1436,
+       "b": 1450
+      },
+      {
+       "k": "ui",
+       "a": 1450,
+       "b": 1464
+      },
+      {
+       "k": "delegating",
+       "a": 1464,
+       "b": 1478
+      },
+      {
+       "k": "logic",
+       "a": 1478,
+       "b": 1492
+      },
+      {
+       "k": "reading",
+       "a": 1492,
+       "b": 1520
+      },
+      {
+       "k": "logic",
+       "a": 1520,
+       "b": 1548
+      },
+      {
+       "k": "tests",
+       "a": 1548,
+       "b": 1576
+      },
+      {
+       "k": "visual",
+       "a": 1576,
+       "b": 1590
+      },
+      {
+       "k": "ui",
+       "a": 1590,
+       "b": 1604
+      },
+      {
+       "k": "delegating",
+       "a": 1604,
+       "b": 1618
+      },
+      {
+       "k": "logic",
+       "a": 1618,
+       "b": 1620
+      }
+     ]
+    },
+    {
+     "label": "Build the board styles",
+     "state": "working",
+     "from": 56,
+     "to": 1620,
+     "segs": [
+      {
+       "k": "reading",
+       "a": 1376,
+       "b": 1397
+      },
+      {
+       "k": "ui",
+       "a": 1406,
+       "b": 1427
+      },
+      {
+       "k": "ui",
+       "a": 1436,
+       "b": 1457
+      },
+      {
+       "k": "ui",
+       "a": 1466,
+       "b": 1487
+      },
+      {
+       "k": "tests",
+       "a": 1496,
+       "b": 1517
+      },
+      {
+       "k": "ui",
+       "a": 1526,
+       "b": 1547
+      },
+      {
+       "k": "visual",
+       "a": 1556,
+       "b": 1577
+      },
+      {
+       "k": "ui",
+       "a": 1586,
+       "b": 1607
+      },
+      {
+       "k": "ui",
+       "a": 1616,
+       "b": 1620
+      }
+     ]
+    },
+    {
+     "label": "Research mermaid options",
+     "state": "working",
+     "from": 780,
+     "to": 1620,
+     "segs": [
+      {
+       "k": "research",
+       "a": 1487,
+       "b": 1508
+      },
+      {
+       "k": "research",
+       "a": 1512,
+       "b": 1533
+      },
+      {
+       "k": "research",
+       "a": 1537,
+       "b": 1558
+      },
+      {
+       "k": "research",
+       "a": 1562,
+       "b": 1583
+      },
+      {
+       "k": "reading",
+       "a": 1587,
+       "b": 1608
+      },
+      {
+       "k": "research",
+       "a": 1612,
+       "b": 1620
+      }
+     ]
+    },
+    {
+     "label": "Write the skill docs",
+     "state": "working",
+     "from": 1080,
+     "to": 1620,
+     "segs": [
+      {
+       "k": "reading",
+       "a": 1527,
+       "b": 1548
+      },
+      {
+       "k": "docs",
+       "a": 1557,
+       "b": 1578
+      },
+      {
+       "k": "docs",
+       "a": 1587,
+       "b": 1608
+      },
+      {
+       "k": "docs",
+       "a": 1617,
+       "b": 1620
+      }
+     ]
+    },
+    {
+     "label": "Visual check",
+     "state": "working",
+     "from": 1260,
+     "to": 1620,
+     "segs": [
+      {
+       "k": "visual",
+       "a": 1515,
+       "b": 1575
+      },
+      {
+       "k": "ui",
+       "a": 1575,
+       "b": 1595
+      },
+      {
+       "k": "visual",
+       "a": 1595,
+       "b": 1620
+      }
+     ]
+    },
+    {
+     "label": "Coordinator helper",
+     "state": "working",
+     "from": 1440,
+     "to": 1620,
+     "segs": [
+      {
+       "k": "reading",
+       "a": 1574,
+       "b": 1589
+      },
+      {
+       "k": "delegating",
+       "a": 1589,
+       "b": 1620
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "delegation",
+   "type": "uml",
+   "title": "Handoffs",
+   "size": "l",
+   "code": "sequenceDiagram\n  participant main as main\n  participant nb1 as Build the boa…\n  participant nb2 as Research merm…\n  participant nb3 as Write the ski…\n  participant nb4 as Visual check\n  participant nb5 as Coordinator h…\n  main->>nb1: spawn Build the boa…\n  main->>nb2: spawn Research merm…\n  main->>nb3: spawn Write the ski…\n  main->>nb4: spawn Visual check\n  main->>nb5: spawn Coordinator h…",
+   "highlight": {
+    "nb1": "active",
+    "nb2": "active",
+    "nb3": "active",
+    "nb4": "active",
+    "nb5": "active"
+   }
+  },
+  {
+   "id": "pipeline",
+   "type": "uml",
+   "title": "Pipeline",
+   "size": "l",
+   "code": "flowchart LR\n  lb1[\"Build the board s…\"]\n  lb2[\"Research mermaid …\"]\n  lb3[\"Write the skill d…\"]\n  lb4[\"Visual check\"]\n  classDef active stroke:#38bdf8,stroke-width:2px\n  classDef done stroke:#4ade80,stroke-width:2px\n  classDef blocked stroke:#f87171,stroke-width:2px\n  classDef todo stroke:#64748b,stroke-width:2px\n  class lb1,lb2,lb3,lb4 active",
+   "highlight": {
+    "lb1": "active",
+    "lb2": "active",
+    "lb3": "active",
+    "lb4": "active"
+   }
+  }
+ ],
+ "lanes": [
+  {
+   "id": "main",
+   "label": "main",
+   "state": "working",
+   "pct": null,
+   "step": "Say what kind of work agents do",
+   "note": "",
+   "goal": "",
+   "dod": [],
+   "at": null,
+   "by": "main",
+   "loop": "main",
+   "calls": 60,
+   "startedAgoMs": 1620000,
+   "updatedAgoMs": 0,
+   "insight": {
+    "kind": "logic",
+    "headline": "Writing logic · agent-insight.ts, work-kinds.ts",
+    "strip": "ltvuglxxllttvulxxllttvug",
+    "mix": [
+     {
+      "kind": "logic",
+      "pct": 27
+     },
+     {
+      "kind": "tests",
+      "pct": 19
+     },
+     {
+      "kind": "reading",
+      "pct": 19
+     },
+     {
+      "kind": "ui",
+      "pct": 12
+     },
+     {
+      "kind": "delegating",
+      "pct": 12
+     },
+     {
+      "kind": "visual",
+      "pct": 11
+     }
+    ],
+    "files": [
+     "agent-insight.ts",
+     "board.css",
+     "shot.png"
+    ],
+    "feed": [
+     "edited agent-insight.ts",
+     "handed work to an agent",
+     "edited board.css"
+    ],
+    "tokens": null,
+    "isBusy": false,
+    "isMain": true,
+    "lastCallAgoMs": 2000
+   }
+  },
+  {
+   "id": "b1",
+   "label": "Build the board styles",
+   "state": "working",
+   "pct": null,
+   "step": "Style the doing frame.",
+   "note": "",
+   "goal": "",
+   "dod": [],
+   "at": null,
+   "by": "b1",
+   "loop": "b1",
+   "calls": 9,
+   "startedAgoMs": 1564000,
+   "updatedAgoMs": 1000,
+   "insight": {
+    "kind": "ui",
+    "headline": "Writing UI · lanes.js, doing.css",
+    "strip": ".......xxuuuuuuttuuvvuuu",
+    "mix": [
+     {
+      "kind": "ui",
+      "pct": 64
+     },
+     {
+      "kind": "tests",
+      "pct": 12
+     },
+     {
+      "kind": "visual",
+      "pct": 12
+     },
+     {
+      "kind": "reading",
+      "pct": 12
+     }
+    ],
+    "files": [
+     "lanes.js",
+     "doing.css",
+     "shot.png"
+    ],
+    "feed": [
+     "edited 2 files",
+     "read shot.png",
+     "edited lanes.js"
+    ],
+    "tokens": 113000,
+    "isBusy": false,
+    "isMain": false,
+    "lastCallAgoMs": 4000
+   }
+  },
+  {
+   "id": "b2",
+   "label": "Research mermaid options",
+   "state": "working",
+   "pct": null,
+   "step": "Desk research.",
+   "note": "",
+   "goal": "",
+   "dod": [],
+   "at": null,
+   "by": "b2",
+   "loop": "b2",
+   "calls": 6,
+   "startedAgoMs": 840000,
+   "updatedAgoMs": 7200,
+   "insight": {
+    "kind": "research",
+    "headline": "Researching",
+    "strip": "...............rrrrrrrxr",
+    "mix": [
+     {
+      "kind": "research",
+      "pct": 81
+     },
+     {
+      "kind": "reading",
+      "pct": 19
+     }
+    ],
+    "files": [
+     "notes.md"
+    ],
+    "feed": [
+     "searched the web",
+     "read notes.md",
+     "searched the web"
+    ],
+    "tokens": 36400,
+    "isBusy": false,
+    "isMain": false,
+    "lastCallAgoMs": 8000
+   }
+  },
+  {
+   "id": "b3",
+   "label": "Write the skill docs",
+   "state": "working",
+   "pct": null,
+   "step": "Docs for the panel.",
+   "note": "",
+   "goal": "",
+   "dod": [],
+   "at": null,
+   "by": "b3",
+   "loop": "b3",
+   "calls": 4,
+   "startedAgoMs": 540000,
+   "updatedAgoMs": 2200,
+   "insight": {
+    "kind": "docs",
+    "headline": "Writing docs · README.md, SKILL.md",
+    "strip": ".................xxddddd",
+    "mix": [
+     {
+      "kind": "docs",
+      "pct": 68
+     },
+     {
+      "kind": "reading",
+      "pct": 32
+     }
+    ],
+    "files": [
+     "README.md",
+     "SKILL.md"
+    ],
+    "feed": [
+     "wrote README.md",
+     "edited 2 files",
+     "read SKILL.md"
+    ],
+    "tokens": null,
+    "isBusy": false,
+    "isMain": false,
+    "lastCallAgoMs": 3000
+   }
+  },
+  {
+   "id": "b4",
+   "label": "Visual check",
+   "state": "working",
+   "pct": null,
+   "step": "Render and read PNGs.",
+   "note": "",
+   "goal": "",
+   "dod": [],
+   "at": null,
+   "by": "b4",
+   "loop": "b4",
+   "calls": 6,
+   "startedAgoMs": 360000,
+   "updatedAgoMs": 4200,
+   "insight": {
+    "kind": "visual",
+    "headline": "Checking visually · reading screenshot",
+    "strip": "................vvvvvuvv",
+    "mix": [
+     {
+      "kind": "visual",
+      "pct": 81
+     },
+     {
+      "kind": "ui",
+      "pct": 19
+     }
+    ],
+    "files": [
+     "c.png",
+     "board.css",
+     "b.png"
+    ],
+    "feed": [
+     "read c.png",
+     "rendered a page",
+     "edited board.css"
+    ],
+    "tokens": null,
+    "isBusy": false,
+    "isMain": false,
+    "lastCallAgoMs": 5000
+   }
+  },
+  {
+   "id": "b5",
+   "label": "Coordinator helper",
+   "state": "working",
+   "pct": null,
+   "step": "Hands out work.",
+   "note": "",
+   "goal": "",
+   "dod": [],
+   "at": null,
+   "by": "b5",
+   "loop": "b5",
+   "calls": 4,
+   "startedAgoMs": 180000,
+   "updatedAgoMs": 200,
+   "insight": {
+    "kind": "delegating",
+    "headline": "Delegating",
+    "strip": ".................xxxgggg",
+    "mix": [
+     {
+      "kind": "delegating",
+      "pct": 67
+     },
+     {
+      "kind": "reading",
+      "pct": 33
+     }
+    ],
+    "files": [
+     "brief.md"
+    ],
+    "feed": [
+     "handed work to an agent",
+     "read brief.md"
+    ],
+    "tokens": null,
+    "isBusy": false,
+    "isMain": false,
+    "lastCallAgoMs": 1000
+   }
+  }
+ ],
+ "now": {
+  "title": "Say what kind of work agents do",
+  "status": "working"
+ }
+}

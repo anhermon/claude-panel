@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Panel</title>
+<link rel="icon" href="data:,">
+<style>
+/* Design tokens only; component styles are in ui.css. Light by default, dark via prefers-color-scheme. */
+:root {
+  color-scheme: light dark;
+  --bg: #fafaf9;
+  --surface: #ffffff;
+  --text: #1c1b1a;
+  --muted: #6b6760;
+  --border: #e4e1db;
+  --border-strong: #cfcac1;
+  --track: #e4e1db;
+  --accent: #2f5bd0;
+  --accent-bg: #eaf0fc;
+  --amber: #d97706;
+  --amber-text: #92400e;
+  --amber-bg: #fef5e3;
+  --green: #15803d;
+  --green-bg: #eaf6ee;
+  --red: #b91c1c;
+  --red-bg: #fdecec;
+  --code-bg: #f1efeb;
+  --chip-bg: #efede8;
+  --flash: #e3e9f8;
+  --font: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  --gutter: 24px;
+  --max-width: 1040px;
+  --section-gap: 36px;
+  --card-gap: 16px;
+  --card-radius: 12px;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #141413;
+    --surface: #1c1b1a;
+    --text: #ecebe8;
+    --muted: #a19d95;
+    --border: #2f2d2a;
+    --border-strong: #46433e;
+    --track: #2f2d2a;
+    --accent: #7aa2ff;
+    --accent-bg: #172036;
+    --amber: #fbbf24;
+    --amber-text: #fbbf24;
+    --amber-bg: #2a2110;
+    --green: #4ade80;
+    --green-bg: #12251a;
+    --red: #f87171;
+    --red-bg: #2a1414;
+    --code-bg: #121211;
+    --chip-bg: #2a2826;
+    --flash: #1f2a44;
+  }
+}
+@media (max-width: 599px) { :root { --gutter: 16px; --section-gap: 28px; } }
+html { background: var(--bg); }
+body { margin: 0; background: var(--bg); color: var(--text); }
+</style>
+<link rel="stylesheet" href="ui.css">
+<script src="blocks.js" defer></script>
+<script src="scenes.js" defer></script>
+<script src="events-client.js" defer></script>
+<script src="workspace/layout.js" defer></script>
+<script src="stage.js" defer></script>
+<script src="rail.js" defer></script>
+<script src="ui.js" defer></script>
+</head>
+<body>
+<div class="shell" id="shell">
+  <header class="stage-rail" id="rail" hidden>
+    <span class="rail-status"><span class="dot working" id="rail-dot" aria-hidden="true"></span><span class="rail-status-label" id="rail-status"></span></span>
+    <span class="rail-title" id="rail-title"></span>
+    <span class="rail-ask" id="rail-ask" hidden></span>
+    <span class="rail-spacer"></span>
+    <span class="rail-conn" id="rail-conn" hidden>reconnecting…</span>
+    <span class="rail-progress" id="rail-progress" hidden></span>
+    <span class="rail-actions" id="rail-actions"></span>
+  </header>
+  <div class="rail-hot" aria-hidden="true"></div>
+  <main class="stage" id="stage" aria-label="Stage" hidden></main>
+  <aside class="drawer" id="drawer" aria-label="Panel details" tabindex="-1" hidden>
+    <div class="drawer-head" id="drawer-head"><h2>Details</h2></div>
+    <div class="drawer-body" id="drawer-body"></div>
+  </aside>
+  <main id="main" aria-live="polite">
+    <div class="content" id="content">
+      <div class="bar">
+        <span class="status" id="status" hidden><span class="dot working" id="dot" aria-hidden="true"></span><span id="status-label"></span></span>
+        <span aria-live="off"><span class="conn" id="conn" hidden>reconnecting…</span><span id="updated"></span></span>
+      </div>
+      <header id="head"></header>
+      <section id="ask" class="ask" hidden></section>
+      <section id="notes" class="notes" hidden></section>
+      <div class="cards" id="pinned" hidden></div>
+      <div class="cards" id="scenes" hidden></div>
+      <div class="cols" id="cols" hidden>
+        <section class="col-context" id="col-context" hidden></section>
+        <section class="col-done" id="col-done" hidden></section>
+        <section class="col-next" id="col-next" hidden></section>
+      </div>
+      <div class="cards" id="cards" hidden></div>
+      <p class="waiting" id="waiting">Waiting for Claude…</p>
+    </div>
+  </main>
+  <p class="toast" id="toast" role="status" aria-live="polite" hidden></p>
+</div>
+</body>
+</html>

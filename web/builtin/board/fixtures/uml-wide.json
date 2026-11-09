@@ -1,0 +1,11 @@
+{
+ "frames": [
+  { "id": "flow", "type": "uml", "title": "Long pipeline (pans)", "size": "l",
+    "code": "flowchart LR\n  a[Checkout] --> b[Install] --> c[Lint] --> d[Unit tests] --> e[Build] --> f[Deploy stage] --> g[Smoke] --> h[Promote]",
+    "highlight": { "a": "done", "b": "done", "c": "done", "d": "active", "e": "todo" } },
+  { "id": "seq", "type": "uml", "title": "Eight participants (squeezed)", "size": "l",
+    "code": "sequenceDiagram\n  participant M as main\n  participant A as Survey\n  participant B as Implement\n  participant C as Review\n  participant D as Run the checks\n  participant E as Docs\n  participant F as Deploy\n  participant G as Verify\n  M->>A: spawn Survey\n  M->>B: spawn Implement\n  M->>C: spawn Review\n  M->>D: spawn Run the checks\n  A-->>M: done\n  M->>E: spawn Docs\n  M->>F: spawn Deploy\n  M->>G: spawn Verify",
+    "highlight": { "B": "active", "A": "done" } }
+ ],
+ "updatedAt": 1794133809000
+}

@@ -1,0 +1,8 @@
+schema_version: "1.1"
+name: debugging-picks-reasoning-form
+description: "Debugging: hypotheses/flow go on the panel as a board frame (steps, uml, timeline, compare ...), not a stage deck"
+runs: 3
+execution:
+  max_turns: 6
+  timeout_seconds: 180
+  prompt: "A test fails about one run in five, only in CI. My suspects: a tmp dir shared between tests, a race in fixture teardown, or an assertion that depends on the clock. Put how you will narrow this down on the panel so I can follow it. There are no files in this session; work from this description."

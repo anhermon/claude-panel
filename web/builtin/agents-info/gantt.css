@@ -1,0 +1,77 @@
+/* The agent gantt: a toggle and a shared time axis above the rows, a track per row. The row is [avatar + text | track] on a wide list
+   (the left part ~38%) and the track drops under the text, full width, on a narrow one. Colours come from agents-info.css and the data. */
+.gantt { flex: 1; min-height: 0; min-width: 0; display: flex; flex-direction: column; container: gantt / inline-size; --g-h: 22px; --g-bar-h: 14px; --g-dot: 10px; }
+#app[data-view="detail"] .gantt, .gantt:has(> .list[hidden]) { display: none; }
+.g-head { flex: none; margin: 0 0 4px; padding: 0 calc(11px + var(--g-gutter, 0px)) 0 9px; }
+.g-head[hidden] { display: none; }
+.g-toggle { display: inline-flex; gap: 2px; padding: 2px; margin: 0 0 6px; border: 1px solid var(--line); border-radius: 999px; }
+.g-mode { all: unset; box-sizing: border-box; cursor: pointer; display: inline-flex; align-items: center; min-height: 26px; padding: 0 11px; border-radius: 999px; color: var(--mut); font-size: max(12px, .84em); font-weight: 600; white-space: nowrap; }
+.g-mode:hover { color: var(--fg); }
+.g-mode[aria-pressed="true"] { background: var(--card-hi); color: var(--fg); box-shadow: inset 0 0 0 1px var(--acc); }
+.g-mode:focus-visible { outline: 2px solid var(--acc); outline-offset: 1px; }
+.g-axis { position: relative; height: 22px; width: var(--g-track-w, 100%); margin-left: auto; border-bottom: 1px solid var(--line); }
+.g-tick { position: absolute; top: 0; margin: 0; font-size: max(12px, .8em); line-height: 18px; color: var(--mut); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.g-tick::after { content: ""; position: absolute; bottom: -4px; left: 0; width: 1px; height: 4px; background: var(--mut); }
+.g-tick[data-anchor="mid"] { transform: translateX(-50%); }
+.g-tick[data-anchor="mid"]::after { left: 50%; }
+.g-tick[data-anchor="end"] { transform: translateX(-100%); }
+.g-tick[data-anchor="end"]::after { left: auto; right: 0; }
+.g-tick:last-child { color: var(--acc); font-weight: 650; }
+.g-tick:last-child::after { background: var(--acc); }
+
+/* the left part of a row: title / chips + kind / step / numbers, four lines (the row-top and row-sub boxes dissolve into the row) */
+.gantt .row-btn { row-gap: 4px; }
+.gantt .row-main { flex-flow: row wrap; align-items: center; gap: 2px 8px; }
+.gantt .row-top, .gantt .row-sub { display: contents; }
+.gantt .row-top > * { order: 1; }
+.gantt .row-name { order: 0; flex: 1 1 100%; }
+.gantt .row-kind { order: 2; }
+.gantt .row-feed { order: 3; flex: 1 1 100%; min-width: 0; }
+.gantt .row-meta { order: 4; flex: 1 1 100%; min-width: 0; white-space: normal; }
+
+.g-track { position: relative; display: block; height: var(--g-h); min-width: 0; grid-column: 1 / -1; grid-row: 2; border-radius: 6px; background: color-mix(in srgb, var(--line) 38%, transparent); box-shadow: inset -2px 0 0 color-mix(in srgb, var(--acc) 80%, transparent); }
+.g-grid i { position: absolute; top: 0; bottom: 0; width: 1px; background: color-mix(in srgb, var(--line) 90%, transparent); }
+.g-bar { position: absolute; top: calc((var(--g-h) - var(--g-bar-h)) / 2); height: var(--g-bar-h); min-width: 0; overflow: hidden; border-radius: 4px; background: color-mix(in srgb, var(--c) 30%, var(--card)); }
+.g-bar[hidden], .g-dot[hidden], .g-end[hidden], .g-chev[hidden] { display: none; }
+.g-bar[data-clipped="true"] { border-top-left-radius: 0; border-bottom-left-radius: 0; }
+.g-seg { position: absolute; top: 0; bottom: 0; display: block; }
+.g-bar[data-running="true"]::after { content: ""; position: absolute; right: 0; top: 0; bottom: 0; width: 6px; background: repeating-linear-gradient(90deg, rgba(255, 255, 255, .85) 0 2px, transparent 2px 4px); animation: g-pulse 1.4s ease-in-out infinite; }
+@keyframes g-pulse { 0%, 100% { opacity: .35; } 50% { opacity: 1; } }
+.row[data-state="waiting"] .g-bar { box-shadow: 0 0 0 1.5px var(--s-waiting); }
+.row[data-state="blocked"] .g-bar { box-shadow: 0 0 0 1.5px var(--s-blocked); }
+.g-dot { position: absolute; top: calc((var(--g-h) - var(--g-dot)) / 2); width: var(--g-dot); height: var(--g-dot); border-radius: 50%; background: var(--fg); box-shadow: 0 0 0 2px var(--bg); pointer-events: none; }
+.g-end { position: absolute; top: calc((var(--g-h) - 16px) / 2); width: 16px; height: 16px; display: grid; place-items: center; border-radius: 50%; font-size: 12px; font-weight: 800; line-height: 1; color: #0b0c10; pointer-events: none; }
+.g-end[data-mark="check"] { background: var(--s-done); }
+.g-end[data-mark="cross"] { background: var(--s-blocked); }
+.g-lab { position: absolute; top: 50%; transform: translateY(-50%); width: 64px; font-size: max(12px, .8em); line-height: 16px; color: var(--fg); font-weight: 650; white-space: nowrap; font-variant-numeric: tabular-nums; pointer-events: none; }
+.g-lab[data-side="left"] { text-align: right; }
+.g-lab[hidden] { display: none; }
+.g-chev { position: absolute; left: 0; top: 50%; transform: translateY(-50%); max-width: 100%; padding: 0 12px 0 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; border-radius: 4px; color: var(--fg); font-size: max(12px, .8em); font-weight: 650; line-height: 16px; background: linear-gradient(90deg, rgba(11, 12, 16, .92) 75%, transparent); pointer-events: none; }
+
+/* what an agent IS: its type verbatim (monospace, so "savvy-flow:savvy-careful" reads as the engine's name) and model:effort; on a row (beside the kind) and on a crew tile (under the chips) */
+.ident { display: inline-flex; flex-wrap: wrap; align-items: baseline; gap: 0 6px; min-width: 0; max-width: 100%; font-size: max(12px, .8em); line-height: 1.4; color: var(--mut); }
+.ident[hidden], .ident > [hidden] { display: none; }
+.ident-type[hidden] { display: none; }
+.ident-type { display: flex; min-width: 0; max-width: 100%; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--fg); white-space: pre; }
+.ident-head { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.ident-tail { flex: none; }
+.ident-model { font-variant-numeric: tabular-nums; font-weight: 650; white-space: nowrap; }
+.gantt .ident { order: 2; }
+.crew-txt > .ident:not([hidden]) { display: flex; }
+
+/* wide list: the left part of the row ~38%, the track the other ~62%, on the same column as the axis */
+@container gantt (min-width: 600px) {
+  .g-head, .gantt .row-btn { --g-track-w: 62%; }
+  .gantt .row-btn { grid-template-columns: 46px minmax(0, 1fr) var(--g-track-w); }
+  .g-track { grid-column: 3; grid-row: 1; }
+}
+@media (prefers-reduced-motion: reduce) { .g-bar[data-running="true"]::after { animation: none; } }
+
+/* an attempt that never started (deferred, refused): a hollow dashed bar and a "not started" tag, grey, no check and no running head */
+.row[data-not-started="true"] .g-bar { background: transparent; box-shadow: none; border: 1.5px dashed var(--mut); }
+.row[data-not-started="true"] .g-bar::after { display: none; }
+.g-tag { position: absolute; top: 50%; transform: translateY(-50%); font-size: max(12px, .8em); line-height: 16px; color: var(--mut); font-weight: 650; white-space: nowrap; pointer-events: none; }
+.g-tag[hidden] { display: none; }
+.g-tag { width: 84px; }
+.g-tag[data-side="left"] { text-align: right; }
+.row[data-not-started="true"] .g-dot { background: var(--mut); }

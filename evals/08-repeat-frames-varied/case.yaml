@@ -1,0 +1,8 @@
+schema_version: "1.1"
+name: repeated-frames-get-varied
+description: "Four successive board frames about different content do not all take the same form (no more than two `steps`)"
+runs: 3
+execution:
+  max_turns: 8
+  timeout_seconds: 180
+  prompt: "Make four separate panel calls, each with one board `frame`, as you work through this made-up job: (1) the plan for speeding up a slow report query, (2) the baseline timing of 4.2 s, (3) the three suspects ranked, (4) the result of 0.9 s after adding an index. No files exist; just make the calls, choosing the form that suits each piece."

@@ -1,0 +1,236 @@
+{
+ "frames": [
+  {
+   "id": "now",
+   "type": "now",
+   "title": "Now",
+   "text": "Bisecting latency",
+   "status": "working",
+   "size": "s"
+  },
+  {
+   "id": "p95",
+   "type": "metric",
+   "title": "p95 checkout",
+   "size": "s",
+   "value": "1,840 ms",
+   "label": "last 5 min",
+   "delta": "+310%",
+   "tone": "danger",
+   "spark": [
+    310,
+    322,
+    318,
+    341,
+    402,
+    580,
+    910,
+    1320,
+    1610,
+    1840
+   ]
+  },
+  {
+   "id": "tracer",
+   "type": "avatar",
+   "title": "Agent",
+   "size": "s",
+   "mood": "working",
+   "say": "Checking the pool"
+  },
+  {
+   "id": "answer",
+   "type": "ask",
+   "title": "Your call",
+   "size": "s",
+   "q": "Roll back 14:05?",
+   "options": [
+    "Roll back",
+    "Keep digging"
+   ]
+  },
+  {
+   "id": "pools",
+   "type": "rings",
+   "title": "Pools",
+   "size": "s",
+   "items": [
+    {
+     "label": "Web",
+     "pct": 64,
+     "color": "#7c9cff"
+    },
+    {
+     "label": "DB",
+     "pct": 91,
+     "color": "#fb7185"
+    }
+   ]
+  },
+  {
+   "id": "hops",
+   "type": "bars",
+   "title": "Time per hop, ms",
+   "size": "s",
+   "items": [
+    {
+     "label": "Edge",
+     "value": 12
+    },
+    {
+     "label": "Pricing",
+     "value": 1210,
+     "color": "#f87171"
+    },
+    {
+     "label": "Postgres",
+     "value": 320,
+     "color": "#fbbf24"
+    }
+   ]
+  },
+  {
+   "id": "jobs",
+   "type": "lanes",
+   "title": "Workers",
+   "size": "s"
+  },
+  {
+   "id": "latency",
+   "type": "line",
+   "title": "Latency, ms",
+   "size": "m",
+   "series": [
+    {
+     "label": "p95",
+     "points": [
+      310,
+      322,
+      318,
+      330,
+      341,
+      365,
+      402,
+      580,
+      910,
+      1320,
+      1610,
+      1790,
+      1840
+     ]
+    },
+    {
+     "label": "p50",
+     "points": [
+      120,
+      118,
+      124,
+      121,
+      126,
+      130,
+      128,
+      140,
+      190,
+      260,
+      330,
+      360,
+      372
+     ]
+    }
+   ]
+  },
+  {
+   "id": "note",
+   "type": "text",
+   "title": "Note",
+   "size": "s",
+   "text": "Pricing is the slow hop.",
+   "sub": "Cache misses fall through."
+  },
+  {
+   "id": "path",
+   "type": "diagram",
+   "title": "Request path",
+   "size": "m",
+   "nodes": [
+    {
+     "id": "api",
+     "label": "Checkout API"
+    },
+    {
+     "id": "price",
+     "label": "Pricing",
+     "tone": "danger"
+    },
+    {
+     "id": "cache",
+     "label": "Redis",
+     "tone": "warn"
+    }
+   ],
+   "edges": [
+    {
+     "from": "api",
+     "to": "price"
+    },
+    {
+     "from": "api",
+     "to": "cache"
+    }
+   ]
+  },
+  {
+   "id": "dod-main-2",
+   "type": "steps",
+   "title": "Scroll, insight, motion, visuals",
+   "size": "m",
+   "items": [
+    {
+     "t": "Board and pane scroll",
+     "state": "doing"
+    },
+    {
+     "t": "Per-agent activity detail",
+     "state": "todo"
+    },
+    {
+     "t": "Purposeful animation",
+     "state": "todo"
+    },
+    {
+     "t": "New visual frame types + gantt built in",
+     "state": "todo"
+    }
+   ]
+  },
+  {
+   "id": "note-2",
+   "type": "text",
+   "size": "m",
+   "title": "Heads up",
+   "text": "Cache misses fall through to the pool.",
+   "sub": "Seen on 3 of 5 hosts"
+  }
+ ],
+ "lanes": [
+  {
+   "id": "trace",
+   "label": "Trace slow query",
+   "state": "working",
+   "pct": 62,
+   "step": "reading pg_stat"
+  },
+  {
+   "id": "replay",
+   "label": "Replay traffic",
+   "state": "waiting",
+   "pct": 20,
+   "step": "needs your OK"
+  }
+ ],
+ "now": {
+  "title": "Bisecting latency",
+  "status": "working"
+ },
+ "updatedAt": 1794133809000
+}

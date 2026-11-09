@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>UML diagrams</title>
+<!--
+  RECIPE uml: Mermaid text -> a themed, zoomable, clickable diagram (sequence, flowchart, state, class, ER, C4, mindmap, timeline, gantt).
+  Use when: the point is a mechanism, an order of events, a state machine, a structure or a dependency graph. ~10 lines of text replace a hand-built SVG.
+  Adapt: renderDiagram(el, { code, highlight }) returns { update(code, highlight), fit(), destroy() }. `highlight` is {nodeId: 'active'|'done'|'blocked'|'todo'}:
+    ids are the ones written in the code (a participant, a flowchart node, a state). Only `active` moves (a pulse, and the edges leaving it flow);
+    call update() again with a new highlight to move it, with new code to redraw (zoom and pan are kept; invalid text keeps the last good picture).
+    A click on a node calls the `emit` option (here it also posts panel.emit('diagram', {id})). Wheel zooms, drag pans, the corner button fits.
+  Constraints: kit only (Mermaid is vendored, no CDN); a node id is letters, digits, `_` and `-`; keep a diagram under ~12 nodes; one diagram, one point.
+  The same text works as a board frame: panel {frame: {id, type: 'uml', code, highlight}}.
+-->
+<style>
+  body { padding: 14px 18px; }
+  h1 { margin: 0; font-size: 18px; }
+  .lead { margin: 4px 0 0; color: var(--panel-muted); }
+  .p-card { padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; }
+  .p-card h2 { margin: 0; font-size: 14px; font-weight: 600; }
+  .p-card .note { margin: 0; color: var(--panel-muted); font-size: 13px; min-height: 1.4em; }
+  .dia { height: 380px; border-radius: 8px; background: var(--panel-surface); border: 1px solid var(--panel-line); overflow: hidden; }
+</style>
+</head>
+<body class="p-stack">
+<div><h1>Pictures that carry the mechanism</h1><p class="lead">Four kinds of diagram from a few lines of text. The ticket's current state moves by itself; click any node.</p></div>
+<div class="p-grid" style="--p-min:min(100%, 420px)">
+  <div class="p-card"><h2>Order of events: a deploy</h2><div class="dia" id="seq"></div><p class="note" id="seq-note">Click an actor.</p></div>
+  <div class="p-card"><h2>State of a ticket (live)</h2><div class="dia" id="state"></div><p class="note" id="state-note">Now: Backlog</p></div>
+  <div class="p-card"><h2>Structure: this panel</h2><div class="dia" id="arch"></div><p class="note" id="arch-note">Click a box.</p></div>
+  <div class="p-card"><h2>Dependencies: what unblocks what</h2><div class="dia" id="deps"></div><p class="note" id="deps-note">Click a ticket.</p></div>
+</div>
+<script type="module">
+  import { renderDiagram } from 'panel/diagrams';
+
+  const STATE_TICK_MS = 2400;
+  const STATES = ['Backlog', 'InProgress', 'Testing', 'Review', 'Done'];
+
+  const DIAGRAMS = {
+    seq: `sequenceDiagram
+  participant Dev
+  participant CI
+  participant Registry
+  participant Prod
+  Dev->>CI: push main
+  CI->>CI: build and test
+  CI->>Registry: push image
+  CI->>Prod: roll out v42
+  Prod-->>CI: healthy
+  CI-->>Dev: deployed`,
+    state: `stateDiagram-v2
+  [*] --> Backlog
+  Backlog --> InProgress: start
+  InProgress --> Testing: code done
+  Testing --> InProgress: tests fail
+  Testing --> Review: tests pass
+  Review --> Done: approved
+  Done --> [*]`,
+    arch: `flowchart LR
+  agents["Agents"] --> tool["panel tool"]
+  subgraph mod["Mod"]
+    tool --> model["board model"]
+  end
+  model --> board["Board scene"]
+  subgraph web["Page"]
+    board --> engine["diagram engine"]
+  end`,
+    deps: `flowchart TD
+  insight["agent insight"] --> uml["UML engine"]
+  layout["board layout"] --> uml
+  uml --> skill["skill rewrite"]
+  ui["UI kit"] --> skill
+  uml --> live["live graphs"]`,
+  };
+  const STATIC_HIGHLIGHT = {
+    seq: { Dev: 'done', CI: 'active' },
+    arch: { model: 'active', board: 'active' },
+    deps: { insight: 'done', layout: 'done', ui: 'done', uml: 'active', skill: 'todo', live: 'todo' },
+  };
+
+  const draw = (key, highlight) => {
+    const note = document.getElementById(`${key}-note`);
+    return renderDiagram(document.getElementById(key), {
+      code: DIAGRAMS[key],
+      highlight,
+      emit: (name, data) => { note.textContent = `Clicked: ${data.id}`; panel.emit(name, data); },
+    });
+  };
+
+  for (const key of ['seq', 'arch', 'deps']) draw(key, STATIC_HIGHLIGHT[key]);
+  const state = draw('state', { Backlog: 'active' });
+  let step = 0;
+  const stateNote = document.getElementById('state-note');
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)');
+  const tick = () => {
+    step = (step + 1) % (STATES.length + 1); // one beat past Done: everything done, nothing pulsing, then the ticket starts over
+    const highlight = Object.fromEntries(STATES.slice(0, Math.min(step, STATES.length)).map((s) => [s, 'done']));
+    if (step < STATES.length) highlight[STATES[step]] = 'active';
+    state.update(DIAGRAMS.state, highlight);
+    stateNote.textContent = step < STATES.length ? `Now: ${STATES[step]}` : 'Done';
+  };
+  if (!reduced.matches) setInterval(tick, STATE_TICK_MS);
+</script>
+</body></html>

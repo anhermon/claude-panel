@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Backoff, with jitter</title>
+<style>
+  /* Scene-only styling. Colours come from the --deck-* tokens so light and dark both work. */
+  .lane { display: flex; align-items: center; gap: 24px; margin-top: 18px; }
+  .lane-info { flex: none; width: 230px; }
+  .lane-info b { display: block; font-size: 26px; line-height: 1.2; }
+  .lane-info span { display: block; margin-top: 2px; font-size: 20px; color: var(--deck-muted); }
+  .lane-info output { display: block; margin-top: 10px; font-size: 20px; font-variant-numeric: tabular-nums; color: var(--deck-muted); }
+  .lane-info output strong { font-size: 40px; line-height: 1; letter-spacing: -0.02em; }
+  .lane.bad strong { color: var(--deck-danger); }
+  .lane.good strong { color: var(--deck-ok); }
+  .lane canvas { flex: 1; min-width: 0; height: 180px; border-radius: 14px; background: var(--deck-surface); border: 1px solid var(--deck-line); }
+  .legend { margin: 20px 0 0; font-size: 20px; color: var(--deck-muted); }
+  .rail-text { align-self: center; }
+  .rail-text .lead { margin-top: 12px; font-size: 28px; }
+  .stage-3d { --p-3d-h: 470px; border-radius: 18px; overflow: hidden; border: 1px solid var(--deck-line); background: var(--deck-surface); }
+  .numbers { grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); align-items: center; }
+  .numbers p-chart { --p-chart-h: 380px; }
+  .numbers p-code { font-size: 26px; }
+  .numbers .legend { margin-top: 24px; }
+  .pick { display: inline-block; margin-top: 28px; padding: 10px 22px; border-radius: 12px; border: 1px solid var(--deck-line); background: var(--deck-surface); font-size: 26px; }
+</style>
+</head>
+<body>
+<main class="deck" data-transition="slide">
+
+  <!-- 1. title -->
+  <section class="title" data-title="Backoff, with jitter"
+    data-background-gradient="radial-gradient(900px 520px at 82% 112%, var(--deck-glow-1), transparent 70%), radial-gradient(700px 420px at 0% 0%, var(--deck-glow-2), transparent 70%)">
+    <p class="eyebrow">Reliability &middot; uploads</p>
+    <h1>Backoff,<br><span class="grad">with jitter</span></h1>
+    <p class="lead">Why exponential backoff alone still stampedes, and the one-line fix.</p>
+    <aside class="notes">
+      Open with the claim: retries without jitter make an outage longer, not shorter.
+      Five slides: the problem, a simulation, the intuition, the numbers, the decision.
+    </aside>
+  </section>
+
+  <!-- 2. the problem -->
+  <section>
+    <p class="eyebrow">The problem</p>
+    <h2>Backoff alone keeps the herd in step</h2>
+    <p-timeline>
+      <li data-when="0.0 s" data-tone="danger">The upload endpoint returns 503. All 60 clients fail in the same instant.</li>
+      <li data-when="0.5 s" data-tone="warn">Every client waited the same 500 ms. 60 requests land in one 100 ms window.</li>
+      <li data-when="1.5 s" data-tone="warn">The wait doubled, for everyone. The wave is just as tall.</li>
+      <li data-when="3.5 s" data-tone="danger">The server never gets room to recover. Each wave hits a machine that is still down.</li>
+    </p-timeline>
+    <aside class="notes">
+      Walk down the timeline. The point: doubling the wait spaces the waves out, it does not break them up.
+      Every client still retries at exactly the same moments, so the server sees 60 requests at once, over and over.
+    </aside>
+  </section>
+
+  <!-- 3. the thundering herd -->
+  <section>
+    <p class="eyebrow">Simulation</p>
+    <h2>Same schedule, or spread out</h2>
+    <div class="lane bad">
+      <div class="lane-info"><b>Exponential</b><span>no jitter</span><output>peak <strong>0</strong> / 100 ms</output></div>
+      <canvas data-herd="exponential" data-tone="danger" role="img"
+        aria-label="Requests per 100 milliseconds with exponential backoff and no jitter: four spikes of 60 requests at 0.5, 1.5, 3.5 and 7.5 seconds."></canvas>
+    </div>
+    <div class="lane good">
+      <div class="lane-info"><b>Full jitter</b><span>random up to the ceiling</span><output>peak <strong>0</strong> / 100 ms</output></div>
+      <canvas data-herd="full" data-tone="ok" role="img"
+        aria-label="Requests per 100 milliseconds with exponential backoff and full jitter: the same 240 requests spread across eight seconds with no tall spikes."></canvas>
+    </div>
+    <p class="legend">60 clients, 4 retries each, one seeded run. Each dot is a request; each bar is what the server sees in 100 ms.</p>
+    <aside class="notes">
+      The lanes start when you arrive: a line sweeps left to right and the bars fill in behind it.
+      Top lane: four towers of 60. Bottom lane: the same 240 requests, smeared across the whole window.
+      Same clients, same number of retries, same base delay. Only the random factor differs.
+    </aside>
+  </section>
+
+  <!-- 4. jitter in 3D -->
+  <section class="two-col" data-title="Retry space">
+    <div class="rail-text">
+      <p class="eyebrow">Intuition</p>
+      <h2>Retry space</h2>
+      <p class="lead">Each retry picks a point inside a window that doubles every time. Without jitter the point is always the edge; with jitter it can be anywhere inside.</p>
+      <p class="muted">Drag to orbit, scroll to zoom.</p>
+    </div>
+    <p-3d class="stage-3d" shape="torusknot" auto-rotate controls zoom></p-3d>
+    <aside class="notes">
+      The knot is a stand-in for the space of possible retry moments: a path that never lands on the same point twice.
+      Drag it around. This is the only slide where the picture is the intuition, not the data.
+    </aside>
+  </section>
+
+  <!-- 5. the numbers -->
+  <section class="two-col numbers">
+    <h2>The numbers</h2>
+    <p-chart type="bar" x="strategy" y="peak" title="Requests in the busiest 100 ms"
+      data='[{"strategy":"Fixed 500 ms","peak":60},{"strategy":"Exponential","peak":60},{"strategy":"Equal jitter","peak":27},{"strategy":"Full jitter","peak":21}]'></p-chart>
+    <p-code lang="js">
+// full jitter
+function retryDelay(attempt) {
+  const ceiling = 500 * 2 ** attempt;
+  return Math.random() * ceiling;
+}
+    </p-code>
+    <p class="legend span-all">Simulated: 60 clients, 4 retries, 500 ms base, mean of 500 seeded runs.</p>
+    <aside class="notes">
+      Simulated, not measured: 60 clients, 4 retries, base 500 ms, averaged over 500 seeded runs.
+      Fixed and plain exponential both peak at all 60 clients. Equal jitter halves that; full jitter cuts it to about a third.
+      The right-hand side is the whole change.
+    </aside>
+  </section>
+
+  <!-- 6. the decision -->
+  <section class="big-number" data-title="The decision">
+    <p class="eyebrow">The decision</p>
+    <p class="num">2.9&times;</p>
+    <p class="label">lower peak load with full jitter</p>
+    <p class="fragment fade-up pick">Ship it on 503. Still open: retry 429 as well?</p>
+    <aside class="notes">
+      60 down to 21 requests in the busiest 100 ms: 2.9 times lower, from one random factor.
+      Next click shows the decision and the open question. The question is the one waiting in the rail: should 429 responses be retried too, or only 503?
+    </aside>
+  </section>
+
+</main>
+
+<script type="module">
+import 'panel/deck';
+import 'panel/components';
+import { mountHerd } from './herd.js';
+
+// The herd lanes animate only while their slide is the current one (and idle on the finished picture otherwise).
+for (const canvas of document.querySelectorAll('canvas[data-herd]')) {
+  const readout = canvas.closest('.lane').querySelector('strong');
+  const lane = mountHerd(canvas, { strategy: canvas.dataset.herd, tone: canvas.dataset.tone, onPeak: (n) => { readout.textContent = n; } });
+  const slide = canvas.closest('section');
+  const sync = () => (slide.dataset.state === 'present' ? lane.start() : lane.stop());
+  slide.addEventListener('panel-slide', sync);
+  sync();
+}
+</script>
+</body>
+</html>
