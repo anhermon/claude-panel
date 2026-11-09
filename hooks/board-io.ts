@@ -1,6 +1,6 @@
 // The `$` half of the board's files: copy the scene's static files (with their sub-folders) into the session's board
 // folder, read the model's sidecar back, write live/data.json and the sidecar atomically. Thin on purpose; the rules are
-// in board-model.ts (a mod reload re-runs installBoard, so edited board and agents-info files reach the pane; the engine reloads the mod after a hooks/ file is changed with the Edit tool, not with a shell command; the router frames reload the same way, and the link keeps its port: the old server hands it over; other sessions get the mod through scripts/sync-sessions.sh; this edit also reloads the mod). `$.fs` has no rename or copy, so the move is a `mv` through `$.process.run` (as pulse-io.ts does) and
+// in board-model.ts (a mod reload re-runs installBoard, so edited board and agents-info files reach the pane; the engine reloads the mod after a hooks/ file is changed with the Edit tool, not with a shell command; the router frames reload the same way, and the link keeps its port: the old server hands it over; other sessions get the mod through scripts/sync-sessions.sh; an edit to a hooks/ file reloads the mod). `$.fs` has no rename or copy, so the move is a `mv` through `$.process.run` (as pulse-io.ts does) and
 // the scene's files are copied as text (they are html / css / js / json).
 import type { EngineInterface } from 'claude-code'
 

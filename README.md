@@ -35,7 +35,6 @@ licenses (`web/kit/LICENSES.md`).
 | `/panel live on\|off\|status` | A live preview of the stage in the terminal pane (needs Chrome, see Platforms). |
 | `/panel pulse on\|off\|status` | The ambient pulse of agent activity. `PANEL_PULSE=off` in the environment turns it off. |
 | `/panel watch <folder>` | Follow a router-kit run in another folder than the session's. |
-| `/fleet [start\|stop\|status\|url]` | A separate local page listing every Claude Code session on this machine (see Privacy). |
 
 The model gets two tools:
 
@@ -80,15 +79,14 @@ None is required; a missing one simply shows nothing.
 - **Chrome** is only needed for scene screenshots and `/panel live`. Set `CHROME=/path/to/chrome` if it is not found. Without Chrome the panel, the browser view and every other feature still work; a screenshot reports "chrome not found".
 - If no browser can be opened (no `open`/`xdg-open`), `/panel open` prints the URL with "could not open a browser".
 
-Other environment variables: `CLAUDE_PANEL_PORT` (first port to try, default 4717), `TMPDIR` (where state goes, default `/tmp`), `CLAUDE_FLEET_DIR`, `CLAUDE_CONFIG_DIR` and `HOME` (fleet page).
+Other environment variables: `CLAUDE_PANEL_PORT` (first port to try, default 4717), `TMPDIR` (where state goes, default `/tmp`).
 
 ## Privacy
 
 - The browser view is a Node server bound to `127.0.0.1` only. Every route sits under a random 128-bit token (`http://127.0.0.1:<port>/<token>/`), anything else is a 404, and a `Host` header other than `127.0.0.1:<port>` or `localhost:<port>` is refused (DNS rebinding). The token is kept in Claude Code's per-project store so the same project reopens the same link. The server only reads; the one write path is the page's `POST /event`, which sends a click back to the model.
-- State is written under `$TMPDIR/claude-panel/` (default `/tmp/claude-panel/`): per-session state files, board, pulse, live-frame and inline-scene folders, screenshots, and the fleet folder. The OS cleans temp folders; nothing is written to your project or home folder by the panel itself.
+- State is written under `$TMPDIR/claude-panel/` (default `/tmp/claude-panel/`): per-session state files, board, pulse, live-frame and inline-scene folders, and screenshots. The OS cleans temp folders; nothing is written to your project or home folder by the panel itself.
 - Transcript text shown on the board (agent details) is passed through a redaction step first (home folders, key/token shapes, passwords in URLs), but treat the board as showing your session's work.
 - Nothing is sent to any remote service by the mod. Scenes are model-written code: they run in a sandboxed iframe with a strict content-security policy, but with the CDN allow-list on (`web/scene-files.mjs`) a scene may load scripts from cdnjs, jsdelivr or unpkg in your browser. Do not put secrets in a scene folder.
-- `/fleet` is separate and opt-in to open: it lists every Claude Code session on the machine (from `~/.claude/sessions` and the tail of each transcript, redacted), is also bound to `127.0.0.1` with its own token, and can send one text message to a running session, with an audit log. Do not run `/fleet url` through a model.
 
 ## Develop and test
 

@@ -174,4 +174,3 @@ Every key of `panel` replaces its section; `done_add` appends; `card` upserts on
 
 Optional convention for orchestrated runs: if you dispatch workers, a `Goal: <one sentence>` line (no paths) and a `Ticket:` line in the brief make their rows on the board clearer; the labels are configurable (`goalLabels`, `ticketLabels`), and without them the row falls back to the brief's first path-free sentence.
 
-Every Claude Code session on this machine, with a send-message box, is a separate page for the person: `/fleet` (see `web/fleet/README.md`). Its text comes from other sessions and is never meant for you to read or act on.

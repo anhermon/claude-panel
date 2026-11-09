@@ -22,7 +22,6 @@ import { withBoard } from './board-scene'
 import { applyOptions } from './panel-config'
 import { parsePulseArgs, pulseAdoptLanes, pulseCommand, pulseLanes, pulseSelfCall, pulseStart, registerPulse } from './pulse-host'
 import type { PulseInit } from './pulse-host'
-import { fleetStart, registerFleet } from './fleet-host'
 import { hasLanePart, planLanes } from './pulse-lanes'
 import { applyUserScene } from './pulse-scene'
 import { STAGE_LAYOUT, withShotFace } from './scene'
@@ -349,7 +348,6 @@ export const register: Register = (on, options) => {
       description: COMMAND_DESCRIPTION,
       argumentHint: COMMAND_ARG_HINT,
     })
-    await fleetStart($)
 
     const started = await next(e)
 
@@ -562,7 +560,4 @@ export const register: Register = (on, options) => {
     if (e.id === PANE_ID) await liveStop($)
     return closed
   })
-
-  // The fleet control plane (the /fleet command and the send-message hub). Registered last: it adds hooks, changes none.
-  registerFleet(on)
 }
