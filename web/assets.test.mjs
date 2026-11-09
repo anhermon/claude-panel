@@ -6,6 +6,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { ASSETS, kinds, describe, validate, AssetError, unknownKindMessage } from './kit/assets/index.js';
+import { openRequest } from './kit/assets/statusboard.js';
 import { sankeyLayout } from './kit/assets/flow.js';
 import { kindsJson } from '../scripts/gen-viz-kinds.mjs';
 import { layerGraph, spread } from './kit/assets/layout.js';
@@ -99,4 +100,21 @@ test('references/assets.md names every asset kind in its shape table', () => {
   const doc = readFileSync(join(HERE, '..', 'skills', 'panel-guide', 'references', 'assets.md'), 'utf8');
   const missing = kinds().filter((k) => !doc.includes(`| \`${k}\` |`));
   assert.deepEqual(missing, [], `assets.md lacks a table row for: ${missing}`);
+});
+
+const SESSION_ID = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+const board = (item) => ({ columns: [{ id: 'waiting', title: 'Needs you', items: [item] }] });
+
+test('statusboard: an item may carry `open` (a safe id) and nothing else unsafe passes; items without it are unchanged', () => {
+  assert.equal(validate('statusboard', board({ title: 'A', open: SESSION_ID })).columns[0].items[0].open, SESSION_ID);
+  assert.equal(validate('statusboard', board({ title: 'A' })).columns[0].items[0].open, undefined);
+  for (const bad of ['a b', '../x', 'a/b', '', 'x'.repeat(65), 5, {}]) {
+    assert.throws(() => validate('statusboard', board({ title: 'A', open: bad })), /open/, JSON.stringify(bad));
+  }
+});
+
+test('statusboard: a card with `open` asks the page to open that session: session-open {id, title, state = its column}; no id, no request', () => {
+  const it = validate('statusboard', board({ title: 'Fix login', open: SESSION_ID })).columns[0].items[0];
+  assert.deepEqual(openRequest({ id: 'waiting' }, it), { name: 'session-open', data: { id: SESSION_ID, title: 'Fix login', state: 'waiting' } });
+  assert.equal(openRequest({ id: 'waiting' }, { title: 'x' }), null);
 });

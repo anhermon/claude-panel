@@ -145,6 +145,22 @@ test('frame_remove and frames_clear: results, auto frames remembered as removed,
   expect((await b.call({ frame_remove: ['now', 'nope'] })).result).toBe('frame now removed (auto; frames_clear brings it back) · 0 on board\nno frame "nope" to remove; frames: none · 0 on board')
 })
 
+test('data.json follows removals and a clear: a removed or cleared frame leaves the file, a repost brings only the new ones', async ($, on) => {
+  const b = await boardBoot($, on)
+  for (const id of ['a', 'b', 'c']) await b.call({ frame: { id, type: 'text', text: id } })
+  await b.settle()
+  expect(b.frameIds()).toEqual(['a', 'b', 'c'])
+  await b.call({ frame_remove: 'b' })
+  await b.settle()
+  expect(b.frameIds()).toEqual(['a', 'c'])
+  await b.call({ frames_clear: true })
+  await b.settle()
+  expect(b.frameIds()).toEqual([]) // the file is written even when it ends up with no frames
+  await b.call({ frame: { id: 'x', type: 'text', text: 'x' } })
+  await b.settle()
+  expect(b.frameIds()).toEqual(['x'])
+})
+
 test('writes are coalesced and only on change: a burst is one write, the same content is none, a steady stream is two a second at most', async ($, on) => {
   const b = await boardBoot($, on)
   await b.settle()

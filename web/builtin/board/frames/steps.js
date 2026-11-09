@@ -11,7 +11,7 @@ const ICONS = {
   failed: 'M6 6 L14 14 M14 6 L6 14',
 };
 const FIT_SHARE = 0.08;
-const FIT_MAX_TIMES = 2.6;
+const FIT_MAX_TIMES = 1.2; // body text: readable, never poster-sized (the card scrolls when the list still overflows)
 const SPREAD_MAX_EM = 0.9;
 const PCT = 100;
 

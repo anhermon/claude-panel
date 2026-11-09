@@ -5,7 +5,7 @@ import type { EngineInterface } from 'claude-code'
 
 import { DISCOVER_EVERY_MS, PS_EVERY_MS } from '../hooks/sessions-state'
 import { newSessionsCache, readSessions, SESSIONS_IO } from '../hooks/sessions-io'
-import { ID_A, ID_B, ID_DEAD, MIN, NOW, psText, registryFile, SELF, toolUse, transcript, user } from './sessions-fixture'
+import { ID_A, ID_B, ID_DEAD, MIN, NOW, psText, registryFile, SELF, toolUseOf, transcript, user } from './sessions-fixture'
 
 const CLAUDE = '/Users/a/.claude'
 type Disk = Map<string, { text: string; mtimeMs: number }>
@@ -53,7 +53,7 @@ function world(): Disk {
     [`${CLAUDE}/sessions/103.json`, file(registryFile(103, SELF, { name: 'this one' }))],
     [`${CLAUDE}/sessions/104.json`, file(registryFile(104, ID_DEAD, { name: 'dead' }))], // pid 104 is not in ps
     [`${CLAUDE}/sessions/101.key`, file('SECRET-PEER-TOKEN')],
-    [`${CLAUDE}/projects/-work-alpha/${ID_A}.jsonl`, file(transcript(user('first'), user('wire the sessions frame'), toolUse('t1')), NOW - 40_000)],
+    [`${CLAUDE}/projects/-work-alpha/${ID_A}.jsonl`, file(transcript(user('first'), user('wire the sessions frame'), toolUseOf('t1', 'Bash', { description: 'Run the frame tests' })), NOW - 40_000)],
     [`${CLAUDE}/projects/-work-beta/${ID_B}.jsonl`, file(transcript(user('write the docs', { cwd: '/work/beta' })), NOW - 30 * MIN)],
     [`${CLAUDE}/projects/-work-alpha/${SELF}.jsonl`, file(transcript(user('me')), NOW)],
     [`${CLAUDE}/projects/-work-alpha/${ID_DEAD}.jsonl`, file(transcript(user('dead')), NOW - MIN)],
@@ -64,7 +64,7 @@ test('only live sessions other than this one: the dead pid and the current sessi
   const { $ } = pretend(world(), () => psText([101, 102, 103]))
   const rows = await readSessions($, newSessionsCache(), SELF, NOW)
   expect(rows).toEqual([
-    { id: ID_A, title: 'alpha work', state: 'waiting', project: 'alpha', branch: 'feature/x', age: 'now', task: 'wire the sessions frame' },
+    { id: ID_A, title: 'alpha work', state: 'waiting', project: 'alpha', branch: 'feature/x', age: 'now', task: 'Bash: Run the frame tests' },
     { id: ID_B, title: 'beta', state: 'idle', project: 'beta', branch: 'feature/x', age: '30m', task: 'write the docs' },
   ])
 })

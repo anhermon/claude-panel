@@ -237,6 +237,33 @@ test('panel-open: only the built-in board may ask the page to open an absolute h
   assert.equal(opened.length, 1, 'bad urls and non-board senders are ignored');
 });
 
+test('session-open: a card of the board\'s Other sessions frame opens that session in the Agents tile through the page, never reaching the server; only the board may ask', () => {
+  const t = env();
+  t.render(stateOf([stageScene({ id: 'board', builtin: true }), stageScene({ id: 'agents-info', title: 'Agents', builtin: true }), stageScene({ id: 'other', title: 'Other' })]));
+  const ID = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+  const sent = t.fetchLog.length;
+  const ask = (id, data) => { t.clock.now += 1000; t.emit(id, 'session-open', data); };
+  ask('board', { id: ID, title: 'Fix login', state: 'waiting' });
+  assert.deepEqual(t.hostMessages('agents-info', 'open-session'), [{ id: ID, title: 'Fix login', state: 'waiting' }]);
+  assert.equal(t.fetchLog.length, sent, 'a card click is for the Agents tile: nothing is posted to the events file (Claude never sees it)');
+  for (const bad of [{ id: '../x', title: 'x', state: 'busy' }, { id: 5 }, { title: 'no id' }, null, 'text']) ask('board', bad);
+  ask('other', { id: ID, title: 'forged', state: 'busy' });
+  assert.equal(t.hostMessages('agents-info', 'open-session').length, 1, 'bad ids and other scenes route nothing');
+  ask('board', { id: ID, title: 'x'.repeat(200), state: 'nonsense' });
+  assert.deepEqual(t.hostMessages('agents-info', 'open-session').at(-1), { id: ID, title: 'x'.repeat(70), state: 'busy' }, 'title cut, unknown state falls back');
+});
+
+test('session-open while the board is shown alone brings the Agents tile forward so the opened transcript is visible', () => {
+  const t = env();
+  t.render(stateOf([stageScene({ id: 'board', builtin: true }), stageScene({ id: 'agents-info', title: 'Agents', builtin: true })]));
+  t.ctx.PanelStage.selectTab('board');
+  assert.equal(t.ctx.PanelStage.view().selectedId, 'board');
+  t.clock.now += 1000;
+  t.emit('board', 'session-open', { id: 'sess-1', title: 'T', state: 'idle' });
+  assert.equal(t.ctx.PanelStage.view().selectedId, 'agents-info');
+  assert.equal(t.hostMessages('agents-info', 'open-session').length, 1);
+});
+
 test('panel-emit validation and failure handling: bad names, big data, floods, and rejections are silent', async () => {
   const t = env();
   t.render(stateOf([stageScene()]));

@@ -1,6 +1,6 @@
 {
   "name": "panel",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "license": "MIT",
   "author": { "name": "anhermon" },
   "description": "A live panel beside the chat: what the task is and why, context, done, next, cards, and sandbox scenes (HTML/JS folders), mirrored to a token-guarded browser view.",
