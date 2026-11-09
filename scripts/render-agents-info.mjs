@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 // Renders the Agents scene in the REAL panel server + headless Chrome and checks it:
-//   node scripts/render-agents-info.mjs [--fixture crew] [--out DIR] [--sizes 1280x900,720x1280,360x730] [--src DIR] [--settle MS] [--details detail|detail-sparse|detail-real-tile|detail-real-metrics]
+//   node scripts/render-agents-info.mjs [--fixture crew] [--out DIR] [--sizes 1280x900,720x1280,360x730] [--src DIR] [--settle MS] [--details detail|detail-sparse|detail-real-tile|detail-real-metrics|codex-detail] [--detail AGENT_ID]
 // Per size it renders twice and writes <out>/<fixture>-<w>x<h>-webgl.png (software GL: SwiftShader) and -svg.png (WebGL off: the 2D
 // fallback), counts console errors (must be 0), checks the mode, the satellites / dots, the rows, that the page does not scroll,
 // and the smallest text. At the first size it also appends an event to the data (a status change) and checks the ticker and the row
 // pulse, then selects a row and checks the satellite label (-event.png, -selected.png). At EVERY size it then opens the drill-down
 // of an agent (fixtures/detail.json -> live/detail.json) and captures each tab (-detail-transcript/-metrics/-struggles.png) plus the
-// main session's, checking that nothing scrolls sideways, the text is readable, Back and Escape return to the list. Prints one JSON
+// main session's (when the details file has one), checking that nothing scrolls sideways, the text is readable, Back and Escape return to the list. Prints one JSON
 // summary; exit 1 on a failure.
 import { cpSync, mkdirSync, mkdtempSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -38,7 +38,8 @@ const FX_MID_MS = 330;
 const FX_SETTLE_MS = 1500;
 const NOT_RUNTIME = /(^|\/)(fixtures|README\.md|[^/]*\.test\.mjs)(\/|$)/;
 const MS_PER_SEC = 1000;
-const DETAIL_AGENT = 't40';
+const DEFAULT_DETAIL_AGENT = 't40';
+const MAIN_ID = 'main';
 const DETAIL_TABS = ['progress', 'transcript', 'metrics', 'struggles'];
 const DETAIL_WAIT_MS = 6000;
 const DETAIL_POLL_MS = 150;
@@ -47,14 +48,15 @@ const GANTT_MIN_LONGEST_PCT = 35;
 const evalJs = async (cdp, expression) => (await cdp.send('Runtime.evaluate', { expression, returnByValue: true, awaitPromise: true })).result.value;
 
 function parseArgs(argv) {
-  const o = { fixture: 'crew', out: join(tmpdir(), 'panel-agents-info'), sizes: DEFAULT_SIZES, src: DEFAULT_SRC, settle: SETTLE_MS, details: 'detail' };
+  const o = { fixture: 'crew', out: join(tmpdir(), 'panel-agents-info'), sizes: DEFAULT_SIZES, src: DEFAULT_SRC, settle: SETTLE_MS, details: 'detail', detailAgent: DEFAULT_DETAIL_AGENT, hasDetailsArg: false };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === '--fixture') o.fixture = argv[++i];
     else if (a === '--out') o.out = resolve(argv[++i]);
     else if (a === '--sizes') o.sizes = argv[++i].split(',');
     else if (a === '--src') o.src = resolve(argv[++i]);
-    else if (a === '--details') o.details = argv[++i];
+    else if (a === '--details') { o.details = argv[++i]; o.hasDetailsArg = true; }
+    else if (a === '--detail') o.detailAgent = argv[++i];
     else if (a === '--settle') o.settle = Number(argv[++i]);
     else throw new Error(`unknown option ${a}`);
   }
@@ -146,10 +148,10 @@ async function waitFor(cdp, expression) {
 const CAPTURE_EMITS = `window.__emits = []; const post = window.parent.postMessage.bind(window.parent); window.parent.postMessage = (m, ...r) => { if (m && m.type === 'panel-emit') window.__emits.push({ name: m.name, data: m.data }); return post(m, ...r); };`;
 const sentEvents = async (cdp) => (await evalJs(cdp, 'window.__emits ?? []'));
 
-async function checkDetail(cdp, scene, details, png, issues, size, kind) {
+async function checkDetail(cdp, scene, details, detailAgent, png, issues, size, kind) {
   const out = {};
   const before = (await sentEvents(cdp)).length;
-  for (const id of [DETAIL_AGENT, 'main']) {
+  for (const id of [detailAgent, MAIN_ID].filter((x) => details[x])) {
     writeDetail(scene, stampDetail(details[id], Date.now()));
     await evalJs(cdp, `window.__agentsInfo.open(${JSON.stringify(id)})`);
     if (!(await waitFor(cdp, `window.__agentsInfo.detail().hasDetail`))) { issues.push(`detail of ${id} never arrived`); continue; }
@@ -157,7 +159,7 @@ async function checkDetail(cdp, scene, details, png, issues, size, kind) {
       await evalJs(cdp, `[...document.querySelectorAll('.tab')].find((b) => b.textContent.startsWith(${JSON.stringify(tab[0].toUpperCase() + tab.slice(1))}))?.click()`);
       await sleep(DETAIL_POLL_MS * 3);
       const a = await evalJs(cdp, DETAIL_AUDIT);
-      await shot(cdp, png(`-detail-${id === 'main' ? 'main-' : ''}${tab}`));
+      await shot(cdp, png(`-detail-${id === MAIN_ID ? 'main-' : ''}${tab}`));
       out[`${id}/${tab}`] = a;
       const where = `${size}/${kind} ${id}/${tab}`;
       if (a.view !== 'detail' || a.tab !== tab) issues.push(`${where}: view ${a.view}, tab ${a.tab}`);
@@ -165,27 +167,27 @@ async function checkDetail(cdp, scene, details, png, issues, size, kind) {
       if (a.pageScrolls) issues.push(`${where}: page scrolls`);
       if (a.minFont < MIN_FONT_PX) issues.push(`${where}: smallest text ${a.minFont}px ("${a.minText}")`);
       if (tab === 'transcript' && a.entries === 0) issues.push(`${where}: no transcript entries`);
-      if (tab === 'transcript' && id === DETAIL_AGENT && a.failed < 1 && details[id].transcript.entries.some((e) => e.error)) issues.push(`${where}: failed call not highlighted`);
+      if (tab === 'transcript' && id === detailAgent && a.failed < 1 && details[id].transcript.entries.some((e) => e.error)) issues.push(`${where}: failed call not highlighted`);
       if (a.tabs.length !== DETAIL_TABS.length) issues.push(`${where}: tabs ${a.tabs.join('|')}`);
       if (tab === 'progress' && a.tabs[0] !== 'Progress') issues.push(`${where}: Progress is not the first tab`);
       if (tab === 'progress' && !a.hasSection) issues.push(`${where}: Progress has no Now / Phases / Checklist / Issues sections`);
       if (tab === 'metrics' && a.ticks > 0) issues.push(`${where}: the Run area still draws ${a.ticks} tick marks`);
       if (tab === 'metrics' && !a.hasRun) issues.push(`${where}: Metrics has no phase bar or no reason for its absence`);
     }
-    if (id === DETAIL_AGENT) {
+    if (id === detailAgent && details[id].transcript.hasMore) {
       await evalJs(cdp, `[...document.querySelectorAll('.tab')].find((b) => b.textContent.startsWith('Transcript')).click()`);
       await sleep(DETAIL_POLL_MS * 3);
       await evalJs(cdp, `document.querySelector('.more')?.click()`);
       await sleep(EVENT_SETTLE_MS);
       const asked = (await sentEvents(cdp)).slice(before).filter((e) => e.name === 'agent');
-      if (!asked.some((e) => e.data?.id === DETAIL_AGENT && e.data?.pages === 2)) issues.push(`${size}/${kind}: "Show earlier entries" did not ask the mod for page 2 (${JSON.stringify(asked.map((e) => e.data))})`);
+      if (!asked.some((e) => e.data?.id === detailAgent && e.data?.pages === 2)) issues.push(`${size}/${kind}: "Show earlier entries" did not ask the mod for page 2 (${JSON.stringify(asked.map((e) => e.data))})`);
     }
     await evalJs(cdp, `document.querySelector('.back').click()`);
     await sleep(DETAIL_POLL_MS * 3);
     const back = await evalJs(cdp, `document.getElementById('app').dataset.view`);
     if (back !== 'list') issues.push(`${size}/${kind}: Back left view ${back}`);
   }
-  await evalJs(cdp, `window.__agentsInfo.open(${JSON.stringify(DETAIL_AGENT)})`);
+  await evalJs(cdp, `window.__agentsInfo.open(${JSON.stringify(detailAgent)})`);
   await sleep(DETAIL_POLL_MS * 3);
   await cdp.send('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27 });
   await cdp.send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27 });
@@ -367,7 +369,7 @@ async function runOne(chrome, base, size, kind, args, scene, fixture, details, i
       await evalJs(cdp, `document.querySelector('.back').click()`);
       await sleep(400);
     }
-    const detail = fixture.agents.length > 0 && details ? await checkDetail(cdp, scene, details, png, issues, size, kind) : null;
+    const detail = fixture.agents.length > 0 && details ? await checkDetail(cdp, scene, details, args.detailAgent, png, issues, size, kind) : null;
     return { size, kind, png: png(), audit, event, detail, console: log.problems, issues };
   } finally {
     await cleanup(res);
@@ -382,7 +384,7 @@ async function main() {
   if (!chrome) throw new Error('chrome not found');
   const fixture = JSON.parse(readFileSync(join(args.src, 'fixtures', `${args.fixture}.json`), 'utf8'));
   const detailsPath = join(args.src, 'fixtures', `${args.details}.json`);
-  const details = args.fixture === 'crew' ? JSON.parse(readFileSync(detailsPath, 'utf8')) : null;
+  const details = args.fixture === 'crew' || args.hasDetailsArg ? JSON.parse(readFileSync(detailsPath, 'utf8')) : null;
   const scene = join(work, SCENE_ID);
   cpSync(args.src, scene, { recursive: true, filter: (src) => !NOT_RUNTIME.test(src.slice(args.src.length)) });
   const state = { id: SCENE_ID, title: 'Agents', layout: 'stage', span: 3, height: 540, alt: 'Agents', rev: 1, dir: scene, entry: 'index.html', builtin: true };
