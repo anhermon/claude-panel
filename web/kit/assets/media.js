@@ -16,6 +16,8 @@ export const MS_PER_SECOND = 1000;
 const TICK_PARTS = 4;
 const CHAR_WIDTH_EM = 0.62;
 const LABEL_GAP_PX = 10;
+// The last tick is end-anchored and its neighbour centred, so together they need 1.5 label widths between tick positions.
+const PAIR_WIDTH_FACTOR = 1.5;
 const DECIMALS = 2;
 const MOTION_STATIC = 'static';
 const MOTION_DATA = 'data';
@@ -37,7 +39,7 @@ export function timeAxis(svg, { left, right, bottom, end, unit, fs, secondary })
   svg.append(s('line', { x1: left, x2: right, y1: bottom, y2: bottom, class: 'pa-axis' }));
   // Fewer ticks when the widest label would touch its neighbour (ms and frame units are wide).
   const size = Math.max(MIN_FONT, fs);
-  const labelPx = `${measure(end)} ${unit}`.length * size * CHAR_WIDTH_EM + LABEL_GAP_PX;
+  const labelPx = `${measure(end)} ${unit}`.length * size * CHAR_WIDTH_EM * PAIR_WIDTH_FACTOR + LABEL_GAP_PX;
   let parts = TICK_PARTS;
   while (parts > ONE && (right - left) / parts < labelPx) parts /= STROKE;
   for (let i = ZERO; i <= parts; i++) {

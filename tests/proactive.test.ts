@@ -363,3 +363,23 @@ test('a task-only panel call after a motion prompt is nudged toward the motion k
   const nudged = JSON.stringify(await $.tool.call({ tool: TOOL, task: { title: 'Intro animation', why: 'Measured evidence' } }))
   expect(nudged).toMatch(/waveform|shotlist|easing|galton|particles|scene3d/)
 })
+
+const LIVE_SESSIONS = 6
+const candidatesOf = (context: readonly string[] | undefined): string[] =>
+  (/Candidates: ([^.]*)\./.exec((context ?? []).find(c => c.includes('Candidates')) ?? '')?.[1] ?? '').split(', ').filter(Boolean)
+
+test('real hooks over several sessions sharing one store: a form every session used stops being offered', async ($, on) => {
+  const b = await setup($, on)
+  const offered: string[][] = []
+  let lastContext: readonly string[] | undefined
+  for (let i = 0; i < LIVE_SESSIONS; i++) {
+    sessionBox.id = `live-${i}`
+    lastContext = (await submit($)).context
+    offered.push(candidatesOf(lastContext))
+    await $.tool.call({ tool: TOOL, frame: FRAME }) // every session draws the same "steps" form
+  }
+  expect(offered.at(-1)).not.toContain('steps')
+  expect(lastContext?.find(c => c.includes('Candidates'))).toMatch(/Avoid recent forms[^.]*steps/)
+  expect(offered.at(-1)!.length).toBeGreaterThan(0)
+  expect((b.stored.get(HISTORY_KEY) as unknown[]).length).toBe(LIVE_SESSIONS)
+})

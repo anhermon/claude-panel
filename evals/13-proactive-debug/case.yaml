@@ -1,7 +1,7 @@
 schema_version: "1.1"
 name: proactive-debug-without-panel-cue
 description: "A debugging task starts task + why without a panel request and posts a board frame that shows the suspects or evidence (steps, hypotheses, timeline, compare...). Note: the no-plugin arm has no panel tool, so its delta only shows the tool is used when present."
-runs: 2
+runs: 4
 execution:
   max_turns: 12
   timeout_seconds: 360

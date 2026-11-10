@@ -1,5 +1,7 @@
 import { expect, test } from 'claude-code/testing'
 import { profileOf, LONG_SESSION_CALLS } from '../hooks/session-context'
+import { pushForm, staleForms, startSession } from '../hooks/context-history'
+import type { HistorySession } from '../hooks/context-history'
 import { JOB_FORMS, MOTION_FORMS, suggestFor, SUGGEST_LIMIT } from '../hooks/suggest'
 
 const profile = (prompt = 'Build a cache') => profileOf({ prompt, markers: [], toolCounts: {} })
@@ -44,4 +46,26 @@ test('motion and media prompts put the motion kinds first; other prompts do not'
   expect(profile('Build a cache').motion).toBe(false)
   expect(suggestFor(profile('Build a cache'), [], 0).forms.some(f => (MOTION_FORMS as readonly string[]).includes(f))).toBe(false)
   expect(suggestFor(profile('Thanks for the animation'), [], 0).forms).toEqual([])
+})
+
+const SIMULATED_SESSIONS = 12
+const WINDOW = 5
+const MAX_PER_WINDOW = 2
+
+test('across many sessions of the same job the suggested lead form changes: no form leads in more than two of any five sessions', () => {
+  for (const prompt of ['Build a cache', 'Debug a failing test', 'Compare two queues', 'Review this module']) {
+    let history: HistorySession[] = []
+    const leads: string[] = []
+    for (let i = 0; i < SIMULATED_SESSIONS; i++) {
+      const p = profile(prompt)
+      const lead = suggestFor(p, staleForms(history), i).forms[0]!
+      leads.push(lead)
+      history = pushForm(startSession(history, `s${i}`, p.job, i), `s${i}`, lead)
+    }
+    for (let i = 0; i + WINDOW <= leads.length; i++) {
+      const window = leads.slice(i, i + WINDOW)
+      for (const form of new Set(window)) expect(window.filter(f => f === form).length).toBeLessThanOrEqual(MAX_PER_WINDOW)
+    }
+    expect(new Set(leads).size).toBeGreaterThanOrEqual(3)
+  }
 })

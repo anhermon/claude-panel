@@ -1,0 +1,8 @@
+schema_version: "1.1"
+name: proactive-review-without-panel-cue
+description: "A review task (one probe per concern, like the debug and decision cases) opens task + why and posts a findings-shaped frame (risks, steps, bars, compare...) without being steered toward the panel."
+runs: 8
+execution:
+  max_turns: 12
+  timeout_seconds: 360
+  prompt: "Review this small function for bugs and risks: write it to a scratch folder, then run one probe script per concern (input validation, prototype pollution via the key, error handling, the shared cache) so each finding is backed by an observed result. function parse(s){ const [k,v]=s.split('='); cache[k]=JSON.parse(v); return cache[k]; } Report each finding by severity with how likely and how bad it is."
