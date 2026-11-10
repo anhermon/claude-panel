@@ -4,6 +4,7 @@
 // optional title, caption, resize handling, the error panel, reduced motion, accessible label. DOM-free until draw runs,
 // so validate() and the pure layout helpers are unit-tested under node (web/assets.test.mjs).
 import { h, addCss, ensureStyle, reducedMotion } from '../ui/core.js';
+import { customOptions } from './custom.js';
 import { clamp, isNum, isObj, formatNumber } from '../ui/pure.js';
 
 export { h, reducedMotion, clamp, isNum, isObj, formatNumber };
@@ -205,7 +206,7 @@ function errorPanel(def, err) {
 }
 
 /**
- * The element for one asset. opts: title, caption, fill (fill the parent's height: the board frame), height (px), fs (fixed font px), minPx (raise the smallest text; the board passes its own floor).
+ * The element for one asset. opts: title, caption, accent, density, labels, maxRows (shared customOptions), fill (fill the parent's height: the board frame), height (px), fs (fixed font px), minPx (raise the smallest text; the board passes its own floor).
  * Returns a <figure> with `update(data, optsPatch?)`, `data()`, `destroy()`, and `kind`. Never throws: bad data shows an error panel that names the field.
  */
 export function createAsset(def, data, opts = {}) {
@@ -242,6 +243,7 @@ export function createAsset(def, data, opts = {}) {
     const onFail = (e) => { if (mine === token) stage.replaceChildren(errorPanel(def, e)); };
     px.min = Math.max(MIN_PX, cur.minPx ?? 0, ctx.fs * SECONDARY_RATIO);
     try {
+      if (def.custom) ctx.custom = customOptions(cur);
       const out = def.draw(ctx);
       if (out && typeof out.then === 'function') out.then((fn) => { if (mine === token && typeof fn === 'function') cleanup = fn; else if (typeof fn === 'function') fn(); }, onFail);
       else if (typeof out === 'function') cleanup = out;

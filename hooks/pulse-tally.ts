@@ -74,6 +74,10 @@ export function tallyEnd(loop: Tallied, ev: Pick<PulseEvent, 'tool' | 'target'>,
 
 const num = (v: unknown): number => (typeof v === 'number' && Number.isFinite(v) && v > 0 ? Math.round(v) : 0)
 
+/** Total failed tool calls recorded across a loop's tally. */
+export const tallyErrors = (tally: Tally | undefined): number =>
+  tally === undefined ? 0 : Object.values(tally).reduce((sum, e) => sum + e.err, 0)
+
 /** A stored tally read back: only well-formed keys and numbers, capped. */
 export function restoreTally(v: unknown): Tally {
   const out: Tally = {}

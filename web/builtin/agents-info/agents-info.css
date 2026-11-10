@@ -79,7 +79,9 @@ html, body { margin: 0; height: 100%; background: var(--bg); color: var(--fg); f
 .row-feed { color: var(--fg); opacity: .85; font-size: .93em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .row-sub { display: flex; gap: 10px; color: var(--mut); font-size: max(12px, .86em); white-space: nowrap; overflow: hidden; }
 .row-kind { color: var(--c); }
-.row-kind[hidden] { display: none; }
+.row-kind[hidden], .row-branch[hidden] { display: none; }
+.row-branch { color: var(--fg); opacity: .78; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: max(12px, .82em); }
+.gantt .row-branch { order: 2; }
 .pill { flex: none; padding: 0 9px; border-radius: 999px; font-size: max(12px, .82em); font-weight: 650; color: #0b0c10; background: var(--s, #94a3b8); }
 .row[data-state="working"] .pill { --s: var(--s-working); }
 .row[data-state="testing"] .pill { --s: var(--s-testing); }
@@ -90,6 +92,7 @@ html, body { margin: 0; height: 100%; background: var(--bg); color: var(--fg); f
 .row-share { display: block; height: 3px; margin-top: 3px; border-radius: 2px; background: color-mix(in srgb, var(--line) 80%, transparent); overflow: hidden; }
 .row-share i { display: block; height: 100%; width: 0; background: var(--c); opacity: .85; transition: width .6s ease-out; }
 .row[data-main="true"] .row-name::after { content: "  (this session)"; color: var(--mut); font-weight: 400; font-size: .85em; }
+.row[data-main="true"][data-titled="true"] .row-name::after { content: none; }
 
 /* ---- the agent detail (drill-down inside the tile): list hidden, detail shown; in the stacked layout the stage shrinks to a strip */
 #app[data-view="detail"] #list, #app[data-view="detail"] #legend, #app[data-view="detail"] #empty { display: none; }
@@ -107,8 +110,10 @@ html, body { margin: 0; height: 100%; background: var(--bg); color: var(--fg); f
 .back:focus-visible, .tab:focus-visible, .more:focus-visible, .detail-body:focus-visible { outline: 2px solid var(--acc); outline-offset: 1px; }
 .detail-names { flex: 1; min-width: 0; }
 .detail-title { margin: 0; font-size: 1.08em; font-weight: 700; overflow-wrap: anywhere; }
-.role-chip { flex: none; padding: 0 7px; border-radius: 6px; border: 1px solid var(--acc); color: var(--acc); font-size: max(12px, .78em); font-weight: 650; line-height: 1.5; letter-spacing: .02em; white-space: nowrap; }
-.role-chip[hidden], .detail-ticket[hidden] { display: none; }
+.role-chip, .wait-chip, .err-chip { flex: none; padding: 0 7px; border-radius: 6px; border: 1px solid var(--acc); color: var(--acc); font-size: max(12px, .78em); font-weight: 650; line-height: 1.5; letter-spacing: .02em; white-space: nowrap; }
+.wait-chip { border-color: color-mix(in srgb, var(--s-waiting) 58%, transparent); background: color-mix(in srgb, var(--s-waiting) 14%, transparent); color: var(--s-waiting); max-width: 190px; overflow: hidden; text-overflow: ellipsis; }
+.err-chip { border-color: color-mix(in srgb, var(--s-blocked) 58%, transparent); background: color-mix(in srgb, var(--s-blocked) 14%, transparent); color: var(--s-blocked); }
+.role-chip[hidden], .wait-chip[hidden], .err-chip[hidden], .detail-ticket[hidden] { display: none; }
 .detail-title-row { display: flex; align-items: center; gap: 8px; min-width: 0; }
 .detail-title-row .detail-title { min-width: 0; }
 .detail-ticket { margin: 0; color: var(--acc); font-size: max(12px, .86em); font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -197,7 +202,9 @@ html, body { margin: 0; height: 100%; background: var(--bg); color: var(--fg); f
 .crew-av { flex: none; width: var(--av); height: var(--av); }
 .crew-txt { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
 .crew-title { font-weight: 650; line-height: 1.2; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow-wrap: anywhere; }
-.crew-meta { display: flex; align-items: center; gap: 6px; min-width: 0; overflow: hidden; }
+.crew-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; min-width: 0; overflow: hidden; }
+/* narrow tiles: the wait chip may shrink (ellipsis) instead of poking past the tile edge */
+.crew-meta .wait-chip { flex: 0 1 auto; min-width: 0; max-width: 100%; white-space: normal; overflow-wrap: anywhere; line-height: 1.3; }
 .crew-chip { flex: none; padding: 0 9px; border-radius: 999px; font-size: max(12px, .82em); font-weight: 700; line-height: 1.5; color: #0b0c10; background: var(--c); white-space: nowrap; }
 .crew-more { display: flex; align-items: center; justify-content: center; border-radius: 14px; border: 1px dashed var(--line); color: var(--mut); font-weight: 700; min-height: var(--av); }
 .crew-callout { position: absolute; top: 0; left: 0; width: min(340px, 100%); padding: 10px 12px 12px; border-radius: 16px; background: var(--card-hi); border: 1px solid var(--c); box-shadow: 0 10px 32px rgba(0, 0, 0, .6); z-index: 6; transform-origin: var(--ox, 20px) 0; opacity: 0; transform: scale(.5); visibility: hidden; pointer-events: none; transition: transform .24s cubic-bezier(.2, .9, .3, 1.15), opacity .16s ease-out, visibility 0s .24s; }

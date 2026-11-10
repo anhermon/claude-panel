@@ -223,6 +223,20 @@ test('panel-emit: POSTed to the relative event URL with the scene id taken from 
   assert.deepEqual(t.fetchLog[2].body, { scene: 'note', name: 'card.click', data: { n: 1 } }, 'card-layout scenes can emit too');
 });
 
+test('panel-open: only the built-in board may ask the page to open an absolute http(s) url, in a new tab without opener', () => {
+  const t = env();
+  const opened = [];
+  t.ctx.window.open = (...a) => { opened.push(a); return null; };
+  t.render(stateOf([stageScene({ id: 'board', builtin: true }), stageScene({ id: 'other', title: 'Other' })]));
+  const open = (id, url) => t.post({ source: t.iframeOf(id).contentWindow, data: { type: 'panel-open', url } });
+  open('board', 'https://x.pagerduty.com/incidents/P1');
+  assert.deepEqual(opened, [['https://x.pagerduty.com/incidents/P1', '_blank', 'noopener,noreferrer']]);
+  for (const bad of ['javascript:alert(1)', 'data:text/html,x', '//evil.com', '/rel', 'mailto:a@b.c', '', 5, null, 'https://' + 'a'.repeat(2100)]) open('board', bad);
+  open('other', 'https://e.com/');
+  t.post({ source: {}, data: { type: 'panel-open', url: 'https://e.com/' } });
+  assert.equal(opened.length, 1, 'bad urls and non-board senders are ignored');
+});
+
 test('panel-emit validation and failure handling: bad names, big data, floods, and rejections are silent', async () => {
   const t = env();
   t.render(stateOf([stageScene()]));
@@ -559,4 +573,21 @@ test('the stage keeps exactly one iframe per scene id across updates', () => {
   for (let i = 0; i < UPDATES; i++) t.render(stateOf([stageScene({ mtime: i })]));
   assert.equal(t.$('stage').findAll(isIframe).length, 1);
   assert.equal(t.iframeOf('deck').srcLog.length, UPDATES);
+});
+
+test('the stage is measured again whenever its own size changes, not only on a window resize', () => {
+  const observed = [];
+  const t = env();
+  t.ctx.ResizeObserver = class { constructor(fn) { this.fn = fn; observed.push(this); } observe(node) { this.node = node; } };
+  const size = { width: 1280, height: 720 };
+  const stage = () => t.$('stage');
+  Object.defineProperty(stage(), 'clientWidth', { get: () => size.width, configurable: true });
+  Object.defineProperty(stage(), 'clientHeight', { get: () => size.height, configurable: true });
+  t.render(stateOf([stageScene({ id: 'one' }), stageScene({ id: 'two' })]));
+  assert.equal(observed.length, 1, 'one observer for the stage');
+  assert.equal(observed[0].node, stage());
+  assert.equal(stage().style.gridTemplateRows, 'minmax(0,1fr)', 'wide: side by side');
+  Object.assign(size, { width: 390, height: 800 });
+  observed[0].fn();
+  assert.equal(stage().style.gridTemplateRows, 'minmax(0,1fr) minmax(0,1fr)', 'a phone-sized stage stacks the tiles');
 });

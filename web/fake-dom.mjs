@@ -160,7 +160,7 @@ export function loadBrowserScripts(files, { doc = createDocument() } = {}) {
     },
   });
   // `workspace/...` is served from builtin/workspace/ (server.mjs), exactly as ui.html names it
-  for (const f of files) vm.runInContext(readFileSync(join(HERE, f.startsWith('workspace/') ? 'builtin' : '', f), 'utf8'), ctx, { filename: f });
+  for (const f of ['plain-title.js', ...files]) vm.runInContext(readFileSync(join(HERE, f.startsWith('workspace/') ? 'builtin' : '', f), 'utf8'), ctx, { filename: f });
   return {
     ctx, doc, messageHandlers, timers, fetchLog,
     get fetchResult() { return env.fetchResult; },

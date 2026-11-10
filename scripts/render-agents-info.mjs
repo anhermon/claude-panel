@@ -310,6 +310,17 @@ async function runOne(chrome, base, size, kind, args, scene, fixture, details, i
     if (audit.ids) issues.push('a ticket id is visible as text');
     if (audit.scrolls) issues.push('page scrolls');
     if (audit.minFont < MIN_FONT_PX) issues.push(`smallest text ${audit.minFont}px ("${audit.minText}")`);
+    if (args.fixture === 'waiting') {
+      audit.waiting = await evalJs(cdp, `(() => {
+        const waits = [...document.querySelectorAll('.wait-chip:not([hidden])')].map((n) => ({ text: n.textContent, title: n.title }));
+        const errs = [...document.querySelectorAll('.err-chip:not([hidden])')].map((n) => n.textContent);
+        const me = document.querySelector('.row[data-main="true"]');
+        return { waits, errs, meName: me?.querySelector('.row-name')?.textContent ?? '', meModel: me?.querySelector('.ident-model')?.textContent ?? '', meBranch: me?.querySelector('.row-branch')?.textContent ?? '' };
+      })()`);
+      if (audit.waiting.waits.length < 2 || !audit.waiting.waits.every((w) => w.text.startsWith('may be waiting') && w.title.includes('a long tool looks the same'))) issues.push(`waiting chips missing or wrong: ${JSON.stringify(audit.waiting.waits)}`);
+      if (audit.waiting.errs.length < 1 || !audit.waiting.errs.some((e) => /\d+ errors?/.test(e))) issues.push(`error chips missing: ${JSON.stringify(audit.waiting.errs)}`);
+      if (!audit.waiting.meModel || !audit.waiting.meBranch) issues.push(`Me row missing model or branch: ${JSON.stringify(audit.waiting)}`);
+    }
     if (args.fixture === 'harness' || args.fixture === 'codex-moods') { // one frame with every character big: claude, codex, agy and the unknown ones side by side
       await evalJs(cdp, `(() => { const s = document.createElement('style'); s.id = 'showcase'; s.textContent = '.crew-grid { grid-template-columns: repeat(auto-fill, minmax(' + ${SHOWCASE_CELL_PX} + 'px, 1fr)) !important } .crew-btn { grid-template-columns: 1fr !important; justify-items: center; text-align: center } .crew-av { --av: ' + ${SHOWCASE_AV_PX} + 'px; width: var(--av); height: var(--av) } .crew-meta { justify-content: center }'; document.head.append(s); })()`);
       await sleep(args.settle);

@@ -34,3 +34,10 @@ test('pushRecent keeps the last RECENT_MAX; restoreRecent drops junk', () => {
   expect(restoreRecent(['a', 1, null, 'b'])).toEqual(['a', 'b'])
   expect(restoreRecent('nope')).toEqual([])
 })
+
+test('varietyHint: different viz kinds are different forms; a repeated kind is named and never offered again', () => {
+  expect(varietyHint(['waveform', 'shotlist', 'easing', 'galton', 'particles'])).toBe('')
+  const hint = varietyHint(['radar', 'radar', 'radar'])
+  expect(hint).toMatch(/all "radar"/)
+  expect(hint.split(': not used recently: ')[1]).not.toMatch(/\bradar\b|\bviz\b/)
+})

@@ -1,12 +1,12 @@
 {
  "t40": {
   "id": "t40",
-  "name": "T63 Quick grep (sonnet/low)",
+  "name": "reviewer",
   "isMain": false,
   "state": "waiting",
   "startedAgoMs": 3441000,
   "endedAgoMs": null,
-  "brief": "Check where tests are.",
+  "brief": "Check the empty-note export test in Acme Notes.",
   "transcript": {
    "isAvailable": true,
    "reason": "",
@@ -18,7 +18,7 @@
      "agoMs": 3420000,
      "kind": "tool",
      "tool": "Bash",
-     "label": "grep tests",
+     "label": "grep empty tests/export.test.mjs",
      "ms": 300,
      "error": "exit 1"
     }
@@ -60,7 +60,7 @@
    "items": [
     {
      "kind": "failing-loop",
-     "title": "`grep tests` failed",
+     "title": "`grep empty tests/export.test.mjs` failed",
      "evidence": "exit code 1; output ends: (no matches)",
      "tAgoMs": 3000000,
      "lastTAgoMs": 3000000,
@@ -102,7 +102,7 @@
     "list": [
      {
       "kind": "failure",
-      "title": "`grep tests` failed",
+      "title": "`grep empty tests/export.test.mjs` failed",
       "evidence": "exit code 1; output ends: (no matches)",
       "tAgoMs": 3000000,
       "outcome": "open"
@@ -113,12 +113,12 @@
  },
  "main": {
   "id": "main",
-  "name": "Me",
+  "name": "planner",
   "isMain": true,
   "state": "working",
   "startedAgoMs": 5400000,
   "endedAgoMs": null,
-  "brief": "Continue with T51: merge the Agents tile with the board's agent rows and add the drill-down.",
+  "brief": "Add a search box to the Acme Notes list and fix export for empty notes.",
   "transcript": {
    "isAvailable": true,
    "reason": "",
@@ -129,13 +129,13 @@
     {
      "agoMs": 500000,
      "kind": "say",
-     "text": "Dispatching three workers for the open tickets."
+     "text": "I will ask builder to add search and reviewer to check empty exports."
     },
     {
      "agoMs": 480000,
      "kind": "tool",
      "tool": "Agent",
-     "label": "T43 Work-kind classifier",
+     "label": "builder",
      "ms": 1200,
      "error": ""
     },
@@ -143,14 +143,14 @@
      "agoMs": 470000,
      "kind": "tool",
      "tool": "Agent",
-     "label": "T40 Deep per-agent insight",
+     "label": "reviewer",
      "ms": 1100,
      "error": ""
     },
     {
      "agoMs": 60000,
      "kind": "say",
-     "text": "Waiting for the workers to report."
+     "text": "The Acme Notes checks are running."
     }
    ]
   },

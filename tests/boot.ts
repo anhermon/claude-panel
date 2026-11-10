@@ -129,6 +129,8 @@ export type BootOptions = {
    * call reject (a timeout). `init` is what the mod passed (stdin, timeoutMs).
    */
   onRun?: (argv: readonly string[], init?: ProcessRunInit) => Partial<RunAnswer> | undefined
+  /** The session id a call sees (default: `sess-1`); a test changes it to model /clear. */
+  sessionId?: () => string
   /** The ambient pulse is on (default: off, see `PANEL_PULSE`). */
   pulse?: boolean
   /** What `ui.blit` answers for a frame (default: taken, `{}`). */
@@ -163,7 +165,7 @@ export async function boot($: Engine, on: On, opts: BootOptions = {}) {
     stored.delete(e.key)
     return { value: undefined }
   })
-  on('session.id', () => ({ value: 'sess-1' }))
+  on('session.id', () => ({ value: opts.sessionId?.() ?? 'sess-1' }))
   on('session.cwd', () => ({ value: CWD }))
   on('tool.register', (_, e) => {
     registered.push(`mcp__panel__${e.name}`)

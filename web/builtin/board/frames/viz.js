@@ -5,25 +5,37 @@
 import { h, uiScale } from './dom.js';
 
 const ENGINE = 'panel/assets';
+const LIMITS_KIND = 'limits';
 const LOAD_FAILED = 'visual asset library unavailable';
 const FONT_BASE_PX = 14; // the board's text floor, scaled like the html frames
 const FONT_MAX_PX = 22;
+const FILL_CLASS = 'pa-fill';
 const states = new WeakMap(); // layer element -> { handle, latest, dead }
 
 // The kit's asset tokens are dark by default but follow prefers-color-scheme; the board is always dark.
 const pinDark = () => { document.documentElement.dataset.theme ||= 'dark'; };
-const optionsOf = (f) => ({ fill: true, caption: f.caption, fs: Math.min(FONT_MAX_PX, FONT_BASE_PX * uiScale()), minPx: FONT_BASE_PX * uiScale() });
+const optionsOf = (f) => ({ fill: f.kind !== LIMITS_KIND, caption: f.caption, fs: Math.min(FONT_MAX_PX, FONT_BASE_PX * uiScale()), minPx: FONT_BASE_PX * uiScale() });
 
 export function render(el, f, ctx) {
   pinDark();
+  el.dataset.kind = f.kind;
   const state = { handle: null, latest: f, dead: false, kind: f.kind };
   states.set(el, state);
+  const measure = () => {
+    if (!state.dead && state.handle && !state.handle.classList.contains(FILL_CLASS)) {
+      ctx.onContentHeight?.(state.handle.offsetHeight);
+    }
+  };
+  const observer = new ResizeObserver(measure);
+  observer.observe(el);
   import(ENGINE).then(({ render: draw }) => {
     if (state.dead) return;
     state.handle = draw(state.latest.kind, state.latest.data, optionsOf(state.latest));
     el.append(state.handle);
+    observer.observe(state.handle);
+    measure();
   }).catch(() => { if (!state.dead) el.append(h('p', { style: 'padding:4px 8px;font-size:14px;color:var(--danger)', text: LOAD_FAILED })); });
-  ctx.onDispose(() => { state.dead = true; state.handle?.destroy?.(); states.delete(el); });
+  ctx.onDispose(() => { state.dead = true; observer.disconnect(); state.handle?.destroy?.(); states.delete(el); });
 }
 
 export function update(el, f) {

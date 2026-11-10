@@ -1,3 +1,4 @@
+import { EXAMPLE_THREAD, EXAMPLE_OTHER_THREAD, EXAMPLE_RUN, EXAMPLE_SECOND_RUN } from './fixtures/codex/ids'
 // The `$` reader of the run records over a pretend disk: the record folder first, the ledger fallback, the rollout found by thread id or
 // (marked guessed) by delegation-kit's own heuristic, bounded reads, env roots, and no re-read while nothing changed.
 import { expect, test } from 'claude-code/testing'
@@ -8,17 +9,17 @@ import type { RunRecordsRead } from '../hooks/run-records-io'
 import { DELEGATIONS, EVENTS, ROLLOUT_FINISHED } from './fixtures/codex/fixtures'
 
 const SESSION = '00000000-0000-4000-8000-000000000001'
-const THREAD = '01a1bfc5-36d6-77b1-9c8a-41ccc83cfee2'
-const FIRST = '20261109T100534-codex-113fad'
-const SECOND = '20261109T102000-codex-77aa88'
+const THREAD = EXAMPLE_THREAD
+const FIRST = EXAMPLE_RUN
+const SECOND = EXAMPLE_SECOND_RUN
 const HOME = '/home/u'
-const CWD = '/work/demo'
+const CWD = '/work/acme-notes'
 const CACHE = `${HOME}/.cache/delegation-kit`
 const CODEX = `${HOME}/.codex`
-const DAY = `${CODEX}/sessions/2026/11/09`
-const ROLLOUT = `${DAY}/rollout-2026-11-09T12-05-35-${THREAD}.jsonl`
-const ROLLOUT_MTIME = Date.parse('2026-11-09T10:06:44.000Z')
-const NOW = Date.parse('2026-11-09T10:30:00.000Z')
+const DAY = `${CODEX}/sessions/2026/01/01`
+const ROLLOUT = `${DAY}/rollout-2026-01-01T12-05-35-${THREAD}.jsonl`
+const ROLLOUT_MTIME = Date.parse('2026-01-01T10:06:44.000Z')
+const NOW = Date.parse('2026-01-01T10:30:00.000Z')
 
 type Disk = Map<string, { text: string; mtimeMs: number; size?: number }>
 type Env = Record<string, string>
@@ -79,7 +80,7 @@ test('the ledger fallback: both runs of the session, the first with its rollout 
   const { records } = await read($)
   expect(records.map(r => r.runId)).toEqual([FIRST, SECOND])
   expect(records[0]?.transcript).toMatchObject({ format: 'codex-rollout', path: ROLLOUT, threadId: THREAD, confidence: 'exact', eventsPath: `${CACHE}/delegations/${FIRST}/events.jsonl` })
-  expect(records[0]).toMatchObject({ status: 'ok', title: 'Add the json flag', ticket: 'T99' })
+  expect(records[0]).toMatchObject({ status: 'ok', title: 'Add note search', ticket: 'T1' })
 })
 
 test('a run with no thread id and a rollout of its workdir at/after its start: found, and marked guessed', async () => {
@@ -94,9 +95,9 @@ test('a run with no thread id and a rollout of its workdir at/after its start: f
 })
 
 test('the guess needs the same workdir and a rollout written at/after the start', async () => {
-  const other = pretend(new Map([...baseDisk()].filter(([k]) => !k.includes('/events.jsonl')).map(([k, v]) => [k, k === ROLLOUT ? file(ROLLOUT_FINISHED.replace('"cwd":"/work/demo"', '"cwd":"/work/elsewhere"')) : v])))
+  const other = pretend(new Map([...baseDisk()].filter(([k]) => !k.includes('/events.jsonl')).map(([k, v]) => [k, k === ROLLOUT ? file(ROLLOUT_FINISHED.replace('"cwd":"/work/acme-notes"', '"cwd":"/work/elsewhere"')) : v])))
   expect((await read(other.$)).records[0]?.transcript?.path).toBeUndefined()
-  const old = pretend(new Map([...baseDisk()].filter(([k]) => !k.includes('/events.jsonl')).map(([k, v]) => [k, k === ROLLOUT ? file(ROLLOUT_FINISHED, Date.parse('2026-11-09T10:00:00.000Z')) : v])))
+  const old = pretend(new Map([...baseDisk()].filter(([k]) => !k.includes('/events.jsonl')).map(([k, v]) => [k, k === ROLLOUT ? file(ROLLOUT_FINISHED, Date.parse('2026-01-01T10:00:00.000Z')) : v])))
   expect((await read(old.$)).records[0]?.transcript?.path).toBeUndefined()
 })
 
@@ -110,7 +111,7 @@ test('a rollout of another day folder far from the start is not looked at', asyn
 
 test('a record in `.router/runs` is preferred over the ledger row of the same run; other sessions, garbage and big files are ignored', async () => {
   const disk = baseDisk()
-  const rec = { v: 1, runId: FIRST, harness: 'codex', sessionId: SESSION, startedAt: '2026-11-09T10:05:34.409Z', status: 'ok', title: 'From the record', transcript: { format: 'codex-rollout', path: '/elsewhere/rollout.jsonl' } }
+  const rec = { v: 1, runId: FIRST, harness: 'codex', sessionId: SESSION, startedAt: '2026-01-01T10:05:34.409Z', status: 'ok', title: 'From the record', transcript: { format: 'codex-rollout', path: '/elsewhere/rollout.jsonl' } }
   disk.set(`${CWD}/.router/runs/${FIRST}.json`, file(JSON.stringify(rec)))
   disk.set(`${CWD}/.router/runs/other.json`, file(JSON.stringify({ ...rec, runId: 'o-codex-000000', sessionId: 'someone-else' })))
   disk.set(`${CWD}/.router/runs/broken.json`, file('{"v":1,'))
@@ -118,7 +119,7 @@ test('a record in `.router/runs` is preferred over the ledger row of the same ru
   disk.set(`${CWD}/.router/runs/notes.txt`, file('hello'))
   const { $, reads } = pretend(disk)
   const { records } = await read($)
-  expect(records.map(r => [r.runId, r.title])).toEqual([[FIRST, 'From the record'], [SECOND, 'Second run still going']])
+  expect(records.map(r => [r.runId, r.title])).toEqual([[FIRST, 'From the record'], [SECOND, 'Review empty-note export']])
   expect(records[0]?.transcript).toMatchObject({ path: '/elsewhere/rollout.jsonl', confidence: 'exact' }) // a named path is kept as is
   expect(reads).not.toContain(`${CWD}/.router/runs/huge.json`)
   expect(reads).not.toContain(`${CWD}/.router/runs/notes.txt`)
@@ -126,8 +127,8 @@ test('a record in `.router/runs` is preferred over the ledger row of the same ru
 
 test('an events path outside delegation-kit`s delegations folder is not trusted', async () => {
   const disk = baseDisk()
-  disk.set('/etc/events.jsonl', file(EVENTS.replace(THREAD, '01a1bfb8-eae0-78e3-8314-75814fc49013')))
-  const rec = { v: 1, runId: FIRST, harness: 'codex', sessionId: SESSION, startedAt: '2026-11-09T10:05:34.409Z', status: 'ok', transcript: { eventsPath: '/etc/events.jsonl' } }
+  disk.set('/etc/events.jsonl', file(EVENTS.replace(THREAD, EXAMPLE_OTHER_THREAD)))
+  const rec = { v: 1, runId: FIRST, harness: 'codex', sessionId: SESSION, startedAt: '2026-01-01T10:05:34.409Z', status: 'ok', transcript: { eventsPath: '/etc/events.jsonl' } }
   disk.set(`${CWD}/.router/runs/${FIRST}.json`, file(JSON.stringify(rec)))
   const { $, runs } = pretend(disk)
   const { records } = await read($)
@@ -177,10 +178,10 @@ test('a running run still waiting for its rollout is looked for again on the nex
   expect(await read($, first)).not.toBe(first) // so it is looked for again, not served from the signature
   disk.set(`${CACHE}/delegations.jsonl`, file(DELEGATIONS.split('\n').filter(l => !l.includes(SECOND)).join('\n')))
   expect((await read($)).isPending).toBe(false) // the only run ended long ago: no longer waited for
-  const later = await readRunRecords($, { cwd: CWD, sessionId: SESSION, now: Date.parse('2026-11-09T10:06:50.000Z') }, undefined)
+  const later = await readRunRecords($, { cwd: CWD, sessionId: SESSION, now: Date.parse('2026-01-01T10:06:50.000Z') }, undefined)
   expect(later.isPending).toBe(true) // ended 6 s ago and no rollout yet
   disk.set(ROLLOUT, file(ROLLOUT_FINISHED))
-  const found = await readRunRecords($, { cwd: CWD, sessionId: SESSION, now: Date.parse('2026-11-09T10:06:55.000Z') }, later)
+  const found = await readRunRecords($, { cwd: CWD, sessionId: SESSION, now: Date.parse('2026-01-01T10:06:55.000Z') }, later)
   expect(found).not.toBe(later)
   expect(found.records[0]?.transcript?.path).toBe(ROLLOUT)
   expect(found.isPending).toBe(false)
@@ -208,7 +209,7 @@ test('roots: the options win, then delegation-kit`s env (DELEGATION_KIT_CACHE_DI
 
 test('a run with another harness keeps its record and gets no rollout lookup', async () => {
   const disk = baseDisk()
-  const agy = JSON.stringify({ id: 'a-agy-123456', status: 'running', startedAt: '2026-11-09T10:25:00.000Z', harness: 'agy', sessionId: SESSION, description: 'An agy run' })
+  const agy = JSON.stringify({ id: 'a-agy-123456', status: 'running', startedAt: '2026-01-01T10:25:00.000Z', harness: 'agy', sessionId: SESSION, description: 'An agy run' })
   disk.set(`${CACHE}/delegations.jsonl`, file(`${DELEGATIONS}${agy}\n`))
   const { records } = await read(pretend(disk).$)
   const run = records.find(r => r.harness === 'agy')

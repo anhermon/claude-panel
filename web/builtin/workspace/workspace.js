@@ -66,9 +66,9 @@
   }
 
   function update(t, s) {
-    const title = s.title || s.id;
+    const title = globalThis.PanelTitles.plainTitle(s.title || s.id, false);
     t.strip.textContent = title;
-    t.iframe.title = s.alt || title;
+    t.iframe.title = globalThis.PanelTitles.plainTitle(s.alt || title, false);
     const version = versionOf(s);
     if (version === t.version) return;
     t.version = version;

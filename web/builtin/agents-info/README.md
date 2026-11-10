@@ -21,9 +21,10 @@ keeps it away for the session). It is a builtin stage scene, so the workspace sh
              kind, kindLabel, kindColor "#rrggbb", kindGlyph, headline, files: [basename...],
              role?: router|worker|verifier|codex-worker|watchdog|qa|merger|null, ticket?: { id, stage, text "verified 4/4", title?, harness? }|null,
              proof?: { eval, what, result: pass|fail|none }|null,   // a delegated ticket's eval (proof-logic.mjs); null = not a ticket, never flagged
-             agentType?: string|null,   // the subagent type EXACTLY as the engine names it, namespace kept: "savvy-flow:savvy-careful", "general-purpose", "Explore"; null = unknown (the main session)
-             calls?, harness?, model?, effort?,
-             notStarted?: true, note? }],   // notStarted: a codex attempt that never ran (deferred by the load governor, refused): state waiting, hollow bar, never "done"; note = "Not started: machine busy (load governor)" (+ "retried N times")   // model / effort: what it was started with (its meta file next to the transcript; an inherited effort is "high*"); absent = unknown, never invented
+             agentType?: string|null,   // the subagent type EXACTLY as the engine names it, namespace kept: "example-tools:worker", "general-purpose", "Explore"; null = unknown (the main session)
+             calls?, errors?, harness?, model?, effort?, branch?, title?,
+             mayBeWaiting?: { tool, target? },   // heuristic hint when a live agent's last tool call has had no answer for >= 20 s while quiet ("a long tool looks the same"); never on done/failed/not-started
+             notStarted?: true, note? }],   // notStarted: a codex attempt that never ran (deferred by the load governor, refused): state waiting, hollow bar, never "done"; note = "Not started: machine busy (load governor)" (+ "retried N times")   // model / effort: what it was started with (its meta file next to the transcript, or the main transcript's last assistant message for "Me"; an inherited effort is "high*"); branch / title: git branch and AI session title for "Me" from its transcript; errors: sum of failed tool calls on the loop tally when > 0; absent = unknown, never invented
   events: [{ id, t, agent, from, to, kind: spawn|handoff|state|work|progress, text }] }   // the newest 20, ids only grow
 ```
 
@@ -116,7 +117,7 @@ crew grid) / `avatar-harness.mjs` (harness registry) / `mascot-grid.mjs` (charac
 `avatar3d.js` (the shared renderer) / `mini-face.js` (flat twin) / `avatar-set.js` (one avatar view) / `avatar-props.js` (state badges) /
 `event-fx.mjs` + `fx-layer.js` (one-shot animations, beam) / `title-of.mjs` (plain titles) / `crew-view.js` (cards, callout) /
 `list-view.js` / `ident-logic.mjs` + `ident-view.js` (type and model:effort labels) / `gantt-logic.mjs` + `gantt-view.js` + `gantt.css` (the list's time axis and bars) / `ticker.js` / `dom.js`; the drill-down: `detail-view.js` (header, tabs, polling, requests) / `detail-transcript.js` /
-`detail-metrics.js` / `detail-progress.js` / `detail-struggles.js` / `detail-progress-logic.mjs` (normalize, phase segments, groups) / `detail-logic.mjs` (normalize, formatting, curve) / `detail-run-logic.mjs` + `detail-run.js` (a codex run's detail without a transcript: `live/detail.json` `run`, from `hooks/agent-detail-run.ts`) / `detail.css` + `detail-progress.css`; `fixtures/detail-real-*.json` are built from two real finished sub-agent transcripts (`tests/fixtures/transcripts`) by `node scripts/make-agents-detail-fixtures.mjs`; `host-messages.test.mjs` pins the host message names to `hooks/agent-controls.ts`; `fixtures/*.json` and the `*.test.mjs` are for development and are not copied to the pane.
+`detail-metrics.js` / `detail-progress.js` / `detail-struggles.js` / `detail-progress-logic.mjs` (normalize, phase segments, groups) / `detail-logic.mjs` (normalize, formatting, curve) / `detail-run-logic.mjs` + `detail-run.js` (a codex run's detail without a transcript: `live/detail.json` `run`, from `hooks/agent-detail-run.ts`) / `detail.css` + `detail-progress.css`; `fixtures/detail-real-*.json` are built from two synthetic Acme Notes sub-agent transcripts (`tests/fixtures/transcripts`) by `node scripts/make-agents-detail-fixtures.mjs`; `host-messages.test.mjs` pins the host message names to `hooks/agent-controls.ts`; `fixtures/*.json` and the `*.test.mjs` are for development and are not copied to the pane.
 
 ## Check it
 

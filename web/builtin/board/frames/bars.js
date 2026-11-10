@@ -1,5 +1,5 @@
 // bars: horizontal bars growing from 0, one row per item (max 8), values written at the end of each bar.
-import { CAPS, capText, safeColor } from '../board-logic.mjs';
+import { CAPS, capText, capTitle, safeColor } from '../board-logic.mjs';
 import { PALETTE, h, nextPaint } from './dom.js';
 import { fitStack } from './fit.js';
 
@@ -19,7 +19,7 @@ export function render(el, f, ctx) {
   const rows = items.map((it, i) => {
     const fill = h('i', { class: 'bar-fill', style: `background:${safeColor(it.color) ?? PALETTE[i % PALETTE.length]};width:${ctx.reduced ? widthOf(items, it) : '0%'}` });
     if (!ctx.reduced) nextPaint(() => { fill.style.width = widthOf(items, it); });
-    return h('div', { class: 'bar-row' }, h('span', { class: 'bar-label', text: capText(it.label, CAPS.label) }), h('span', { class: 'bar-track' }, fill), h('b', { class: 'bar-value', text: fmt(valueOf(it), unit) }));
+    return h('div', { class: 'bar-row' }, h('span', { class: 'bar-label', text: capTitle(it.label, CAPS.label) }), h('span', { class: 'bar-track' }, fill), h('b', { class: 'bar-value', text: fmt(valueOf(it), unit) }));
   });
   const grid = h('div', { class: 'bars-grid' }, rows);
   const root = h('div', { class: 'bars' }, grid);
@@ -35,7 +35,7 @@ export function update(el, f) {
   if (rows.length !== items.length) return false;
   const unit = capText(f.unit, 8);
   items.forEach((it, i) => {
-    rows[i].querySelector('.bar-label').textContent = capText(it.label, CAPS.label);
+    rows[i].querySelector('.bar-label').textContent = capTitle(it.label, CAPS.label);
     rows[i].querySelector('.bar-value').textContent = fmt(valueOf(it), unit);
     const fill = rows[i].querySelector('.bar-fill');
     fill.style.width = widthOf(items, it);

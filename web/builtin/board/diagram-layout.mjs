@@ -3,10 +3,11 @@
 // barycentre ordering, columns centred. The caller gives the pixel box it has and the font size it would like; the
 // layout shrinks the type (never below MIN_FONT) and the gaps until it fits, so 1 svg unit = 1 css px and the labels
 // stay readable. Nodes never overlap and edge-label chips sit in the gaps between layers, never on a node.
-import { CAPS, capText } from './board-logic.mjs';
+import { CAPS, capTitle } from './board-logic.mjs';
 
 export const MIN_FONT = 14;
-export const EDGE_LABEL_MAX = 14;
+export const TASK_TITLE = 'Task';
+const EDGE_LABEL_MAX = 14;
 const SWEEPS = 4;
 /** Gap tiers tried at each font before it shrinks: full layer gaps, then tighter (a 6-node diagram in a half tile keeps its 14 px text this way). */
 const GAP_SCALES = [1, 0.8, 0.62];
@@ -42,12 +43,12 @@ export function normalizeDiagram(frame) {
     const id = String(n.id ?? '');
     if (id === '' || seen.has(id)) continue;
     seen.add(id);
-    nodes.push({ id, label: capText(n.label ?? id, CAPS.label) || id, tone: typeof n.tone === 'string' ? n.tone : '' });
+    nodes.push({ id, label: capTitle(n.label ?? id, CAPS.label) || TASK_TITLE, tone: typeof n.tone === 'string' ? n.tone : '' });
   }
   const edges = [];
   for (const e of Array.isArray(frame.edges) ? frame.edges : []) {
     if (e === null || typeof e !== 'object' || edges.length >= CAPS.edges) continue;
-    if (seen.has(e.from) && seen.has(e.to) && e.from !== e.to) edges.push({ from: e.from, to: e.to, label: capText(e.label, EDGE_LABEL_MAX) });
+    if (seen.has(e.from) && seen.has(e.to) && e.from !== e.to) edges.push({ from: e.from, to: e.to, label: capTitle(e.label, EDGE_LABEL_MAX) });
   }
   return { nodes, edges };
 }

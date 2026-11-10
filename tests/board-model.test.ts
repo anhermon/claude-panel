@@ -216,16 +216,16 @@ test('agents by default: one lanes row per loop (name, state, intent), a posted 
   const rows = agentLanes([], [main, sub, loop('ag-2', { status: 'idle', lastTool: '', lastTarget: '' })], 'Fix uploads')
   expect(rows.map(r => [r.id, r.label, r.state, r.step, r.pct, r.calls])).toEqual([
     ['main', 'Main', 'working', 'Fix uploads', null, 9],
-    ['ag-1', 'Survey the repo', 'working', 'T30 · Map the live view.', null, 4],
+    ['ag-1', 'Survey the repo', 'working', 'Map the live view', null, 4],
     ['ag-2', 'Agent ag-2', 'waiting', '', null, 3],
   ])
   expect(JSON.stringify(rows)).not.toMatch(/Bash|sed|Read|a\.ts/) // the tool in use is never shown
   const posted: BoardLane = { id: 't25', label: 'Survey', state: 'testing', pct: 40, step: 'reading', note: '', goal: '', dod: [], at: null, startedAt: 1, updatedAt: 2, by: 'ag-1', loop: 'ag-1' }
   const merged = agentLanes([posted, { ...posted, id: 'orphan', loop: null }], [main, sub])
   expect(merged.map(r => r.id)).toEqual(['main', 't25', 'orphan'])
-  expect(merged[1]).toMatchObject({ label: 'Survey', pct: 40, step: 'reading', note: 'T30 · Map the live view.', state: 'testing', calls: 4 }) // its own step wins, the intent follows
+  expect(merged[1]).toMatchObject({ label: 'Survey', pct: 40, step: 'reading', note: 'Map the live view', state: 'testing', calls: 4 }) // its own step wins, the intent follows
   const bare = agentLanes([{ ...posted, label: 't25', step: '' }], [sub])
-  expect(bare[0]).toMatchObject({ label: 'Survey the repo', step: 'T30 · Map the live view.', note: '', pct: 40 }) // named only by its id: the agent's name; no step: its intent
+  expect(bare[0]).toMatchObject({ label: 'Survey the repo', step: 'Map the live view', note: '', pct: 40 }) // named only by its id: the agent's name; no step: its intent
   const frames = assembleBoard(newBoardModel(), input({ loops: [main, sub] }))
   expect(ids(frames.frames)).toEqual(['now-doing', 'lanes', 'bars'])
   expect(frames.lanes).toHaveLength(2)

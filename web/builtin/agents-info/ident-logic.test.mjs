@@ -6,12 +6,12 @@ import { normalizeData } from './agents-info-logic.mjs';
 const row = (extra) => ({ id: 'a1', state: 'working', ...extra });
 
 test('a namespaced type is shown verbatim, with model:effort next to it', () => {
-  const a = normalizeData({ agents: [row({ agentType: 'savvy-flow:savvy-careful', model: 'sonnet', effort: 'high' })] }).agents[0];
-  assert.equal(typeOf(a), 'savvy-flow:savvy-careful');
+  const a = normalizeData({ agents: [row({ agentType: 'example-tools:worker', model: 'sonnet', effort: 'high' })] }).agents[0];
+  assert.equal(typeOf(a), 'example-tools:worker');
   const parts = splitType(typeOf(a));
-  assert.equal(parts.head + parts.tail, 'savvy-flow:savvy-careful'); // shown verbatim, in two spans
+  assert.equal(parts.head + parts.tail, 'example-tools:worker'); // shown verbatim, in two spans
   assert.equal(modelEffortOf(a), 'sonnet:high');
-  assert.equal(identLine(a), 'savvy-flow:savvy-careful · sonnet:high');
+  assert.equal(identLine(a), 'example-tools:worker · sonnet:high');
 });
 
 test('plain types stay as they are; Explore keeps its capital', () => {
@@ -28,11 +28,11 @@ test('an inherited effort keeps its star; an unknown part is left out, never inv
 });
 
 test('a type splits into a shrinkable head and a fixed tail that join back to the exact name (middle ellipsis in CSS)', () => {
-  for (const t of ['savvy-flow:savvy-careful', 'general-purpose', 'Plan', '']) {
+  for (const t of ['example-tools:worker', 'general-purpose', 'Plan', '']) {
     const { head, tail } = splitType(t);
     assert.equal(head + tail, t);
     assert.ok(tail.length <= 8);
   }
-  assert.equal(splitType('savvy-flow:savvy-careful').tail, '-careful');
-  assert.equal(identLine({ agentType: 'savvy-flow:savvy-careful', model: 'sonnet', effort: 'high' }), 'savvy-flow:savvy-careful · sonnet:high');
+  assert.equal(splitType('example-tools:worker').tail, 's:worker');
+  assert.equal(identLine({ agentType: 'example-tools:worker', model: 'sonnet', effort: 'high' }), 'example-tools:worker · sonnet:high');
 });

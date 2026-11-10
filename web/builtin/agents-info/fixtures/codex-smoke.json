@@ -13,15 +13,15 @@
    "id": "main",
    "loop": "main",
    "isMain": true,
-   "name": "Me",
-   "short": "Me",
+   "name": "planner",
+   "short": "planner",
    "state": "working",
    "pct": null,
    "tokens": null,
    "kind": "thinking",
    "kindLabel": "Thinking",
    "kindColor": "#94a3b8",
-   "kindGlyph": "…",
+   "kindGlyph": "\u2026",
    "headline": "Thinking",
    "files": [],
    "agentType": null,
@@ -42,15 +42,15 @@
    "id": "run-codex-smoke",
    "loop": "run-codex-smoke",
    "isMain": false,
-   "name": "Codex smoke test: largest agents-info files",
-   "short": "Codex smoke test…",
+   "name": "builder",
+   "short": "builder",
    "state": "done",
    "pct": null,
    "tokens": 21400,
    "kind": "done",
    "kindLabel": "Done",
    "kindColor": "#475569",
-   "kindGlyph": "■",
+   "kindGlyph": "\u25a0",
    "headline": "Finished",
    "files": [],
    "agentType": null,
@@ -59,8 +59,8 @@
    "role": null,
    "ticket": null,
    "proof": {
-    "eval": "the answer lists exactly 5 files with line counts that match `wc -l`.",
-    "what": "the answer lists exactly 5 files with line counts that…",
+    "eval": "the answer lists exactly 5 files with fictional line counts.",
+    "what": "the answer lists exactly 5 files with fictional line counts.",
     "result": "pass"
    },
    "harness": "codex",
@@ -84,19 +84,19 @@
    "id": "run-run-bbb222",
    "loop": "run-run-bbb222",
    "isMain": false,
-   "name": "Harder autonomy traps",
-   "short": "Harder autono…",
+   "name": "reviewer",
+   "short": "reviewer",
    "state": "working",
    "pct": null,
    "tokens": 12995,
    "kind": "thinking",
    "kindLabel": "Thinking",
    "kindColor": "#94a3b8",
-   "kindGlyph": "…",
+   "kindGlyph": "\u2026",
    "headline": "Thinking",
    "files": [
-    "report.py",
-    "report_json.py"
+    "notes.ts",
+    "search.ts"
    ],
    "agentType": null,
    "model": "gpt-6.1-sol",
@@ -128,17 +128,17 @@
   "delegating": {
    "label": "Delegating",
    "color": "#a78bfa",
-   "glyph": "⇉"
+   "glyph": "\u21c9"
   },
   "working": {
    "label": "Working",
    "color": "#64748b",
-   "glyph": "•"
+   "glyph": "\u2022"
   },
   "logic": {
    "label": "Logic",
    "color": "#34d399",
-   "glyph": "λ"
+   "glyph": "\u03bb"
   }
  },
  "events": []

@@ -74,15 +74,15 @@ test('the kinds: every one has a label, a letter, a glyph and a color, and the o
 
 test('zoneOf: only a class of folder (tests, ui) is kept, never a folder name, and only for file tools', () => {
   const zone = (tool: string, path: string): string => zoneOf(tool, { file_path: path })
-  expect(zone('Edit', '/Users/me/secret-client/proj/web/builtin/board/lanes.js')).toBe('ui')
-  expect(zone('Edit', '/Users/me/secret-client/proj/tests/a.ts')).toBe('tests')
+  expect(zone('Edit', '/home/example/secret-client/proj/web/builtin/board/lanes.js')).toBe('ui')
+  expect(zone('Edit', '/home/example/secret-client/proj/tests/a.ts')).toBe('tests')
   expect(zone('Write', '/p/web/tests/a.js')).toBe('tests') // tests before ui
-  expect(zone('Edit', '/Users/me/secret-client/proj/hooks/a.ts')).toBe('')
+  expect(zone('Edit', '/home/example/secret-client/proj/hooks/a.ts')).toBe('')
   expect(zone('Read', 'C:\\work\\Components\\a.tsx')).toBe('ui')
   expect(zone('Bash', '/p/web/a')).toBe('')
   expect(zoneOf('Edit', {})).toBe('')
   expect(zone('Edit', 'web')).toBe('') // a bare file name has no folder
-  for (const p of ['/Users/me/secret-client/proj/web/a.js', '/Users/me/secret-client/proj/tests/a.js']) expect(JSON.stringify(zone('Edit', p))).not.toMatch(/secret|Users|proj/)
+  for (const p of ['/home/example/secret-client/proj/web/a.js', '/home/example/secret-client/proj/tests/a.js']) expect(JSON.stringify(zone('Edit', p))).not.toMatch(/secret|Users|proj/)
 })
 
 test('spans: calls of one kind close together are one span; a gap or another kind starts a new one; time is owned up to a cap', () => {

@@ -6,6 +6,7 @@
  * Stage mode (any scene with layout "stage"): the same sections move into the right-hand drawer, the stage fills the page.
  * Without stage.js and rail.js the page degrades to the plain v3 page (stage scenes then show as card scenes). */
 (function () {
+  const { plainTitle } = globalThis.PanelTitles;
   const { renderBlock, el, str, kids } = globalThis.PanelBlocks;
   const { sync: syncSceneFrames, normScenes } = globalThis.PanelScenes;
   const Stage = globalThis.PanelStage;
@@ -61,7 +62,7 @@
       seen.add(id);
       out.push({
         id,
-        title: str(c.title),
+        title: plainTitle(str(c.title), false),
         span: SPANS.includes(c.span) ? c.span : DEFAULT_SPAN,
         pin: c.pin === true,
         tone: CARD_TONES.includes(c.tone) ? c.tone : "",
@@ -73,7 +74,7 @@
   function normChoices(raw) {
     const out = [];
     for (const c of Array.isArray(raw) ? raw : []) {
-      if (isObj(c) && str(c.id) && str(c.label) && out.length < MAX_CHOICES) out.push({ id: str(c.id), label: str(c.label) });
+      if (isObj(c) && str(c.id) && str(c.label) && out.length < MAX_CHOICES) out.push({ id: str(c.id), label: plainTitle(str(c.label), false) });
     }
     return out;
   }
@@ -84,7 +85,7 @@
     return {
       status: Object.prototype.hasOwnProperty.call(STATUS_LABELS, s.status) ? s.status : DEFAULT_STATUS,
       updatedAt: Number(s.updatedAt) || 0,
-      title: str(task.title), why: str(task.why), ask: str(s.ask), choices: normChoices(s.choices),
+      title: plainTitle(str(task.title), false), why: str(task.why), ask: str(s.ask), choices: normChoices(s.choices),
       labels: { context: str(labels.context), done: str(labels.done), next: str(labels.next) },
       context: strs(s.context), done: strs(s.done), next: strs(s.next),
       cards: normCards(s.cards),

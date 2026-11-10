@@ -1,3 +1,4 @@
+import { EXAMPLE_THREAD, EXAMPLE_RUN, EXAMPLE_SECOND_RUN } from './fixtures/codex/ids'
 // Codex runs as pulse agents: the pure ingest (hooks/pulse-ingest.ts) and the poll (hooks/pulse-runs-host.ts) over a pretend disk made of the
 // T72 fixtures. A finished run, a running one that grows, an aborted one, an unknown status, another session's record, the snapshot, the
 // delegate tool, and the rows of the agents scene.
@@ -16,16 +17,16 @@ import { kindOf } from '../hooks/work-kinds'
 import { DELEGATIONS, EVENTS, ROLLOUT_FINISHED, ROLLOUT_UNFINISHED } from './fixtures/codex/fixtures'
 
 const SESSION = '00000000-0000-4000-8000-000000000001'
-const THREAD = '01a1bfc5-36d6-77b1-9c8a-41ccc83cfee2'
-const FIRST = '20261109T100534-codex-113fad'
-const SECOND = '20261109T102000-codex-77aa88'
+const THREAD = EXAMPLE_THREAD
+const FIRST = EXAMPLE_RUN
+const SECOND = EXAMPLE_SECOND_RUN
 const HOME = '/home/u'
-const CWD = '/work/demo'
+const CWD = '/work/acme-notes'
 const CACHE = `${HOME}/.cache/delegation-kit`
-const DAY = `${HOME}/.codex/sessions/2026/11/09`
-const ROLLOUT = `${DAY}/rollout-2026-11-09T12-05-35-${THREAD}.jsonl`
+const DAY = `${HOME}/.codex/sessions/2026/01/01`
+const ROLLOUT = `${DAY}/rollout-2026-01-01T12-05-35-${THREAD}.jsonl`
 const RUNS = `${CWD}/.router/runs`
-const NOW = Date.parse('2026-11-09T10:30:00.000Z')
+const NOW = Date.parse('2026-01-01T10:30:00.000Z')
 const FIXTURE_TOKENS = 17135 // fresh (input - cached: 15742) + output (1393) over the five token records of the finished fixture rollout
 const ROW_GAP_MS = 5000 // a finished agent's row is shown for a while after it ended: look just after
 const ABORT_AGE_MS = 3_600_000
@@ -78,7 +79,7 @@ const ledgerDisk = (): Disk =>
   ])
 
 const recordJson = (over: Record<string, unknown> = {}): string =>
-  JSON.stringify({ v: 1, runId: FIRST, harness: 'codex', sessionId: SESSION, startedAt: '2026-11-09T10:05:34.409Z', status: 'running', title: 'Add the json flag', workdir: CWD, transcript: { format: 'codex-rollout', path: ROLLOUT, threadId: THREAD }, ...over })
+  JSON.stringify({ v: 1, runId: FIRST, harness: 'codex', sessionId: SESSION, startedAt: '2026-01-01T10:05:34.409Z', status: 'running', title: 'Add note search', workdir: CWD, transcript: { format: 'codex-rollout', path: ROLLOUT, threadId: THREAD }, ...over })
 
 /** Run the poll once over a disk and give the model. */
 async function polled(disk: Disk, sessionId = SESSION, model: PulseModel = newModel(NOW)): Promise<PulseModel> {
@@ -96,7 +97,7 @@ const spanKinds = (l: PulseLoop | undefined): string[] => [...new Set((l?.spans 
 test('a finished run is a done codex agent with its title, model, spans by kind, tokens, calls and proof', async () => {
   const m = await polled(ledgerDisk())
   const l = loopOf(m, FIRST)
-  expect(l).toMatchObject({ status: 'done', harness: 'codex', model: 'gpt-6.1-sol', effort: 'medium', source: 'external', label: 'Add the json flag', runId: FIRST, confidence: 'exact' })
+  expect(l).toMatchObject({ status: 'done', harness: 'codex', model: 'gpt-6.1-sol', effort: 'medium', source: 'external', label: 'Add note search', runId: FIRST, confidence: 'exact' })
   expect(l?.label).not.toMatch(/^T\d+$/)
   expect(l?.id).toMatch(/^[A-Za-z0-9_-]{1,64}$/)
   expect(l?.tokens).toBe(FIXTURE_TOKENS)
@@ -105,13 +106,13 @@ test('a finished run is a done codex agent with its title, model, spans by kind,
   expect((l?.spans ?? []).length).toBeGreaterThan(0)
   expect(spanKinds(l).length).toBeGreaterThan(1) // the shell and the edits are different kinds of work
   expect(l?.proof).toMatchObject({ result: 'pass' })
-  expect(l?.proof?.eval).toContain('report_selftest')
+  expect(l?.proof?.eval).toContain('check-notes')
   expect(l?.outcome).toBeUndefined()
 })
 
 test('a run the ledger calls running, with no transcript yet, stays working with its record title', async () => {
   const l = loopOf(await polled(ledgerDisk()), SECOND)
-  expect(l).toMatchObject({ status: 'running', harness: 'codex', label: 'Second run still going', calls: 0 })
+  expect(l).toMatchObject({ status: 'running', harness: 'codex', label: 'Review empty-note export', calls: 0 })
 })
 
 test('polling again adds nothing twice', async () => {
@@ -160,19 +161,19 @@ test('the status words: running, ok, failed, blocked, cancelled keep their meani
   const base = parseRunJson(recordJson()) as RunRecord
   const at = (status: string, endedAt?: string): RunRecord => ({ ...base, status, ...(endedAt === undefined ? {} : { endedAt }) })
   expect(verdictOf(at('running'))).toEqual({ isDone: false })
-  expect(verdictOf(at('ok', '2026-11-09T10:10:00Z'))).toEqual({ isDone: true })
-  expect(verdictOf(at('failed', '2026-11-09T10:10:00Z'))).toEqual({ isDone: true, outcome: 'failed' })
+  expect(verdictOf(at('ok', '2026-01-01T10:10:00Z'))).toEqual({ isDone: true })
+  expect(verdictOf(at('failed', '2026-01-01T10:10:00Z'))).toEqual({ isDone: true, outcome: 'failed' })
   expect(verdictOf(at('blocked'))).toEqual({ isDone: true, outcome: 'blocked' })
   expect(verdictOf(at('cancelled'))).toEqual({ isDone: true, outcome: 'cancelled' })
   expect(verdictOf(at('deferred'))).toEqual({ isDone: true, outcome: 'notstarted' }) // T77: never started is not done
-  expect(verdictOf(at('deferred', '2026-11-09T10:10:00Z'))).toEqual({ isDone: true, outcome: 'notstarted' })
+  expect(verdictOf(at('deferred', '2026-01-01T10:10:00Z'))).toEqual({ isDone: true, outcome: 'notstarted' })
   for (const status of ['deferred', '', 'x'.repeat(500), 'FAILED']) {
     const m = newModel(NOW)
     expect(() => ingestRun(m, at(status || 'weird'), [], [], NOW)).not.toThrow()
     expect(loopOf(m, FIRST)).toBeDefined()
   }
   const m = newModel(NOW)
-  ingestRun(m, at('failed', '2026-11-09T10:10:00Z'), [], [], NOW)
+  ingestRun(m, at('failed', '2026-01-01T10:10:00Z'), [], [], NOW)
   expect(loopOf(m, FIRST)).toMatchObject({ status: 'done', outcome: 'failed' })
 })
 
@@ -222,7 +223,7 @@ test('the rows of the agents scene: a codex run carries harness, model, effort, 
 
 test('a log matched only by folder and time says so in the row note; a failed run reads as blocked', () => {
   const m = newModel(NOW)
-  const base = parseRunJson(recordJson({ status: 'failed', endedAt: '2026-11-09T10:10:00.000Z', transcript: { format: 'codex-rollout', path: ROLLOUT, confidence: 'guessed' } })) as RunRecord
+  const base = parseRunJson(recordJson({ status: 'failed', endedAt: '2026-01-01T10:10:00.000Z', transcript: { format: 'codex-rollout', path: ROLLOUT, confidence: 'guessed' } })) as RunRecord
   ingestRun(m, base, [], [], NOW)
   beginCall(m, NOW, 'ag-busy', 'Read', 'a.ts') // an agent at work: a crew of only finished agents shows no rows
   const now = (loopOf(m, FIRST)?.lastAt ?? NOW) + ROW_GAP_MS

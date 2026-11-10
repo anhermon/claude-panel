@@ -2,8 +2,8 @@
 // struggles), then top tools and files.
 // A number the data does not hold says why in a few words; a section with no data is one muted line.
 import { h, svg } from './dom.js';
-import { activitySplit, callBuckets, currentStep, failureTone, longestGap, tokenReason } from './detail-logic.mjs';
-import { renderExternal } from './detail-external.js';
+import { activitySplit, callBuckets, currentStep, failureTone, longestGap, tokenReason, seriesPath, clockShort } from './detail-logic.mjs';
+import { renderExternal, tokenBar } from './detail-external.js';
 import { phaseBar } from './detail-progress.js';
 import { planCount } from './detail-progress-logic.mjs';
 import { formatDuration, formatTokens } from './agents-info-logic.mjs';
@@ -11,6 +11,8 @@ import { formatDuration, formatTokens } from './agents-info-logic.mjs';
 const RING = Object.freeze({ size: 44, r: 18, stroke: 6 });
 const SPARK = Object.freeze({ w: 96, h: 28, pad: 2 });
 const TOP_N = 5;
+const CURVE = Object.freeze({ w: 320, h: 90, pad: 6 });
+const TOKEN_CURVE_LABEL = 'Cumulative fresh input and output tokens';
 const TONE_WORD = Object.freeze({ ok: 'none failed', warn: 'some failed', bad: 'many failed', none: '' });
 
 function stat(label, value, sub, extra) {
@@ -99,6 +101,23 @@ function filesList(files) {
   return ul;
 }
 
+function claudeTokens(m) {
+  const sec = h('section', 'm-sec');
+  sec.append(h('h3', 'm-head', 'Token usage'));
+  sec.append(tokenBar(m.tokens));
+  const curve = seriesPath(m.tokens.series, CURVE.w, CURVE.h, CURVE.pad);
+  if (curve) {
+    const wrap = h('div', 'curve');
+    const chart = svg('svg', { viewBox: `0 0 ${CURVE.w} ${CURVE.h}`, role: 'img', 'aria-label': TOKEN_CURVE_LABEL });
+    chart.append(svg('path', { d: curve.area, class: 'curve-area' }), svg('path', { d: curve.line, class: 'curve-line' }));
+    const axis = h('div', 'curve-axis');
+    axis.append(h('span', '', clockShort(curve.from)), h('span', '', `${formatTokens(curve.max)} fresh + output`), h('span', '', clockShort(curve.to)));
+    wrap.append(chart, axis);
+    sec.append(wrap);
+  } else sec.append(h('p', 'm-empty', 'Not enough model requests for a token curve.'));
+  return sec;
+}
+
 export function renderMetrics(root, detail) {
   root.replaceChildren();
   const m = detail.metrics;
@@ -108,7 +127,7 @@ export function renderMetrics(root, detail) {
   const gap = longestGap(detail);
   const counts = callBuckets(detail);
   const step = currentStep(detail);
-  const fail = stat('Failed calls', m.errors === null ? 'n/a' : `${m.errors} / ${m.calls}`, m.errors === null ? 'not measured' : [TONE_WORD[tone], m.retries ? `${m.retries} retried` : ''].filter(Boolean).join(' · '));
+  const fail = stat('Failed calls', m.errors === null ? 'n/a' : `${m.errors} / ${m.calls}`, m.errors === null ? 'not measured' : [TONE_WORD[tone], m.apiErrors ? `${m.apiErrors} API errors` : '', m.retries ? `${m.retries} retried` : ''].filter(Boolean).join(' · '));
   fail.dataset.tone = tone;
   const stepStat = stat('Latest step', step || 'none', detail.endedAt === null ? 'running' : 'finished');
   stepStat.classList.add('m-stat-wide');
@@ -117,11 +136,13 @@ export function renderMetrics(root, detail) {
     stat('Tool calls', String(m.calls), detail.endedAt === null ? 'so far' : 'in the run', counts.length > 0 ? spark(counts) : null),
     stat('Tokens', m.tokens.total === null ? 'n/a' : formatTokens(m.tokens.total), m.tokens.total === null ? tokenReason(detail) : 'fresh input + output'),
     fail,
+    stat('Turns', m.turns ? String(m.turns.count) : 'n/a', m.turns?.count ? `average ${formatDuration(m.turns.avgMs) || '<1 s'} · longest ${formatDuration(m.turns.maxMs) || '<1 s'}` : 'no turn durations recorded'),
     stat('Longest silence', gap ? formatDuration(gap.ms) || '<1 s' : 'n/a', gap ? 'no entry in between' : 'no transcript entries'),
     stepStat,
   );
   root.append(grid);
-  if (detail.external) root.append(renderExternal(detail.external));
+  if (detail.external) root.append(renderExternal(detail.external, detail.updatedAt));
+  else if (m.tokens.steps > 0) root.append(claudeTokens(m));
   root.append(runSection(detail, m));
 
   const two = h('div', 'm-two');

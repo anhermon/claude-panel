@@ -5,6 +5,7 @@
  *
  * The page keeps working without stage mode: ui.js only calls update({on:true}) when a stage scene exists. */
 (function () {
+  const { plainTitle } = globalThis.PanelTitles;
   const { el, kids, iconButton, isTextEntry, within } = globalThis.PanelBlocks;
 
   const SENT_MS = 3000; // "Sent: <label>" stays this long, then the answers are clickable again
@@ -158,8 +159,8 @@
     $("rail-dot").className = "dot " + v.status;
     $("rail-status").textContent = v.statusLabel;
     const title = $("rail-title");
-    title.textContent = v.title || DEFAULT_TITLE;
-    title.title = v.title || "";
+    title.textContent = plainTitle(v.title, false) || DEFAULT_TITLE;
+    title.title = plainTitle(v.title, false);
 
     const ask = drawerAllowed ? v.ask : ""; // alone, the board's own ask frame is the question
     const sig = JSON.stringify([ask, v.choices]);

@@ -145,7 +145,7 @@
    "model": "sonnet",
    "effort": "high",
    "role": "worker",
-   "agentType": "savvy-flow:savvy-careful"
+   "agentType": "example-tools:worker"
   },
   {
    "id": "w-parser",

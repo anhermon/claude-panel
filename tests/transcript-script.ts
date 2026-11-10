@@ -3,7 +3,7 @@
 import { parseTranscript } from '../hooks/transcript-parse'
 import type { Parsed } from '../hooks/transcript-parse'
 
-export const T0 = Date.parse('2026-11-08T10:00:00.000Z')
+export const T0 = Date.parse('2026-01-01T00:00:00.000Z')
 export const SEC = 1000
 const at = (sec: number): string => new Date(T0 + sec * SEC).toISOString()
 

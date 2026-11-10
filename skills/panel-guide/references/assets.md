@@ -49,6 +49,41 @@ Keep numbers measured: build the data from a file or tool output, not from memor
 | a change you can slide between | `beforeafter` | `unit, goodWhen?, before{label,src?}, after{label,src?}, items[{label,before,after}]?, start?` |
 | status of many items | `statusboard` | `columns[{id,title,tone?,limit?,items[{title,sub?,tags?}]}]` |
 | things placed in space | `scene3d` | `objects[{id,shape,pos,size?,label?,tone?}], links?, ground?, autoRotate?` |
+| a test or check run and its failures | `testresults` | `unit?, suites[{name,passed,failed,skipped?,ms?}], failures[{name,message?,file?}]?` |
+| debugging explanations and evidence | `hypotheses` | `question, items[{id,label,state,evidence?,confidence?}]` |
+| options scored against weighted criteria | `decisionmatrix` | `options[{id,label}], criteria[{id,label,weight}], scores{optionId:{criterionId:0..5}}, chosen?` |
+| research claims and provenance | `sources` | `items[{title,url?,kind?,claim?,confidence?,date?}]` |
+| quota windows, context and cost | `limits` | `groups[{title,status?,windows[{label,usedPct,resetsAt?,tone?}]}]` or `windows[{label,usedPct,resetsAt?,tone?}], context{usedPct}?, cost{amount,unit}?` |
+| risks by likelihood and impact | `riskgrid` | `items[{label,likelihood,impact,mitigation?,owner?}]` |
+| an audio envelope with timed onsets and sections | `waveform` | `unit?:'s', durationS, peaks?[], onsets[], bpm?, playheadS?, sections?[{label,fromS,toS}]` |
+| a video plan with shot ranges, tools and render states | `shotlist` | `fps, shots[{id,label,startFrame,frames,tool?,style?,state?,beatAligned?}], beatsAtFrames?[]` |
+| elapsed time mapped to motion progress and velocity | `easing` | `durationMs, curves[{label,kind,params?}], markers?[{label,atMs}]` |
+| how a distribution emerges (probability, sampling, binomial/normal intuition) | `galton` | `rows (2..14), balls (<=400), seed?, p? (0..1), observed?[rows+1 counts]` |
+| a rate or load where density should be the reading | `particles` | `unit, series[{label,rate,tone?,max?}], style? (sparks\|rain\|flow)` |
+
+## Customizing
+
+The work and media assets accept `name(data, opts)` and `.update(data, optsPatch)`. Shared options: `title`, `caption`, `height` (px; content scrolls), `fs` (font px), `accent` (`info|ok|warn|danger|c1..c6`, headline/selection colour), `density` (`comfortable` by default, or `compact`), `labels` (fixed-word overrides), and `maxRows` (positive integer, default 12, per list; clips with "+N more"). `limits` also accepts `now` (epoch milliseconds, default `Date.now()`) for deterministic countdowns. Only `easing` animates: one pass on mount, final dots under reduced motion; updates and resizes do not replay it.
+
+| Asset | `labels` keys |
+|---|---|
+| `testresults` | `passed, failed, skipped, tests, slowest, failures, more` |
+| `hypotheses` | `confirmed, testing, open, ruled-out, confidence, more` |
+| `decisionmatrix` | `ranking, option, total, weight, weighted, chosen, missing, partial, more` |
+| `sources` | `evidence, primary, secondary, vendor, forum, unknown, confidence, more` |
+| `limits` | `usage, used, resetsIn, context, cost, fresh, stale, unavailable, more` |
+| `riskgrid` | `risks, likelihood, impact, mitigation, owner, more` |
+| `waveform` | `onsets, onset, medianGap, tempoUnknown, playhead, more` |
+| `shotlist` | `shots, groupedByTool, planned, rendering, done, failed, offBeat, more` |
+| `easing` | `curves, velocityPeak, more` |
+| `galton` | `rows, balls, mean, sd, simulated, binomial, observed, bin` |
+| `particles` | `more` (lanes past `maxRows`) |
+
+`waveform` peaks are amplitudes 0..1 (at most 400), optional; onsets and section bounds are seconds within `durationS`. Median gaps use sorted onset times. The playhead only changes with supplied data; there is no audio or autoplay.
+`shotlist` ranges are integer frames, `frames` and `fps` are positive, ids are unique, and states are `planned|rendering|done|failed`. A ◆ marks a start absent from `beatsAtFrames` (when provided, these beats determine alignment); otherwise `beatAligned:false` marks it. Total duration ends at the last shot, including any gaps.
+`easing` kinds are `linear|easeIn|easeOut|easeInOut|spring|bounce|steps`. `params` accepts `power` (0..8, default 3) for ease curves, `damping` (0..30, default 6) and `frequency` (0..10 cycles, default 2) for spring, or integer `steps` (1..100, default 5); all parameter lower bounds exclude zero. Markers are milliseconds within the duration. Peak velocity is absolute progress per second, estimated over 200 intervals; steps have infinite instantaneous velocity. Spring overshoot remains visible. Compact layouts follow the figure width and height; long lists scroll with an explicit remaining count when `maxRows` limits them.
+
+Confidence is 0..1; quota usage is 0..100%; risk axes are integers 1..5. Hypothesis states are `open|testing|confirmed|ruled-out`; source kinds are `primary|secondary|vendor|forum|unknown`. Reset times are epoch milliseconds or ISO date-times. Suite durations are milliseconds. Decision totals are sums of score × weight; missing scores display a dash and make totals partial (only known contributions are summed). Source confidence sorts descending (absent last), then kind in the order above. URLs must be HTTP(S); link text shows only the host. Payloads are limited to 12 KB.
 
 ## When NOT to use a chart
 - One number: say it (`metric`, or a sentence). A chart of one value is decoration.

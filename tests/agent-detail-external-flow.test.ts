@@ -1,3 +1,4 @@
+import { EXAMPLE_SMOKE_THREAD, EXAMPLE_SMOKE_RUN } from './fixtures/codex/ids'
 // The host half for a codex run, end to end with a stand-in `$`: the poll reads the run's record and rollout, the page asks for the agent, and
 // detail.json carries the rollout's transcript and the run's facts; a run with no rollout says so; an outside path is never read.
 import { expect, test } from 'claude-code/testing'
@@ -13,19 +14,19 @@ import { pollRunsNow, startRunsPoll, stopRunsPoll } from '../hooks/pulse-runs-ho
 import { ROLLOUT_SMOKE } from './fixtures/codex/fixtures'
 
 const SESSION = '00000000-0000-4000-8000-000000000001'
-const RUN = '20261109T115103-codex-9b79ba'
-const THREAD = '01a1c025-c93d-7852-9a66-31be9623cf40'
+const RUN = EXAMPLE_SMOKE_RUN
+const THREAD = EXAMPLE_SMOKE_THREAD
 const HOME = '/home/u'
-const CWD = '/work/demo'
-const ROLLOUT = `${HOME}/.codex/sessions/2026/11/09/rollout-2026-11-09T13-51-08-${THREAD}.jsonl`
+const CWD = '/work/acme-notes'
+const ROLLOUT = `${HOME}/.codex/sessions/2026/01/01/rollout-2026-01-01T13-51-08-${THREAD}.jsonl`
 const OUTSIDE = '/etc/rollout-secret.jsonl'
 const EVENTS = '/tmp/t/panel.events.jsonl'
 const DIR = '/tmp/t/agents-info'
-const NOW = Date.parse('2026-11-09T11:52:00.000Z')
+const NOW = Date.parse('2026-01-01T11:52:00.000Z')
 
 type Disk = Map<string, string>
 const record = (path: string | undefined): string =>
-  JSON.stringify({ v: 1, runId: RUN, harness: 'codex', sessionId: SESSION, startedAt: '2026-11-09T11:51:03.613Z', endedAt: '2026-11-09T11:51:21.917Z', status: 'ok', title: 'Codex smoke test', workdir: CWD, model: 'gpt-6.1-sol', effort: 'low', durationS: 18.304, ...(path === undefined ? {} : { transcript: { format: 'codex-rollout', path, threadId: THREAD } }) })
+  JSON.stringify({ v: 1, runId: RUN, harness: 'codex', sessionId: SESSION, startedAt: '2026-01-01T11:51:03.613Z', endedAt: '2026-01-01T11:51:21.917Z', status: 'ok', title: 'Codex smoke test', workdir: CWD, model: 'gpt-6.1-sol', effort: 'low', durationS: 18.304, ...(path === undefined ? {} : { transcript: { format: 'codex-rollout', path, threadId: THREAD } }) })
 
 function world(disk: Disk): { $: EngineInterface; written: Map<string, string>; reads: string[] } {
   const written = new Map<string, string>()

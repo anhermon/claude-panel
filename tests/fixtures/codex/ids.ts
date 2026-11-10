@@ -1,0 +1,9 @@
+// Deterministic identities shared by the synthetic Acme Notes fixture tests.
+export const EXAMPLE_SESSION = '00000000-0000-4000-8000-000000000001'
+export const EXAMPLE_THREAD = '00000000-0000-4000-8000-000000000003'
+export const EXAMPLE_SMOKE_THREAD = '00000000-0000-4000-8000-000000000004'
+export const EXAMPLE_OTHER_THREAD = '00000000-0000-4000-8000-000000000005'
+export const EXAMPLE_RUN = '20260101T100000-codex-aaaaaa'
+export const EXAMPLE_SECOND_RUN = '20260101T102000-codex-bbbbbb'
+export const EXAMPLE_SMOKE_RUN = '20260101T115000-codex-cccccc'
+export const EXAMPLE_OTHER_RUN = '20260101T101000-agy-dddddd'

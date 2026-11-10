@@ -315,6 +315,9 @@ test('the allowed roots: the session cwd, the temp dirs, ~/.claude', () => {
     `${HOME}/.claude`,
   ])
   expect(allowedRoots({ cwd: CWD })).not.toContain('/.claude')
+  expect(allowedRoots({ cwd: CWD, tmp: '/mnt/scratch/tmp' })).toContain('/mnt/scratch/tmp')
+  expect(allowedRoots({ cwd: CWD, tmp: '/tmp' }).filter(r => r === '/tmp')).toHaveLength(1)
+  expect(allowedRoots({ cwd: CWD, tmp: '/' })).not.toContain('/')
 })
 
 test('prepareScene resolves dir to its real path (/tmp is /private/tmp)', async () => {

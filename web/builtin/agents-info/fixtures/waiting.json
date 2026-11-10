@@ -1,0 +1,141 @@
+{
+ "overall": "working",
+ "mainKind": "delegating",
+ "kinds": {
+  "delegating": { "label": "Delegating", "color": "#c084fc", "glyph": "⇉" },
+  "tests": { "label": "Tests", "color": "#4ade80", "glyph": "✓" },
+  "logic": { "label": "Logic", "color": "#7c9cff", "glyph": "ƒ" },
+  "ui": { "label": "UI", "color": "#38bdf8", "glyph": "◈" }
+ },
+ "agents": [
+  {
+   "id": "main",
+   "loop": "main",
+   "isMain": true,
+   "name": "Me",
+   "short": "Me",
+   "state": "working",
+   "pct": null,
+   "startedAgoMs": 3600000,
+   "endedAgoMs": null,
+   "tokens": 184000,
+   "kind": "delegating",
+   "kindLabel": "Delegating",
+   "kindColor": "#c084fc",
+   "kindGlyph": "⇉",
+   "headline": "Coordinating panel row updates",
+   "files": [],
+   "model": "claude-opus-4-6",
+   "effort": "high",
+   "branch": "feat/agent-row-signals",
+   "title": "Add search box and empty state to notes list",
+   "segs": [
+    { "k": "delegating", "aAgoMs": 3600000, "bAgoMs": 0 }
+   ]
+  },
+  {
+   "id": "w1",
+   "loop": "w1",
+   "isMain": false,
+   "name": "Inspect live transcript tail",
+   "short": "Inspect live",
+   "state": "working",
+   "pct": 45,
+   "startedAgoMs": 900000,
+   "endedAgoMs": null,
+   "tokens": 52400,
+   "kind": "tests",
+   "kindLabel": "Tests",
+   "kindColor": "#4ade80",
+   "kindGlyph": "✓",
+   "headline": "Running tests: agents-info-data.test.ts",
+   "files": [
+    "agents-info-data.test.ts"
+   ],
+   "agentType": "general-purpose",
+   "model": "claude-sonnet-4-6",
+   "effort": "high",
+   "mayBeWaiting": {
+    "tool": "Bash",
+    "target": "npm test"
+   },
+   "segs": [
+    { "k": "logic", "aAgoMs": 900000, "bAgoMs": 300000 },
+    { "k": "tests", "aAgoMs": 300000, "bAgoMs": 0 }
+   ]
+  },
+  {
+   "id": "w2",
+   "loop": "w2",
+   "isMain": false,
+   "name": "Update row and card badges",
+   "short": "Update row",
+   "state": "working",
+   "pct": 70,
+   "startedAgoMs": 1200000,
+   "endedAgoMs": null,
+   "tokens": 68100,
+   "kind": "ui",
+   "kindLabel": "UI",
+   "kindColor": "#38bdf8",
+   "kindGlyph": "◈",
+   "headline": "Editing UI: list-view.js, crew-view.js",
+   "files": [
+    "list-view.js",
+    "crew-view.js"
+   ],
+   "agentType": "general-purpose",
+   "model": "claude-sonnet-4-6",
+   "effort": "medium",
+   "errors": 3,
+   "segs": [
+    { "k": "ui", "aAgoMs": 1200000, "bAgoMs": 0 }
+   ]
+  },
+  {
+   "id": "w3",
+   "loop": "w3",
+   "isMain": false,
+   "name": "Verify data contract docs",
+   "short": "Verify docs",
+   "state": "done",
+   "pct": 100,
+   "startedAgoMs": 1500000,
+   "endedAgoMs": 400000,
+   "tokens": 24000,
+   "kind": "logic",
+   "kindLabel": "Logic",
+   "kindColor": "#7c9cff",
+   "kindGlyph": "ƒ",
+   "headline": "Updated README contract",
+   "files": [
+    "README.md"
+   ],
+   "agentType": "Explore",
+   "model": "claude-haiku-4-5",
+   "segs": [
+    { "k": "logic", "aAgoMs": 1500000, "bAgoMs": 400000 }
+   ]
+  }
+ ],
+ "events": [
+  {
+   "id": 1,
+   "ago": 850000,
+   "agent": "w1",
+   "from": "main",
+   "to": "w1",
+   "kind": "handoff",
+   "text": "main → Inspect live"
+  },
+  {
+   "id": 2,
+   "ago": 120000,
+   "agent": "w2",
+   "from": "logic",
+   "to": "ui",
+   "kind": "work",
+   "text": "Update row · UI"
+  }
+ ]
+}

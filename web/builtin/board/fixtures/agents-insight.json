@@ -5,7 +5,7 @@
    "type": "now",
    "title": "Now",
    "size": "m",
-   "text": "Deep per-agent activity insight",
+   "text": "Add a search box to Acme Notes",
    "status": "working"
   },
   {
@@ -27,17 +27,17 @@
    "size": "s",
    "items": [
     {
-     "label": "Implement the strip",
+     "label": "Add a search box to Acme Notes",
      "value": 121,
      "color": "#38bdf8"
     },
     {
-     "label": "Survey the repo",
+     "label": "Fix export for empty notes",
      "value": 43,
      "color": "#38bdf8"
     },
     {
-     "label": "Run the checks",
+     "label": "Check note title matching",
      "value": 4,
      "color": "#38bdf8"
     }
@@ -51,7 +51,7 @@
    "size": "m",
    "items": [
     {
-     "label": "main",
+     "label": "Fix export for empty notes",
      "state": "working",
      "from": 0,
      "to": 3600,
@@ -79,7 +79,7 @@
      ]
     },
     {
-     "label": "Survey the repo",
+     "label": "Fix export for empty notes",
      "state": "working",
      "from": 3180,
      "to": 3600,
@@ -172,7 +172,7 @@
      ]
     },
     {
-     "label": "Implement the strip",
+     "label": "Add a search box to Acme Notes",
      "state": "working",
      "from": 3280,
      "to": 3600,
@@ -230,7 +230,7 @@
      ]
     },
     {
-     "label": "Run the checks",
+     "label": "Check note title matching",
      "state": "working",
      "from": 3510,
      "to": 3600,
@@ -253,7 +253,7 @@
      ]
     },
     {
-     "label": "Review the patch",
+     "label": "Add a search box to Acme Notes",
      "state": "working",
      "from": 3560,
      "to": 3600,
@@ -282,12 +282,12 @@
    "type": "uml",
    "title": "Handoffs",
    "size": "l",
-   "code": "sequenceDiagram\n  participant main as main\n  participant na1 as Survey the re…\n  participant na2 as Implement the…\n  participant na3 as Run the checks\n  participant na4 as Review the pa…\n  main->>na1: spawn Survey the re…\n  main->>na2: spawn Implement the…\n  main->>na3: spawn Run the checks\n  main->>na4: spawn Review the pa…",
+   "code": "sequenceDiagram\n  participant exampleNode1 as planner\n  participant exampleNode2 as builder\n  participant exampleNode3 as reviewer\n  participant exampleNode4 as planner\n  exampleNode1->>exampleNode2: Check note search\n  exampleNode2->>exampleNode3: Check note search\n  exampleNode3->>exampleNode4: Check note search",
    "highlight": {
-    "na1": "active",
-    "na2": "active",
-    "na3": "active",
-    "na4": "active"
+    "exampleNode1": "active",
+    "exampleNode2": "active",
+    "exampleNode3": "active",
+    "exampleNode4": "active"
    }
   },
   {
@@ -295,22 +295,22 @@
    "type": "uml",
    "title": "Pipeline",
    "size": "l",
-   "code": "flowchart LR\n  la1[\"Survey the repo\"]\n  la2[\"Implement the str…\"]\n  la3[\"Run the checks\"]\n  la4[\"Review the patch\"]\n  classDef active stroke:#38bdf8,stroke-width:2px\n  classDef done stroke:#4ade80,stroke-width:2px\n  classDef blocked stroke:#f87171,stroke-width:2px\n  classDef todo stroke:#64748b,stroke-width:2px\n  class la1,la2,la3,la4 active",
+   "code": "flowchart LR\n  exampleNode1[\"Plan search\"]\n  exampleNode2[\"Build search\"]\n  exampleNode3[\"Review export\"]\n  exampleNode4[\"Plan search\"]\n  exampleNode1 --> exampleNode2\n  exampleNode2 --> exampleNode3\n  exampleNode3 --> exampleNode4",
    "highlight": {
-    "la1": "active",
-    "la2": "active",
-    "la3": "active",
-    "la4": "active"
+    "exampleNode1": "active",
+    "exampleNode2": "active",
+    "exampleNode3": "active",
+    "exampleNode4": "active"
    }
   }
  ],
  "lanes": [
   {
    "id": "main",
-   "label": "main",
+   "label": "planner",
    "state": "working",
    "pct": null,
-   "step": "Deep per-agent activity insight",
+   "step": "Add a search box to Acme Notes",
    "note": "",
    "goal": "",
    "dod": [],
@@ -332,7 +332,7 @@
     ],
     "files": [],
     "feed": [
-     "handed work to an agent"
+     "checked Acme Notes search and export"
     ],
     "tokens": null,
     "isBusy": false,
@@ -342,10 +342,10 @@
   },
   {
    "id": "a1",
-   "label": "Survey the repo",
+   "label": "builder",
    "state": "working",
    "pct": null,
-   "step": "T41 · Map the live view.",
+   "step": "Check note title matching",
    "note": "",
    "goal": "",
    "dod": [],
@@ -357,7 +357,7 @@
    "updatedAgoMs": 2500,
    "insight": {
     "kind": "reading",
-    "headline": "Reading code",
+    "headline": "Checking Acme Notes",
     "strip": "xxxxxxxxxxxxxxxxxxxxxxxx",
     "mix": [
      {
@@ -366,14 +366,14 @@
      }
     ],
     "files": [
-     "grid-plan.mjs",
-     "board.js",
-     "pane.tsx"
+     "notes.test.mjs",
+     "search-example.png",
+     "README.md"
     ],
     "feed": [
-     "read 4 files",
-     "browsed files",
-     "searched the code"
+     "checked Acme Notes search and export",
+     "checked Acme Notes search and export",
+     "checked Acme Notes search and export"
     ],
     "tokens": 43000,
     "isBusy": false,
@@ -383,10 +383,10 @@
   },
   {
    "id": "a2",
-   "label": "Implement the strip",
+   "label": "reviewer",
    "state": "working",
    "pct": null,
-   "step": "T40 · Per-agent activity insight.",
+   "step": "Add a search box to Acme Notes",
    "note": "",
    "goal": "",
    "dod": [],
@@ -398,7 +398,7 @@
    "updatedAgoMs": 5000,
    "insight": {
     "kind": "logic",
-    "headline": "Writing logic · insight-logic.mjs, board-logic.mjs",
+    "headline": "Checking Acme Notes",
     "strip": ".......xxxxllluuttlllltl",
     "mix": [
      {
@@ -419,14 +419,14 @@
      }
     ],
     "files": [
-     "insight-logic.mjs",
-     "board-logic.mjs",
-     "agents-detail.js"
+     "notes.ts",
+     "search.ts",
+     "export.ts"
     ],
     "feed": [
-     "edited insight-logic.mjs",
-     "ran tests",
-     "edited 2 files"
+     "checked Acme Notes search and export",
+     "checked Acme Notes search and export",
+     "checked Acme Notes search and export"
     ],
     "tokens": 121200,
     "isBusy": false,
@@ -436,10 +436,10 @@
   },
   {
    "id": "a3",
-   "label": "Run the checks",
+   "label": "planner",
    "state": "working",
    "pct": null,
-   "step": "T42 · Run tsc and the plugin tests.",
+   "step": "Fix export for empty notes",
    "note": "",
    "goal": "",
    "dod": [],
@@ -451,7 +451,7 @@
    "updatedAgoMs": 1500,
    "insight": {
     "kind": "tests",
-    "headline": "Running tests",
+    "headline": "Checking Acme Notes",
     "strip": "..........ttttttttttwwwt",
     "mix": [
      {
@@ -465,9 +465,9 @@
     ],
     "files": [],
     "feed": [
-     "ran tests",
-     "used git",
-     "ran tests"
+     "checked Acme Notes search and export",
+     "checked Acme Notes search and export",
+     "checked Acme Notes search and export"
     ],
     "tokens": 3590,
     "isBusy": false,
@@ -477,10 +477,10 @@
   },
   {
    "id": "a4",
-   "label": "Review the patch",
+   "label": "builder",
    "state": "working",
    "pct": null,
-   "step": "T43 · Review the diff for regressions.",
+   "step": "Fix export for empty notes",
    "note": "",
    "goal": "",
    "dod": [],
@@ -505,14 +505,14 @@
      }
     ],
     "files": [
-     "pulse-model.ts",
-     "board-agents.ts",
-     "agent-insight.ts"
+     "notes.test.mjs",
+     "README.md",
+     "search-example.png"
     ],
     "feed": [
-     "read pulse-model.ts",
-     "handed work to an agent",
-     "read 2 files"
+     "checked Acme Notes search and export",
+     "checked Acme Notes search and export",
+     "checked Acme Notes search and export"
     ],
     "tokens": null,
     "isBusy": false,
@@ -522,7 +522,7 @@
   }
  ],
  "now": {
-  "title": "Deep per-agent activity insight",
+  "title": "Add a search box to Acme Notes",
   "status": "working"
  }
 }

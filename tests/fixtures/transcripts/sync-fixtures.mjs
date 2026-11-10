@@ -1,6 +1,6 @@
 // Rebuilds fixtures.ts (the .jsonl files as strings: `claude plugin test` can import only code files) from the .jsonl fixtures here.
-// The .jsonl files are real Claude sub-agent transcripts, trimmed (tool results cut to their start and end, thinking and images dropped,
-// long inputs cut) and scrubbed (user name, emails, token shapes). Run: node tests/fixtures/transcripts/sync-fixtures.mjs
+// The .jsonl files are independently written synthetic Acme Notes sub-agent transcripts.
+// Run: node tests/fixtures/transcripts/sync-fixtures.mjs
 import { readFileSync, writeFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 

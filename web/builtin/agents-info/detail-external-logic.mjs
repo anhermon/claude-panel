@@ -7,6 +7,9 @@ export const EXTERNAL_CAPS = Object.freeze({ word: 40, reason: 200, eval: 200, w
 const PERCENT = 100;
 const MIN_PER_HOUR = 60;
 const HOURS_PER_DAY = 24;
+const MS_SEC = 1000;
+const MS_MIN = MS_SEC * MIN_PER_HOUR;
+const MS_DAY = MS_MIN * MIN_PER_HOUR * HOURS_PER_DAY;
 const PLAN_WORDS = Object.freeze({ primary: '5-hour limit', secondary: 'weekly limit' });
 const DAYS_WEEK = 7;
 
@@ -23,7 +26,7 @@ function normalizeTokens(raw) {
 }
 
 function normalizeWindow(raw) {
-  return isObj(raw) && num(raw.usedPct) !== null ? { usedPct: Math.min(PERCENT, raw.usedPct), windowMinutes: num(raw.windowMinutes) } : null;
+  return isObj(raw) && num(raw.usedPct) !== null ? { usedPct: Math.min(PERCENT, raw.usedPct), windowMinutes: num(raw.windowMinutes), resetsAt: num(raw.resetsAt) } : null;
 }
 
 function normalizeProofFact(raw) {
@@ -73,7 +76,14 @@ export function tokenParts(t) {
 }
 
 /** The labelled facts, `[label, value]`, only those the data holds, in the order a reader asks: model, task time, context, limits, cost. */
-export function externalRows(e) {
+export function resetText(resetsAt, now) {
+  if (num(resetsAt) === null || num(now) === null) return '';
+  const remaining = Math.max(0, resetsAt * MS_SEC - now);
+  if (remaining <= MS_DAY) return `resets in ${Math.ceil(remaining / MS_MIN)} min`;
+  return `resets at ${new Date(resetsAt * MS_SEC).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}`;
+}
+
+export function externalRows(e, now) {
   const rows = [];
   const model = [e.model, e.effort].filter(Boolean).join(':');
   if (model !== '') rows.push(['Model', model]);
@@ -91,7 +101,7 @@ export function externalRows(e) {
   if (e.rate !== null) {
     for (const key of ['primary', 'secondary']) {
       const w = e.rate[key];
-      if (w) rows.push([windowWord(w, PLAN_WORDS[key]).replace(/^./, (c) => c.toUpperCase()), `${Math.round(w.usedPct)}% used${e.rate.plan && key === 'primary' ? ` (${e.rate.plan} plan)` : ''}${e.rate.isReached ? ', reached' : ''}`]);
+      if (w) rows.push([windowWord(w, PLAN_WORDS[key]).replace(/^./, (c) => c.toUpperCase()), `${Math.round(w.usedPct)}% used${e.rate.plan && key === 'primary' ? ` (${e.rate.plan} plan)` : ''}${e.rate.isReached ? ', reached' : ''}${resetText(w.resetsAt, now) ? ` · ${resetText(w.resetsAt, now)}` : ''}`]);
     }
   }
   rows.push(['Cost', `not measured: ${e.costReason}`]);

@@ -1,6 +1,6 @@
 // Human titles for agents, never ids or hashes. Pure helpers (plainTitle, titleFromBrief, placeholderFor) plus one lazy,
 // bounded, once-per-agent lookup of an agent's own transcript head (resolveBriefTitle) for an agent seen without a spawn.
-// NOTE: plainTitle also exists in agent-roles.ts (T65) and avatar-model.mjs (T64): the three should be unified.
+// Browser mirror: web/plain-title.js; plain-title.test.mjs checks parity against this implementation.
 import type { EngineInterface } from 'claude-code'
 
 import type { WorkKind } from './work-kinds'

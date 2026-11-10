@@ -19,7 +19,7 @@ test('plainTitle: ticket token, model/effort suffix and control characters go; f
 
 test('titleFromBrief: first imperative sentence without Ticket lines, paths and notes; cut at a word boundary', () => {
   expect(titleFromBrief('Ticket: T66\n\nFix the transcript lookup. Then run tests.')).toBe('Fix the transcript lookup')
-  expect(titleFromBrief('Panel mod (MOD=/Users/x/panel) review router state')).toBe('Panel mod review router state')
+  expect(titleFromBrief('Panel mod (MOD=/home/example/panel) review router state')).toBe('Panel mod review router state')
   const long = titleFromBrief('Investigate the flaky behaviour of the delegation diagram renderer today')
   expect(long.length).toBeLessThanOrEqual(NAME_CAPS.TITLE_CHARS)
   expect(long.endsWith(' ')).toBe(false)

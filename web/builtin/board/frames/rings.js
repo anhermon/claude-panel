@@ -1,5 +1,5 @@
 // rings: animated progress rings (3-4 of them), the percentage in the middle, the label below.
-import { CAPS, capText, pctOf, safeColor } from '../board-logic.mjs';
+import { CAPS, capTitle, pctOf, safeColor } from '../board-logic.mjs';
 import { PALETTE, h, nextPaint } from './dom.js';
 
 const R = 40;
@@ -16,7 +16,7 @@ function ring(item, i, ctx) {
     h('div', { class: 'ring-disc' },
       h('svg', { viewBox: '0 0 100 100', 'aria-hidden': 'true' }, h('circle', { class: 'ring-track', cx: 50, cy: 50, r: R }), arc),
       h('span', { class: 'ring-num', text: pct === null ? '–' : String(Math.round(pct)) })), // html, so its size can have a px floor
-    h('b', { class: 'ring-label', text: capText(item?.label, CAPS.label) }));
+    h('b', { class: 'ring-label', text: capTitle(item?.label, CAPS.label) }));
 }
 
 export function render(el, f, ctx) {
@@ -33,7 +33,7 @@ export function update(el, f, ctx) {
     arc.style.stroke = safeColor(it?.color) ?? PALETTE[i % PALETTE.length];
     arc.style.strokeDashoffset = offsetOf(pct);
     rings[i].querySelector('.ring-num').textContent = pct === null ? '–' : String(Math.round(pct));
-    rings[i].querySelector('.ring-label').textContent = capText(it?.label, CAPS.label);
+    rings[i].querySelector('.ring-label').textContent = capTitle(it?.label, CAPS.label);
   });
   return true;
 }

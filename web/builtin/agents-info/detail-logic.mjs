@@ -1,6 +1,8 @@
 // Pure logic of the agent detail view (the drill-down of one agent): what the mod wrote to live/detail.json
 // (hooks/agent-detail.ts) -> clean data, and the numbers the drawing needs (clock text, durations, the stacked bar of kinds, the
 // token curve). No DOM, no clock of its own. Tested by detail-logic.test.mjs.
+import { plainTitle } from '../../kit/panel/plain-title.mjs';
+export { plainTitle } from '../../kit/panel/plain-title.mjs';
 import { cut, formatDuration, formatTokens } from './agents-info-logic.mjs';
 import { normalizeProgress, normalizeStruggles } from './detail-progress-logic.mjs';
 import { normalizeExternal } from './detail-external-logic.mjs';
@@ -25,6 +27,7 @@ export const TIMING = Object.freeze({
 });
 export const CAPS = Object.freeze({ entries: 400, text: 700, label: 90, error: 160, kinds: 9, tools: 8, files: 8, series: 48, maxPages: 8 });
 const MAX_TEXT = CAPS.text;
+const AGENT_TITLE = 'Agent';
 const ENTRY_KINDS = Object.freeze(['say', 'user', 'think', 'tool']);
 const COLOR = /^#[0-9a-fA-F]{6}$/;
 const PERCENT = 100;
@@ -59,13 +62,13 @@ export function normalizeDetail(raw) {
   const tokens = isObj(m.tokens) ? m.tokens : {};
   return {
     id: cut(raw.id, 64),
-    name: cut(raw.name, 40) || cut(raw.id, 40),
+    name: cut(plainTitle(raw.name ?? '', false), 40) || AGENT_TITLE,
     isMain: raw.isMain === true,
     state: cut(raw.state, 12),
     startedAt: num(raw.startedAt) ?? 0,
     endedAt: num(raw.endedAt),
     updatedAt: num(raw.updatedAt) ?? 0,
-    brief: cut(raw.brief, MAX_TEXT),
+    brief: cut(plainTitle(raw.brief ?? '', false), MAX_TEXT),
     run: normalizeRun(raw.run),
     external: normalizeExternal(raw.external),
     transcript: {
@@ -85,10 +88,15 @@ export function normalizeDetail(raw) {
       idleMs: num(m.idleMs) ?? 0,
       calls: count(m.calls),
       errors: num(m.errors) === null ? null : count(m.errors),
+      apiErrors: count(m.apiErrors),
+      turns: isObj(m.turns) ? { count: count(m.turns.count), lastMs: count(m.turns.lastMs), avgMs: count(m.turns.avgMs), maxMs: count(m.turns.maxMs) } : null,
       retries: num(m.retries) === null ? null : count(m.retries),
       tokens: {
         total: num(tokens.total) !== null && tokens.total > 0 ? Math.round(tokens.total) : null,
         series: list(tokens.series, CAPS.series).filter((p) => isObj(p) && num(p.t) !== null && num(p.tokens) !== null).map((p) => ({ t: p.t, tokens: p.tokens })),
+        fresh: count(tokens.fresh),
+        cached: count(tokens.cached),
+        output: count(tokens.output),
         steps: count(tokens.steps),
         coveredFromT: num(tokens.coveredFromT),
       },
@@ -176,15 +184,6 @@ export function coverageText(t) {
 
 // ---- derived data for the Metrics tab (pure; the DOM files only draw it)
 
-const TICKET_PREFIX = /^\s*T\d+\b[\s·:\-–—]*/i;
-const MODEL_SUFFIX = /\s*\([^()]*\/[^()]*\)\s*$/;
-/** A task name without its ticket id ("T63 · Fix x (sonnet/low)" -> "Fix x"); the id belongs in a tooltip only. */
-const stripTicket = (text) => String(text ?? '').replace(MODEL_SUFFIX, '').replace(TICKET_PREFIX, '').trim();
-export function plainTitle(text) {
-  const s = stripTicket(text);
-  return s.charAt(0).toUpperCase() + s.slice(1);
-}
-
 const toolEntries = (d) => d.transcript.entries.filter((e) => e.kind === 'tool');
 
 /** The span of the run: from the start (or the start of the part read) to the end / last sign of life. */
@@ -230,7 +229,7 @@ const MARKDOWN_MARKS = /\*\*|__|`/g;
 export function currentStep(d) {
   const e = d.transcript.entries[d.transcript.entries.length - 1];
   if (!e) return '';
-  return cut(e.kind === 'tool' ? `${e.tool} ${stripTicket(e.label)}`.trim() : String(e.text ?? '').replace(MARKDOWN_MARKS, ''), STEP_CAP);
+  return cut(e.kind === 'tool' ? `${e.tool} ${plainTitle(e.label, false)}`.trim() : String(e.text ?? '').replace(MARKDOWN_MARKS, ''), STEP_CAP);
 }
 
 const FAIL_WARN = 0.1;

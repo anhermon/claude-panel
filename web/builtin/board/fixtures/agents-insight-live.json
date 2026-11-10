@@ -5,7 +5,7 @@
    "type": "now",
    "title": "Now",
    "size": "m",
-   "text": "Deep per-agent activity insight",
+   "text": "Add a search box to Acme Notes",
    "status": "working"
   },
   {
@@ -27,32 +27,32 @@
    "size": "s",
    "items": [
     {
-     "label": "T40 Deep per-agent acti…",
+     "label": "Fix export for empty notes",
      "value": 563,
      "color": "#38bdf8"
     },
     {
-     "label": "T43 Scene UI component …",
+     "label": "Check note title matching",
      "value": 419,
      "color": "#64748b"
     },
     {
-     "label": "T44 UML-style diagram e…",
+     "label": "Add a search box to Acme Notes",
      "value": 375,
      "color": "#64748b"
     },
     {
-     "label": "T49 /agents-info comman…",
+     "label": "Fix export for empty notes",
      "value": 220,
      "color": "#38bdf8"
     },
     {
-     "label": "T39 Scrollable board an…",
+     "label": "Check note title matching",
      "value": 206,
      "color": "#64748b"
     },
     {
-     "label": "T47 Flexible prompt, sk…",
+     "label": "Add a search box to Acme Notes",
      "value": 176,
      "color": "#38bdf8"
     }
@@ -66,7 +66,7 @@
    "size": "m",
    "items": [
     {
-     "label": "main",
+     "label": "Fix export for empty notes",
      "state": "waiting",
      "from": 0,
      "to": 22343,
@@ -119,7 +119,7 @@
      ]
     },
     {
-     "label": "T40 Deep per-agent acti…",
+     "label": "Fix export for empty notes",
      "state": "working",
      "from": 20915,
      "to": 22430,
@@ -312,7 +312,7 @@
      ]
     },
     {
-     "label": "T47 Flexible prompt, sk…",
+     "label": "Add a search box to Acme Notes",
      "state": "working",
      "from": 21219,
      "to": 22429,
@@ -445,7 +445,7 @@
      ]
     },
     {
-     "label": "T49 /agents-info comman…",
+     "label": "Fix export for empty notes",
      "state": "working",
      "from": 21541,
      "to": 22429,
@@ -513,7 +513,7 @@
      ]
     },
     {
-     "label": "T44 UML-style diagram e…",
+     "label": "Add a search box to Acme Notes",
      "state": "done",
      "from": 20268,
      "to": 22326,
@@ -682,14 +682,14 @@
    "type": "uml",
    "title": "Handoffs",
    "size": "l",
-   "code": "sequenceDiagram\n  participant main as main\n  participant na73ad7514c as T40 Deep per-…\n  participant naa7567880f as T46 Audit pan…\n  participant naf05ed88c9 as T47 Flexible …\n  participant naee486a6c7 as T43 Scene UI …\n  participant nad3fa49e0f as T49 /agents-i…\n  participant nad291000b1 as T44 UML-style…\n  main->>na73ad7514c: spawn T40 Deep per-…\n  main->>naa7567880f: spawn T46 Audit pan…\n  naa7567880f-->>main: done\n  main->>naf05ed88c9: spawn T47 Flexible …\n  naee486a6c7-->>main: done\n  main->>nad3fa49e0f: spawn T49 /agents-i…\n  nad291000b1-->>main: done",
+   "code": "sequenceDiagram\n  participant exampleNode1 as planner\n  participant exampleNode2 as builder\n  participant exampleNode3 as reviewer\n  participant exampleNode4 as planner\n  participant exampleNode5 as builder\n  participant exampleNode6 as reviewer\n  exampleNode1->>exampleNode2: Check note search\n  exampleNode2->>exampleNode3: Check note search\n  exampleNode3->>exampleNode4: Check note search\n  exampleNode4->>exampleNode5: Check note search\n  exampleNode5->>exampleNode6: Check note search",
    "highlight": {
-    "na73ad7514c": "active",
-    "naa7567880f": "done",
-    "naf05ed88c9": "active",
-    "naee486a6c7": "done",
-    "nad3fa49e0f": "active",
-    "nad291000b1": "done"
+    "exampleNode1": "active",
+    "exampleNode2": "done",
+    "exampleNode3": "active",
+    "exampleNode4": "done",
+    "exampleNode5": "active",
+    "exampleNode6": "done"
    }
   },
   {
@@ -697,22 +697,22 @@
    "type": "uml",
    "title": "Pipeline",
    "size": "l",
-   "code": "flowchart LR\n  lad291000b1[\"T44 UML-style dia…\"]\n  la73ad7514c[\"T40 Deep per-agen…\"]\n  laf05ed88c9[\"T47 Flexible prom…\"]\n  lad3fa49e0f[\"T49 /agents-info …\"]\n  classDef active stroke:#38bdf8,stroke-width:2px\n  classDef done stroke:#4ade80,stroke-width:2px\n  classDef blocked stroke:#f87171,stroke-width:2px\n  classDef todo stroke:#64748b,stroke-width:2px\n  class la73ad7514c,laf05ed88c9,lad3fa49e0f active\n  class lad291000b1 done",
+   "code": "flowchart LR\n  exampleNode1[\"Plan search\"]\n  exampleNode2[\"Build search\"]\n  exampleNode3[\"Review export\"]\n  exampleNode4[\"Plan search\"]\n  exampleNode1 --> exampleNode2\n  exampleNode2 --> exampleNode3\n  exampleNode3 --> exampleNode4",
    "highlight": {
-    "lad291000b1": "done",
-    "la73ad7514c": "active",
-    "laf05ed88c9": "active",
-    "lad3fa49e0f": "active"
+    "exampleNode1": "done",
+    "exampleNode2": "active",
+    "exampleNode3": "active",
+    "exampleNode4": "active"
    }
   }
  ],
  "lanes": [
   {
    "id": "main",
-   "label": "main",
+   "label": "planner",
    "state": "waiting",
    "pct": null,
-   "step": "Deep per-agent activity insight",
+   "step": "Add a search box to Acme Notes",
    "note": "",
    "goal": "",
    "dod": [],
@@ -737,13 +737,13 @@
      }
     ],
     "files": [
-     "live-0.png",
-     "ui-catalog-1280x900-dark.png",
-     "report.md"
+     "notes.test.mjs",
+     "notes.ts",
+     "search.ts"
     ],
     "feed": [
-     "ran a command",
-     "read live-0.png"
+     "checked Acme Notes search and export",
+     "checked Acme Notes search and export"
     ],
     "tokens": 156410,
     "isBusy": false,
@@ -752,17 +752,17 @@
    }
   },
   {
-   "id": "ad291000b1f1c904c",
-   "label": "T44 UML-style diagram engine, mermaid-based",
+   "id": "agent-example-012",
+   "label": "builder",
    "state": "done",
    "pct": null,
-   "step": "T44 · make UML-style diagrams (sequence, flowchart, state, class, ER, architect…",
+   "step": "Fix export for empty notes",
    "note": "",
    "goal": "",
    "dod": [],
    "at": null,
-   "by": "ad291000b1f1c904c",
-   "loop": "ad291000b1f1c904c",
+   "by": "agent-example-012",
+   "loop": "agent-example-012",
    "calls": 128,
    "startedAgoMs": 2160233,
    "updatedAgoMs": 102965,
@@ -785,14 +785,14 @@
      }
     ],
     "files": [
-     "served.png",
-     "uml-360x730.png",
-     "uml-1280x900.png"
+     "export.ts",
+     "notes.test.mjs",
+     "search-example.png"
     ],
     "feed": [
-     "ran a command",
-     "read served.png",
-     "ran a command"
+     "checked Acme Notes search and export",
+     "checked Acme Notes search and export",
+     "checked Acme Notes search and export"
     ],
     "tokens": 374911,
     "isBusy": false,
@@ -801,23 +801,23 @@
    }
   },
   {
-   "id": "a73ad7514cc2d196d",
-   "label": "T40 Deep per-agent activity insight",
+   "id": "agent-example-013",
+   "label": "reviewer",
    "state": "working",
    "pct": null,
-   "step": "T45 (follow-up to T40, same area, you ha · at any moment the user can tell, per…",
+   "step": "Fix export for empty notes",
    "note": "",
    "goal": "",
    "dod": [],
    "at": null,
-   "by": "a73ad7514cc2d196d",
-   "loop": "a73ad7514cc2d196d",
+   "by": "agent-example-013",
+   "loop": "agent-example-013",
    "calls": 169,
    "startedAgoMs": 1513780,
    "updatedAgoMs": 63,
    "insight": {
     "kind": "visual",
-    "headline": "Checking visually · reading screenshot",
+    "headline": "Checking Acme Notes",
     "strip": "vvvv...xxxwxttvxxxxxxxxv",
     "mix": [
      {
@@ -842,14 +842,14 @@
      }
     ],
     "files": [
-     "agents-kinds-360x730-scroll…",
-     "agents-kinds-360x730.png",
-     "agents-kinds-720x730.png"
+     "agents-kinds-360x730-scroll\u2026",
+     "README.md",
+     "notes.ts"
     ],
     "feed": [
-     "ran a script",
-     "read 2 files",
-     "browsed files"
+     "checked Acme Notes search and export",
+     "checked Acme Notes search and export",
+     "checked Acme Notes search and export"
     ],
     "tokens": 563228,
     "isBusy": false,
@@ -858,17 +858,17 @@
    }
   },
   {
-   "id": "af05ed88c972cde3b",
-   "label": "T47 Flexible prompt, skill, evals and anti-repetition (sonne",
+   "id": "agent-example-014",
+   "label": "planner",
    "state": "working",
    "pct": null,
-   "step": "T47 · make the panel's guidance and conventions context-driven instead of repea…",
+   "step": "Fix export for empty notes",
    "note": "",
    "goal": "",
    "dod": [],
    "at": null,
-   "by": "af05ed88c972cde3b",
-   "loop": "af05ed88c972cde3b",
+   "by": "agent-example-014",
+   "loop": "agent-example-014",
    "calls": 60,
    "startedAgoMs": 1209889,
    "updatedAgoMs": 79744,
@@ -891,12 +891,12 @@
      }
     ],
     "files": [
-     "report.md"
+     "search.ts"
     ],
     "feed": [
-     "type-checked",
-     "ran a command",
-     "browsed files"
+     "checked Acme Notes search and export",
+     "checked Acme Notes search and export",
+     "checked Acme Notes search and export"
     ],
     "tokens": 175757,
     "isBusy": false,
@@ -905,17 +905,17 @@
    }
   },
   {
-   "id": "ad3fa49e0f3cd8cc4",
-   "label": "T49 /agents-info command with 3D avatar scene",
+   "id": "agent-example-015",
+   "label": "builder",
    "state": "working",
    "pct": null,
-   "step": "T49 · a new slash command `/agents-info` that opens the panel on an `agents-inf…",
+   "step": "Fix export for empty notes",
    "note": "",
    "goal": "",
    "dod": [],
    "at": null,
-   "by": "ad3fa49e0f3cd8cc4",
-   "loop": "ad3fa49e0f3cd8cc4",
+   "by": "agent-example-015",
+   "loop": "agent-example-015",
    "calls": 38,
    "startedAgoMs": 887531,
    "updatedAgoMs": 69736,
@@ -942,12 +942,12 @@
      }
     ],
     "files": [
-     "agents-info-host.ts",
-     "agents-info-scene.ts"
+     "search.ts",
+     "export.ts"
     ],
     "feed": [
-     "ran tests",
-     "browsed files"
+     "checked Acme Notes search and export",
+     "checked Acme Notes search and export"
     ],
     "tokens": 220006,
     "isBusy": false,
@@ -957,7 +957,7 @@
   }
  ],
  "now": {
-  "title": "Deep per-agent activity insight",
+  "title": "Add a search box to Acme Notes",
   "status": "working"
  }
 }

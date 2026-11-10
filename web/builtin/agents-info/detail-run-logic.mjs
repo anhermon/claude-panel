@@ -1,3 +1,4 @@
+import { plainTitle } from '../../kit/panel/plain-title.mjs';
 // The detail of a run of another harness that has no transcript (hooks/agent-detail-run.ts): live/detail.json's `run` -> clean data, and the
 // rows of its fact list. Pure, no DOM; tested by detail-run-logic.test.mjs. What the record does not hold is listed in `absent`, in the harness's terms.
 import { cut, formatTokens } from './agents-info-logic.mjs';
@@ -12,7 +13,7 @@ const PROMPT_SOURCES = Object.freeze(['file', 'head']);
 /** live/detail.json's `run` -> clean data, or null when it is not one. Never throws. */
 export function normalizeRun(raw) {
   if (!isObj(raw) || typeof raw.status !== 'string') return null;
-  const prompt = isObj(raw.prompt) && keepText(raw.prompt.text, RUN_CAPS.text) !== '' ? { text: keepText(raw.prompt.text, RUN_CAPS.text), source: PROMPT_SOURCES.includes(raw.prompt.source) ? raw.prompt.source : 'head' } : null;
+  const prompt = isObj(raw.prompt) && keepText(raw.prompt.text, RUN_CAPS.text) !== '' ? { text: keepText(plainTitle(raw.prompt.text, false), RUN_CAPS.text), source: PROMPT_SOURCES.includes(raw.prompt.source) ? raw.prompt.source : 'head' } : null;
   return {
     harness: cut(raw.harness, RUN_CAPS.harness),
     status: cut(raw.status, RUN_CAPS.word) || 'Unknown',
@@ -22,7 +23,7 @@ export function normalizeRun(raw) {
     endedAt: num(raw.endedAt),
     model: orNull(cut(raw.model, RUN_CAPS.model)),
     effort: orNull(cut(raw.effort, RUN_CAPS.effort)),
-    title: cut(raw.title, RUN_CAPS.title),
+    title: cut(plainTitle(raw.title, false), RUN_CAPS.title),
     verdict: orNull(cut(raw.verdict, RUN_CAPS.line)),
     tokens: num(raw.tokens),
     reason: orNull(cut(raw.reason, RUN_CAPS.line)),

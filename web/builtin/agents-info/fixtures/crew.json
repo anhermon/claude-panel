@@ -39,7 +39,7 @@
   },
   {
    "id": "t40",
-   "name": "T40 Deep per-agent insight",
+   "name": "Export crash fix",
    "short": "T40",
    "state": "working",
    "pct": 40,

@@ -16,5 +16,5 @@ tmp/
 # OS / editor
 .DS_Store
 
-# the author's own dev workflow (copies this mod into other sessions' dev-mods folders); not part of the plugin
+# the author's own dev workflow (copies this mod into other sessions' plugin development folders); not part of the plugin
 scripts/sync-sessions.sh

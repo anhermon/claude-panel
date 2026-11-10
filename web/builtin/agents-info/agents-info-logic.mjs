@@ -1,3 +1,4 @@
+import { plainTitle } from '../../kit/panel/plain-title.mjs';
 // Pure logic of the Agents scene (no DOM, no clock of its own): what the mod wrote (hooks/agents-info-data.ts) -> clean data,
 // the mood of the big avatar, the wording of durations and tokens, the order of the rows, the legend, which events are new.
 // Tested by agents-info-logic.test.mjs.
@@ -8,7 +9,10 @@ export const OVERALLS = Object.freeze(['working', 'waiting', 'blocked', 'done'])
 export const EVENT_KINDS = Object.freeze(['spawn', 'handoff', 'state', 'work', 'progress']);
 /** Kinds in which an agent makes calls (hooks/work-kinds.ts WORK_KINDS): any of them on a running agent means "busy". */
 export const WORK_KINDS = Object.freeze(['ui', 'logic', 'tests', 'visual', 'docs', 'research', 'reading', 'delegating', 'working']);
-export const CAPS = Object.freeze({ agents: 12, events: 20, id: 64, name: 80, short: 14, text: 60, note: 120, files: 3, file: 28, kind: 12, role: 12, ticket: 28, harness: 16, model: 28, effort: 8, segs: 48, kinds: 16, type: 40 });
+export const CAPS = Object.freeze({ agents: 12, events: 20, id: 64, name: 80, short: 14, text: 60, note: 120, files: 3, file: 28, kind: 12, role: 12, ticket: 28, harness: 16, model: 28, effort: 8, branch: 60, title: 80, tool: 40, segs: 48, kinds: 16, type: 40 });
+export const WAITING_CHIP_PREFIX = 'may be waiting';
+export const WAITING_TOOLTIP = 'Heuristic: last tool call has had no answer for 20 s+ while quiet (a long tool looks the same).';
+const FAILED_STAGES = Object.freeze(['failed', 'fail', 'rejected', 'error']);
 /** Kinds that say nothing about WHAT the work is (the state pill already says it): no kind chip, not in the legend. */
 export const GENERIC_KINDS = Object.freeze(['working', 'thinking', 'waiting', 'done']);
 export const hasKind = (a) => a.kind !== null && !GENERIC_KINDS.includes(a.kind);
@@ -39,8 +43,32 @@ export const cut = (v, max) => {
 /** The router ticket an agent works on, `{ id, stage, text, title, harness }` (text: "verified 4/4"), or null. */
 export function normalizeTicket(raw) {
   if (!isObj(raw) || typeof raw.id !== 'string' || raw.id === '') return null;
-  const text = cut(raw.text, CAPS.ticket) || cut(raw.stage, CAPS.ticket);
-  return { id: cut(raw.id, CAPS.ticket), stage: cut(raw.stage, CAPS.kind), text, title: cut(raw.title, CAPS.text), harness: cut(raw.harness, CAPS.harness) || null };
+  const text = cut(plainTitle(raw.text, false), CAPS.ticket) || cut(raw.stage, CAPS.ticket);
+  return { id: cut(raw.id, CAPS.ticket), stage: cut(raw.stage, CAPS.kind), text, title: cut(plainTitle(raw.title, false), CAPS.text), harness: cut(raw.harness, CAPS.harness) || null };
+}
+
+/** Heuristic "may be waiting" hint (`{ tool, target }`), or null; never kept for done, failed or not-started agents. */
+export function normalizeWaiting(raw, state, notStarted, ticket) {
+  if (state === 'done' || notStarted || FAILED_STAGES.includes((ticket?.stage ?? '').toLowerCase())) return null;
+  const tool = isObj(raw) ? cut(raw.tool, CAPS.tool) : typeof raw === 'string' ? cut(raw, CAPS.tool) : '';
+  if (tool === '') return null;
+  const target = isObj(raw) ? cut(raw.target, CAPS.text) : '';
+  return { tool, target };
+}
+
+/** Label and tooltip for the "may be waiting" chip, or null when the agent is not waiting or has finished/failed. */
+export function waitingChipOf(a) {
+  const w = a?.mayBeWaiting;
+  if (!w || typeof w.tool !== 'string' || w.tool === '' || a.state === 'done' || a.notStarted || FAILED_STAGES.includes((a.ticket?.stage ?? '').toLowerCase())) return null;
+  const detail = w.target ? `${w.tool}: ${w.target} — ` : `${w.tool} — `;
+  return { text: `${WAITING_CHIP_PREFIX} · ${w.tool}`, title: `${detail}${WAITING_TOOLTIP}` };
+}
+
+/** "1 error", "3 errors", or '' when 0 / absent. */
+export function formatErrors(n) {
+  if (typeof n !== 'number' || !Number.isFinite(n) || n < 1) return '';
+  const c = Math.round(n);
+  return `${c} error${c === 1 ? '' : 's'}`;
 }
 
 /** The stretches of work of an agent (`[{ k, a, b }]` in ms, oldest first): only well-formed ones, capped. */
@@ -64,13 +92,15 @@ function normalizeAgent(raw) {
   if (!isObj(raw) || typeof raw.id !== 'string' || raw.id === '' || !STATES.includes(raw.state)) return null;
   const pct = num(raw.pct);
   const kind = typeof raw.kind === 'string' && raw.kind !== '' ? cut(raw.kind, CAPS.kind) : null;
+  const notStarted = raw.notStarted === true;
+  const ticket = normalizeTicket(raw.ticket);
   return {
     id: cut(raw.id, CAPS.id),
     isMain: raw.isMain === true,
     name: cut(raw.name, CAPS.name) || cut(raw.id, CAPS.id),
     short: cut(raw.short, CAPS.short) || cut(raw.name, CAPS.short) || cut(raw.id, CAPS.short),
-    notStarted: raw.notStarted === true,
-    note: cut(raw.note, CAPS.note),
+    notStarted,
+    note: cut(plainTitle(raw.note, false), CAPS.note),
     state: raw.state,
     pct: pct === null ? null : Math.min(PCT_MAX, Math.max(0, Math.round(pct))),
     startedAt: num(raw.startedAt) ?? 0,
@@ -80,23 +110,27 @@ function normalizeAgent(raw) {
     kindLabel: cut(raw.kindLabel, CAPS.kind) || FALLBACK_KIND.label,
     kindColor: typeof raw.kindColor === 'string' && COLOR.test(raw.kindColor) ? raw.kindColor : FALLBACK_KIND.color,
     kindGlyph: cut(raw.kindGlyph, 2) || FALLBACK_KIND.glyph,
-    headline: cut(raw.headline, CAPS.text),
+    headline: cut(plainTitle(raw.headline, false), CAPS.text),
     files: Array.isArray(raw.files) ? raw.files.slice(0, CAPS.files).map((f) => cut(f, CAPS.file)).filter((f) => f !== '') : [],
     segs: normalizeSegs(raw.segs),
     calls: num(raw.calls) !== null && raw.calls >= 0 ? Math.round(raw.calls) : null,
+    errors: num(raw.errors) !== null && raw.errors > 0 ? Math.round(raw.errors) : 0,
+    mayBeWaiting: normalizeWaiting(raw.mayBeWaiting, raw.state, notStarted, ticket),
     role: cut(raw.role, CAPS.role) || null,
-    ticket: normalizeTicket(raw.ticket),
+    ticket,
     proof: normalizeProof(raw.proof),
     agentType: cut(raw.agentType, CAPS.type) || null,
     harness: cut(raw.harness, CAPS.harness) || null,
     model: cut(raw.model, CAPS.model) || null,
     effort: cut(raw.effort, CAPS.effort) || null,
+    branch: cut(raw.branch, CAPS.branch) || null,
+    title: cut(plainTitle(raw.title, false), CAPS.title) || null,
   };
 }
 
 function normalizeEvent(raw) {
   if (!isObj(raw) || num(raw.id) === null || typeof raw.agent !== 'string' || !EVENT_KINDS.includes(raw.kind)) return null;
-  return { id: raw.id, t: num(raw.t) ?? 0, agent: cut(raw.agent, CAPS.id), from: cut(raw.from, CAPS.text), to: cut(raw.to, CAPS.text), kind: raw.kind, text: cut(raw.text, CAPS.text) };
+  return { id: raw.id, t: num(raw.t) ?? 0, agent: cut(raw.agent, CAPS.id), from: cut(raw.from, CAPS.text), to: cut(raw.to, CAPS.text), kind: raw.kind, text: cut(plainTitle(raw.text, false), CAPS.text) };
 }
 
 /** Whatever the data file holds -> clean data; a missing or odd file is "no agents, working". Never throws. */

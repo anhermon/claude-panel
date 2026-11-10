@@ -1,3 +1,4 @@
+import { plainTitle } from '../../kit/panel/plain-title.mjs';
 // Pure logic of the Board scene: no DOM, no timers, no globals. Everything that decides WHAT the board shows
 // (normalising the data file, the text caps, the grid, which frame may change next) lives here so Node can test it.
 // Tested by board-logic.test.mjs.
@@ -32,6 +33,9 @@ export function capText(value, max) {
   if (s.length <= max) return s;
   return s.slice(0, Math.max(0, max - 1)).trimEnd() + ELLIPSIS;
 }
+
+/** Display text, cleaned before clipping; ids still use capText. */
+export const capTitle = (value, max) => capText(plainTitle(value, false), max);
 
 const isObj = (v) => v !== null && typeof v === 'object' && !Array.isArray(v);
 const arr = (v, max) => (Array.isArray(v) ? v.slice(0, max) : []);
@@ -78,7 +82,7 @@ export function formatMetric(parts, n) {
 export const LANE_ORDER = ['working', 'testing', 'blocked', 'waiting', 'done'];
 const DOD_STATES = ['todo', 'doing', 'done', 'failed'];
 const count = (v) => (typeof v === 'number' && Number.isInteger(v) && v >= 0 ? v : undefined);
-const dodOf = (v) => arr(v, CAPS.dod).filter(isObj).map((d) => ({ t: capText(d.t, CAPS.stepItem), state: DOD_STATES.includes(d.state) ? d.state : 'todo' }));
+const dodOf = (v) => arr(v, CAPS.dod).filter(isObj).map((d) => ({ t: capText(plainTitle(d.t, false), CAPS.stepItem), state: DOD_STATES.includes(d.state) ? d.state : 'todo' }));
 export function sortLanes(lanes) {
   const rank = (s) => { const i = LANE_ORDER.indexOf(s); return i < 0 ? LANE_ORDER.length : i; };
   return arr(lanes, 64)
@@ -90,9 +94,9 @@ export function sortLanes(lanes) {
       const dod = dodOf(l.dod);
       const at = Number.isInteger(l.at) && l.at >= 0 && l.at < dod.length ? l.at : null;
       return {
-        id: capText(l.id, 24) || 'lane', label: capText(l.label, CAPS.laneLabel), state: LANE_ORDER.includes(l.state) ? l.state : 'working',
-        pct: pctOf(l.pct), step: capText(l.step, CAPS.laneStep), note: capText(l.note, CAPS.laneNote),
-        goal: capText(l.goal, CAPS.laneLabel), dod, at, calls: count(l.calls), startedAt: num(l.startedAt), updatedAt: num(l.updatedAt), insight: normalizeInsight(l.insight),
+        id: capText(l.id, 24) || 'lane', label: capText(plainTitle(l.label, false), CAPS.laneLabel), state: LANE_ORDER.includes(l.state) ? l.state : 'working',
+        pct: pctOf(l.pct), step: capText(plainTitle(l.step, false), CAPS.laneStep), note: capText(plainTitle(l.note, false), CAPS.laneNote),
+        goal: capText(plainTitle(l.goal, false), CAPS.laneLabel), dod, at, calls: count(l.calls), startedAt: num(l.startedAt), updatedAt: num(l.updatedAt), insight: normalizeInsight(l.insight),
       };
     });
 }
@@ -115,7 +119,7 @@ export const isCallsBars = (frame) => frame.type === 'bars' && AGENT_BARS_UNITS.
 export function normalizeData(raw) {
   const d = isObj(raw) ? raw : {};
   const lanes = sortLanes(d.lanes);
-  const now = isObj(d.now) ? { title: capText(d.now.title, CAPS.text), status: capText(d.now.status, CAPS.status) } : null;
+  const now = isObj(d.now) ? { title: capText(plainTitle(d.now.title, false), CAPS.text), status: capText(d.now.status, CAPS.status) } : null;
   const seen = new Set();
   const frames = [];
   for (const f of arr(d.frames, RAW_FRAMES_MAX)) {
@@ -124,7 +128,7 @@ export function normalizeData(raw) {
     if (seen.has(id)) id = `${id.slice(0, ID_MAX - ID_SUFFIX_ROOM)}-${frames.length + 1}`;
     seen.add(id);
     const type = typeof f.type === 'string' ? f.type : '';
-    const frame = { ...f, id, type, title: capText(f.title, CAPS.title), size: isSize(f.size) ? f.size : DEFAULT_SIZE };
+    const frame = { ...f, id, type, title: capText(plainTitle(f.title, false), CAPS.title), size: isSize(f.size) ? f.size : DEFAULT_SIZE };
     if (type === 'lanes' || type === 'doing') frame.lanes = lanes; // the frame shows data.lanes, so a lane change is a change of this frame
     if (type === 'now' && frame.text === undefined && now) { frame.text = now.title; frame.status = frame.status ?? now.status; }
     frames.push(frame);

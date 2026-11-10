@@ -3,6 +3,7 @@
 // `panel.emit('agent', {id, pages})` (repeated every heartbeat while open; 'agent-close' ends it) and reads the answer from
 // live/detail.json once a second. Escape and the back button close it. Scroll position survives updates; a transcript that was
 // scrolled to its end keeps following the newest entry.
+import { titleOf } from './title-of.mjs';
 import { h } from './dom.js';
 import { DEFAULT_TAB, DETAIL_URL, plainTitle, EVENT_AGENT, EVENT_CLOSE, TABS, TAB_LABEL, TIMING, fillState, normalizeDetail, requestOf } from './detail-logic.mjs';
 import { renderMetrics } from './detail-metrics.js';
@@ -121,15 +122,15 @@ export function createDetail(root, hooks) {
   function fillHead() {
     const a = st.row;
     if (!a) return;
-    title.textContent = plainTitle(a.name);
-    title.title = a.name;
+    title.textContent = titleOf(a);
+    title.title = titleOf(a);
     pill.textContent = STATE_WORD[a.state] ?? a.state;
     pill.dataset.state = a.state;
-    sub.textContent = a.isMain ? 'This session' : (a.headline || a.kindLabel || '');
+    sub.textContent = a.isMain ? 'This session' : plainTitle(a.headline || a.kindLabel || '', false);
     role.textContent = a.role ?? '';
     role.hidden = a.role === null;
     ticket.textContent = a.ticket ? plainTitle(a.ticket.text) : '';
-    ticket.title = a.ticket ? a.ticket.id : '';
+    ticket.title = a.ticket ? titleOf(a) : '';
     ticket.hidden = !a.ticket;
     fillProof();
   }

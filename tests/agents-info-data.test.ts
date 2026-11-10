@@ -2,12 +2,14 @@
 // (diffAgents turns two looks into the transitions the page animates).
 import { expect, test } from 'claude-code/testing'
 
-import { AGENTS_INFO_CAPS, agentRowsOf, assembleAgentsInfo, countsOf, dataKey, diffAgents, hasCrew, overallOf, shortNameOf, spokenDuration } from '../hooks/agents-info-data'
+import { AGENTS_INFO_CAPS, agentRowsOf, assembleAgentsInfo, countsOf, dataKey, diffAgents, hasCrew, identityOf, overallOf, shortNameOf, spokenDuration } from '../hooks/agents-info-data'
 import type { AgentRow } from '../hooks/agents-info-data'
 import { agentsInfoScene, AGENTS_INFO_SCENE_ID, hasAgentsInfo, withAgentsInfo } from '../hooks/agents-info-scene'
 import { boardScene, withBoard } from '../hooks/board-scene'
 import { MAIN_LOOP } from '../hooks/pulse-model'
 import type { PulseLoop } from '../hooks/pulse-model'
+import { tallyBegin, tallyEnd } from '../hooks/pulse-tally'
+import type { Tallied } from '../hooks/pulse-tally'
 import { applyUserScene } from '../hooks/pulse-scene'
 import { emptyState } from '../hooks/state'
 import { heroOf, switcherScenes } from '../hooks/hero'
@@ -82,11 +84,11 @@ test('segs: the rows carry the swimlane stretches of work (ms, newest SEGS), the
 test('identity: the agent type is the engines own name (namespace kept), model and effort come from the loop, the main session and an unknown part carry none', () => {
   const loops = [
     main,
-    loop('a', { name: 'writer', type: 'savvy-flow:savvy-careful', model: 'sonnet', effort: 'high' }),
+    loop('a', { name: 'writer', type: 'example-tools:worker', model: 'sonnet', effort: 'high' }),
     loop('b', { name: 'reader', type: 'general-purpose' }),
   ]
   const { agents } = agentRowsOf(input({ loops, lanes: [lane('a', { loop: 'a' }), lane('b', { loop: 'b' })] }))
-  expect(agents.find(r => r.id === 'a')).toMatchObject({ agentType: 'savvy-flow:savvy-careful', model: 'sonnet', effort: 'high' })
+  expect(agents.find(r => r.id === 'a')).toMatchObject({ agentType: 'example-tools:worker', model: 'sonnet', effort: 'high' })
   const b = agents.find(r => r.id === 'b')!
   expect(b.agentType).toBe('general-purpose')
   expect('model' in b || 'effort' in b).toBe(false) // never invented
@@ -105,7 +107,7 @@ test('overall: blocked beats a pending question beats done beats working; counts
 })
 
 test('short names and spoken durations', () => {
-  expect(shortNameOf('T43 Fix the lanes (sonnet/high)')).toBe('T43')
+  expect(shortNameOf('T43 Fix the lanes (sonnet/high)')).toBe('Fix the lanes')
   expect(shortNameOf('Landscape research of everything')).toBe('Landscape res…')
   expect(spokenDuration(42_000)).toBe('42 s')
   expect(spokenDuration(26 * MIN)).toBe('26 min')
@@ -113,23 +115,23 @@ test('short names and spoken durations', () => {
 })
 
 test('diffAgents: the first look announces nothing; a new agent is handed work and started; a finish says how long', () => {
-  const a = row('t43', { short: 'T43' })
+  const a = row('t43', { name: 'T43 Fix lanes', short: 'T43' })
   expect(diffAgents(null, [a], NOW, 100)).toEqual([])
   const born = diffAgents([], [a], NOW, 100)
-  expect(born.map(e => [e.id, e.kind, e.text])).toEqual([[100, 'handoff', 'main → T43'], [101, 'spawn', 'T43 started']])
+  expect(born.map(e => [e.id, e.kind, e.text])).toEqual([[100, 'handoff', 'main → Fix lanes'], [101, 'spawn', 'Fix lanes started']])
   const done = diffAgents([a], [{ ...a, state: 'done', endedAt: NOW }], NOW, 102)
-  expect(done).toEqual([{ id: 102, t: NOW, agent: 't43', from: 'working', to: 'done', kind: 'state', text: 'T43 done · 1 min' }])
+  expect(done).toEqual([{ id: 102, t: NOW, agent: 't43', from: 'working', to: 'done', kind: 'state', text: 'Fix lanes done · 1 min' }])
   expect(diffAgents([a], [a], NOW, 1)).toEqual([])
 })
 
 test('diffAgents: state flips, kind changes and progress steps; quiet kinds, small steps and repeats inside the gap are not events', () => {
-  const a = row('t40', { short: 'T40', pct: 10 })
+  const a = row('t40', { name: 'T40 Fix lanes', short: 'T40', pct: 10 })
   const ev = (next: Partial<AgentRow>, recent = [] as ReturnType<typeof diffAgents>) => diffAgents([a], [{ ...a, ...next }], NOW, 1, recent)
-  expect(ev({ state: 'testing' })[0]).toMatchObject({ kind: 'state', from: 'working', to: 'testing', text: 'T40 testing' })
-  expect(ev({ kind: 'tests' })[0]).toMatchObject({ kind: 'work', from: 'logic', to: 'tests', text: 'T40 · Tests' })
+  expect(ev({ state: 'testing' })[0]).toMatchObject({ kind: 'state', from: 'working', to: 'testing', text: 'Fix lanes testing' })
+  expect(ev({ kind: 'tests' })[0]).toMatchObject({ kind: 'work', from: 'logic', to: 'tests', text: 'Fix lanes · Tests' })
   expect(ev({ kind: 'thinking' })).toEqual([])
   expect(ev({ pct: 12 })).toEqual([])
-  expect(ev({ pct: 40 })[0]).toMatchObject({ kind: 'progress', from: '10', to: '40', text: 'T40 40%' })
+  expect(ev({ pct: 40 })[0]).toMatchObject({ kind: 'progress', from: '10', to: '40', text: 'Fix lanes 40%' })
   const first = ev({ kind: 'tests' })
   expect(diffAgents([a], [{ ...a, kind: 'ui' }], NOW + 1000, 5, first)).toEqual([]) // the same kind of event within the gap
   expect(diffAgents([a], [{ ...a, kind: 'ui' }], NOW + AGENTS_INFO_CAPS.REPEAT_GAP_MS, 5, first)).toHaveLength(1)
@@ -198,4 +200,42 @@ test('role and ticket are part of the data key: a stage change is a change', () 
   const base = assembleAgentsInfo(input({ loops: [main] }), [])
   const d = (r: AgentRow) => ({ ...base, agents: [r] })
   expect(dataKey(d(a))).not.toBe(dataKey(d(b)))
+})
+
+test('mayBeWaiting: set on a live agent whose pending tool call has had no answer for >= 20 s; omitted when fresh, idle, done, failed or not started', () => {
+  const waitLoop = loop('w', { busy: 1, lastTool: 'Bash', lastTarget: 'npm test', lastAt: NOW - AGENTS_INFO_CAPS.WAITING_HINT_MS })
+  const freshLoop = loop('f', { busy: 1, lastTool: 'Bash', lastTarget: 'npm test', lastAt: NOW - AGENTS_INFO_CAPS.WAITING_HINT_MS + 1 })
+  const idleLoop = loop('i', { busy: 0, lastTool: 'Bash', lastTarget: 'npm test', lastAt: NOW - 40_000 })
+  const doneLoop = loop('d', { status: 'done', busy: 1, lastTool: 'Bash', lastAt: NOW - 40_000 })
+  const failedLoop = loop('x', { outcome: 'failed', busy: 1, lastTool: 'Bash', lastAt: NOW - 40_000 })
+  const deferredLoop = loop('n', { source: 'external', status: 'done', outcome: 'notstarted', calls: 0, busy: 1, lastTool: 'Bash', lastAt: NOW - 40_000 })
+  const rows = Object.fromEntries(agentRowsOf(input({ loops: [main, waitLoop, freshLoop, idleLoop, doneLoop, failedLoop, deferredLoop] })).agents.map(a => [a.id, a]))
+  expect(rows.w?.mayBeWaiting).toEqual({ tool: 'Bash', target: 'npm test' })
+  expect(rows.f?.mayBeWaiting).toBeUndefined()
+  expect(rows.i?.mayBeWaiting).toBeUndefined()
+  expect(rows.d?.mayBeWaiting).toBeUndefined()
+  expect(rows.x?.mayBeWaiting).toBeUndefined()
+  expect(rows.n?.mayBeWaiting).toBeUndefined()
+})
+
+test('errors and Me identity: failed tool calls sum into errors; main loop exposes model, effort, branch and title via identityOf', () => {
+  const tallied: Tallied = {}
+  for (const ev of [{ tool: 'Bash', target: 'npm test' }, { tool: 'Edit', target: 'a.ts' }]) {
+    tallyBegin(tallied, ev)
+    tallyEnd(tallied, ev, 5000, true)
+  }
+  const tally = tallied.tally
+  const mainWithMeta = loop(MAIN_LOOP, { kind: 'main', name: 'main', model: 'claude-opus-4-6', effort: 'high', branch: 'feat/panel-rows', title: 'Add search box to notes' })
+  const errLoop = loop('e', { tally })
+  const rows = Object.fromEntries(agentRowsOf(input({ loops: [mainWithMeta, errLoop] })).agents.map(a => [a.id, a]))
+  expect(rows.e?.errors).toBe(2)
+  expect(rows[MAIN_LOOP]?.errors).toBeUndefined()
+  expect(rows[MAIN_LOOP]).toMatchObject({ isMain: true, agentType: null, model: 'claude-opus-4-6', effort: 'high', branch: 'feat/panel-rows', title: 'Add search box to notes' })
+  expect(identityOf(lane(MAIN_LOOP, { insight: { kind: 'working', headline: '', files: [], tokens: null, isMain: true, strip: '', mix: [], feed: [], lastCallAt: NOW, isBusy: false } }), [mainWithMeta])).toEqual({
+    agentType: null,
+    model: 'claude-opus-4-6',
+    effort: 'high',
+    branch: 'feat/panel-rows',
+    title: 'Add search box to notes',
+  })
 })

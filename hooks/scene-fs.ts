@@ -12,7 +12,8 @@ import { SHOT_STATE_DIR } from './shot'
 export type PathInfo = { kind: 'file' | 'dir' | 'other'; size: number; realPath?: string }
 export type SceneFs = { stat: (path: string) => Promise<PathInfo | undefined> }
 /** `scenesDir`: where inline (html / files) scenes are written, one folder per scene id (see `inlineScenesDir`). */
-export type SceneEnv = { cwd: string; home?: string; scenesDir?: string }
+/** `tmp`: this machine's temp dir ($TMPDIR; not always under TEMP_ROOTS, e.g. on Linux or a custom TMPDIR), also an allowed root. */
+export type SceneEnv = { cwd: string; home?: string; scenesDir?: string; tmp?: string }
 /** What an inline publish writes through (the mod hands it `$.fs` + `mv` / `rm`; the tests hand it a recorder). */
 export type SceneIo = {
   /** Replace the folder's content (all but its `live/`) with exactly these files. */
@@ -34,7 +35,8 @@ const ROOT_HINT = 'put the scene folder under the project directory or its scrat
 /** The allowed roots as spelled (not yet resolved). */
 export function allowedRoots(env: SceneEnv): string[] {
   const home = env.home === undefined || env.home === '' ? [] : [joinPath(env.home, CLAUDE_DIR_NAME)]
-  return [env.cwd, ...TEMP_ROOTS, ...home]
+  const tmp = env.tmp === undefined || env.tmp === '' || env.tmp === '/' ? [] : [env.tmp]
+  return [...new Set([env.cwd, ...TEMP_ROOTS, ...tmp, ...home])]
 }
 
 /** The roots as they really are (`/tmp` -> `/private/tmp`), those that exist, each once; never `/`. */

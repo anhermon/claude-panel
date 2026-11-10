@@ -7,11 +7,11 @@
 import { crewCells, crewSplit, FIGURE_THEME, figureState, chipText, ringPctOf, NOT_STARTED_WORD } from './avatar-model.mjs';
 import { createAvatarView } from './avatar-set.js';
 import { harnessInfo, harnessLine, harnessOf } from './avatar-harness.mjs';
-import { elapsedMs, formatDuration, formatTokens } from './agents-info-logic.mjs';
+import { elapsedMs, formatDuration, formatErrors, formatTokens, waitingChipOf } from './agents-info-logic.mjs';
 import { h } from './dom.js';
 import { feedOf } from './list-view.js';
 import { captionOf, recentFor } from './event-fx.mjs';
-import { idHint, retitle, titleOf } from './title-of.mjs';
+import { retitle, titleOf } from './title-of.mjs';
 import { paintProof } from './proof-chip.js';
 import { createIdent } from './ident-view.js';
 import { identLine, modelEffortOf, typeOf } from './ident-logic.mjs';
@@ -43,8 +43,10 @@ export function createCrew(host, hooks) {
     const title = h('span', 'crew-title');
     const chip = h('span', 'crew-chip');
     const role = h('span', 'role-chip');
+    const wait = h('span', 'wait-chip');
+    const err = h('span', 'err-chip');
     const meta = h('span', 'crew-meta');
-    meta.append(chip, role);
+    meta.append(chip, role, wait, err);
     const text = h('span', 'crew-txt');
     const ident = createIdent();
     text.append(title, meta, ident.el);
@@ -56,7 +58,7 @@ export function createCrew(host, hooks) {
     btn.addEventListener('focus', () => hooks.onHover(a.id));
     btn.addEventListener('blur', () => hooks.onHover(null));
     grid.append(li);
-    return { li, btn, avatar, title, chip, role, ident, flashTimer: 0, agent: a };
+    return { li, btn, avatar, title, chip, role, wait, err, ident, flashTimer: 0, agent: a };
   }
 
   function fill(c, a) {
@@ -66,10 +68,18 @@ export function createCrew(host, hooks) {
     c.li.dataset.state = fs;
     c.li.style.setProperty('--c', FIGURE_THEME[fs].accent);
     c.title.textContent = title;
-    c.title.title = [title, harnessLine(a), idHint(a)].filter(Boolean).join(SEP);
+    c.title.title = [title, harnessLine(a)].filter(Boolean).join(SEP);
     c.chip.textContent = a.notStarted ? NOT_STARTED_WORD : FIGURE_THEME[fs].word;
     c.role.textContent = a.role ?? '';
     c.role.hidden = a.role === null;
+    const wait = waitingChipOf(a);
+    c.wait.textContent = wait?.text ?? '';
+    c.wait.hidden = wait === null;
+    if (wait) c.wait.title = wait.title;
+    else c.wait.removeAttribute('title');
+    const errText = formatErrors(a.errors);
+    c.err.textContent = errText;
+    c.err.hidden = errText === '';
     c.ident.set(a);
     paintProof(c.title, a);
     c.btn.setAttribute('aria-label', `${title}: ${chipText(a)}`);
@@ -137,7 +147,8 @@ export function createCrew(host, hooks) {
     const title = titleOf(a);
     const step = retitle(feedOf(a) || FIGURE_THEME[fs].word, view.agents);
     const recent = recentFor(view.events, a.id);
-    const sig = JSON.stringify([a.id, title, fs, a.pct, step, a.calls, a.tokens, a.role, harnessLine(a), identLine(a), recent.map((e) => e.id)]);
+    const wait = waitingChipOf(a);
+    const sig = JSON.stringify([a.id, title, fs, a.pct, step, a.calls, a.errors, wait, a.tokens, a.role, harnessLine(a), identLine(a), recent.map((e) => e.id)]);
     if (view.open !== a.id) { // a new agent: its own bigger avatar (the same figure as its card)
       calloutAvatar?.dispose();
       calloutAvatar = createAvatarView({ key: a.id, ring: true });
@@ -152,10 +163,15 @@ export function createCrew(host, hooks) {
     const head = h('div', 'callout-head');
     const names = h('div', 'callout-names');
     const heading = h('p', 'callout-title', title);
-    heading.title = [harnessLine(a), idHint(a)].filter(Boolean).join(SEP);
+    heading.title = [harnessLine(a)].filter(Boolean).join(SEP);
     names.append(heading, h('span', 'crew-chip', chipText(a)));
+    if (wait) {
+      const wc = h('span', 'wait-chip', wait.text);
+      wc.title = wait.title;
+      names.append(wc);
+    }
     head.append(calloutAvatar.el, names);
-    const rows = [['Doing', step], ['Running', formatDuration(elapsedMs(a, view.now))], ['Tool calls', a.calls === null ? '' : String(a.calls)], ['Tokens', formatTokens(a.tokens)], ['Type', typeOf(a)], ['Model', modelEffortOf(a)], ['Harness', harnessLine(a)], ['Role', a.role ?? '']].filter(([, v]) => v !== '');
+    const rows = [['Doing', step], ['Running', formatDuration(elapsedMs(a, view.now))], ['Tool calls', a.calls === null ? '' : String(a.calls)], ['Tool errors', a.errors > 0 ? String(a.errors) : ''], ['Tokens', formatTokens(a.tokens)], ['Type', typeOf(a)], ['Model', modelEffortOf(a)], ['Harness', harnessLine(a)], ['Role', a.role ?? '']].filter(([, v]) => v !== '');
     const dl = h('dl', 'callout-rows');
     for (const [k, v] of rows) { const d = h('div'); d.append(h('dt', '', k), h('dd', k === 'Running' ? 'callout-time' : '', v)); dl.append(d); }
     callout.append(head, dl);

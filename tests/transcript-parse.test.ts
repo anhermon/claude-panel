@@ -15,7 +15,7 @@ const call = (id: string, name: string, input: Record<string, unknown>) => ({ ty
 
 const FILE = [
   user(0, 'You are a worker on T40. password=hunter2 Do the thing.'),
-  asst(5, 'm1', [{ type: 'thinking', thinking: 'secret reasoning' }, { type: 'text', text: 'Reading the model.' }, call('c1', 'Read', { file_path: '/Users/me/p/board.ts' })], { input_tokens: 10, output_tokens: 20, cache_creation_input_tokens: 100, cache_read_input_tokens: 5000 }),
+  asst(5, 'm1', [{ type: 'thinking', thinking: 'secret reasoning' }, { type: 'text', text: 'Reading the model.' }, call('c1', 'Read', { file_path: '/home/example/p/board.ts' })], { input_tokens: 10, output_tokens: 20, cache_creation_input_tokens: 100, cache_read_input_tokens: 5000 }),
   user(7, [{ type: 'tool_result', tool_use_id: 'c1', content: 'FILE CONTENTS SHOULD NOT SURVIVE' }]),
   asst(8, 'm2', [call('c2', 'Bash', { command: 'npm test' })], { input_tokens: 4, output_tokens: 6, cache_creation_input_tokens: 0, cache_read_input_tokens: 6000 }),
   asst(8, 'm2', [{ type: 'text', text: 'Running the tests.' }], { input_tokens: 4, output_tokens: 6, cache_creation_input_tokens: 0, cache_read_input_tokens: 6000 }),
@@ -92,4 +92,40 @@ test('neutral facts for the progress logic: act, path, cmd, exit code and a shor
   expect(run).toMatchObject({ act: 'run', cmd: 'node --test x', exit: 2 })
   expect(run?.out).toContain('expected 1, got 2')
   expect(run?.out).not.toContain('Exit code')
+})
+
+
+test('API errors and failed results are counted without matching calls or valid timestamps; bulk rows skip JSON parsing', () => {
+  const result = { type: 'tool_result', tool_use_id: 'outside-tail', is_error: true, content: 'failed' }
+  const p = parseTranscript([
+    line({ isApiErrorMessage: true, type: 'assistant', timestamp: at(1), message: { content: [{ type: 'text', text: 'Overloaded' }] } }),
+    user(2, [result, { ...result, tool_use_id: 'another' }, { ...result, is_error: false }]),
+    line({ type: 'user', message: { content: [result] } }),
+    '{"type":"api-request broken',
+    '{"type":"file-history-snapshot broken',
+  ].join('\n'), true)
+  expect(p.apiErrors).toBe(1)
+  expect(p.failedCalls).toBe(3)
+  expect(p.apiError).toEqual({ t: T0 + 1000, lastT: T0 + 1000, text: 'Overloaded' })
+  expect(p.skipped).toBe(0)
+})
+
+test('turn durations need no message or timestamp; invalid durations are ignored and zero is valid', () => {
+  const durations = [1000, 3000, 2000, -1, 'bad', null, 0]
+  const p = parseTranscript(durations.map(durationMs => line({ type: 'system', subtype: 'turn_duration', durationMs })).join('\n'), true)
+  expect(p.turns).toEqual({ count: 4, lastMs: 0, avgMs: 1500, maxMs: 3000 })
+  expect(parseTranscript('', true).turns).toEqual({ count: 0, lastMs: 0, avgMs: 0, maxMs: 0 })
+})
+
+test('session metadata: parseTranscript extracts the latest assistant model (ignoring <synthetic>), gitBranch and ai-title', () => {
+  const file = [
+    JSON.stringify({ type: 'user', gitBranch: 'feat/waiting-badge', timestamp: new Date(T0).toISOString(), message: { content: 'Start task' } }),
+    JSON.stringify({ type: 'ai-title', aiTitle: 'Add search box to notes rows' }),
+    JSON.stringify({ type: 'assistant', timestamp: new Date(T0 + 1000).toISOString(), message: { id: 'm1', model: 'claude-sonnet-4-6', content: [{ type: 'text', text: 'First reply' }] } }),
+    JSON.stringify({ type: 'assistant', timestamp: new Date(T0 + 2000).toISOString(), message: { id: 'm2', model: '<synthetic>', content: [{ type: 'text', text: 'Synthetic' }] } }),
+  ].join('\n')
+  const p = parseTranscript(file, true)
+  expect(p.model).toBe('claude-sonnet-4-6')
+  expect(p.branch).toBe('feat/waiting-badge')
+  expect(p.title).toBe('Add search box to notes rows')
 })

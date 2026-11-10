@@ -1,6 +1,6 @@
 // Anti-repetition, pure: the board remembers the forms of the last few panel updates (frame types, scene publishes) and,
 // when the model keeps reaching for the same one, one line asks it to look at the others. A nudge, never a refusal.
-import { FRAME_TYPES } from './board-frames'
+import { FRAME_TYPES, VIZ_KINDS } from './board-frames'
 
 /** How many recent forms are remembered. */
 export const RECENT_MAX = 6
@@ -36,7 +36,8 @@ function repeated(recent: readonly string[]): { form: string; count: number; isS
 
 /** Other forms to try: unused in the window, and a start that moves with the history so the same three are not always named. */
 function unused(recent: readonly string[]): string[] {
-  const pool = FRAME_TYPES.filter(t => !recent.includes(t) && !NOT_SUGGESTED.includes(t))
+  // `viz` itself is not a form: its kinds are, and they are remembered by kind (see pushRecent in board-model).
+  const pool = [...FRAME_TYPES.filter(t => t !== 'viz'), ...VIZ_KINDS].filter(t => !recent.includes(t) && !NOT_SUGGESTED.includes(t))
   const start = recent.join('').length % Math.max(pool.length, 1)
   return [...pool.slice(start), ...pool.slice(0, start)].slice(0, SUGGEST_MAX)
 }

@@ -13,6 +13,7 @@ import {
   newModel,
   PULSE_CAPS,
   restore,
+  restoreLanes,
   snapshot,
   spawnLoop,
   syncAgents,
@@ -36,20 +37,20 @@ test('privacy table: only a tool name and a short target survive', () => {
     ['Bash', { command: '"$(cat ~/.ssh/id_rsa)"' }, ''],
     ['Bash', { command: '' }, ''],
     ['Bash', { command: 42 }, ''],
-    ['Read', { file_path: '/Users/x/secret/key.pem' }, 'key.pem'],
-    ['Edit', { file_path: '/Users/x/proj/src/app.ts', old_string: 'password = "hunter2"', new_string: 'x' }, 'app.ts'],
+    ['Read', { file_path: '/home/example/secret/key.pem' }, 'key.pem'],
+    ['Edit', { file_path: '/home/example/proj/src/app.ts', old_string: 'password = "hunter2"', new_string: 'x' }, 'app.ts'],
     ['Write', { file_path: 'C:\\Users\\x\\notes.txt', content: 'SECRET' }, 'notes.txt'],
     ['NotebookEdit', { notebook_path: '/n/analysis.ipynb', new_source: 'SECRET' }, 'analysis.ipynb'],
-    ['Grep', { pattern: 'AKIA[0-9A-Z]{16}', path: '/Users/x/proj/src' }, 'src'],
+    ['Grep', { pattern: 'AKIA[0-9A-Z]{16}', path: '/home/example/proj/src' }, 'src'],
     ['Glob', { pattern: '**/*.env' }, ''],
-    ['Read', { file_path: '/Users/x/secret/' }, 'secret'],
+    ['Read', { file_path: '/home/example/secret/' }, 'secret'],
     ['WebFetch', { url: 'https://user:pw@docs.example.com:8443/private/page?token=abc#frag', prompt: 'SECRET' }, 'docs.example.com'],
     ['WebFetch', { url: 'http://[::1]:3000/admin' }, '[::1]'],
     ['WebFetch', { url: 'not a url' }, ''],
     ['WebSearch', { query: 'how do I hide my api key' }, '24 chars'],
     ['WebSearch', { query: '' }, '0 chars'],
     ['Task', { prompt: 'SECRET', description: 'SECRET' }, ''],
-    ['mcp__x__y', { anything: '/Users/x/secret' }, ''],
+    ['mcp__x__y', { anything: '/home/example/secret' }, ''],
   ]
   for (const [tool, input, target] of table) expect(targetOf(tool, input)).toBe(target)
   expect(baseName('/a/b/c.txt')).toBe('c.txt')
@@ -85,10 +86,10 @@ test('what reaches the snapshot never holds a prompt, an output, a path, a comma
   const m = newModel(NOW)
   const calls: [string, Record<string, unknown>][] = [
     ['Bash', { command: 'git push --force origin main', description: 'SECRET-PROMPT' }],
-    ['Read', { file_path: '/Users/x/secret/key.pem' }],
+    ['Read', { file_path: '/home/example/secret/key.pem' }],
     ['WebFetch', { url: 'https://docs.example.com/private?token=SECRET-QUERY' }],
     ['WebSearch', { query: 'SECRET-SEARCH' }],
-    ['Edit', { file_path: '/Users/x/secret/app.ts', old_string: 'SECRET-CONTENT', new_string: 'SECRET-CONTENT' }],
+    ['Edit', { file_path: '/home/example/secret/app.ts', old_string: 'SECRET-CONTENT', new_string: 'SECRET-CONTENT' }],
   ]
   calls.forEach(([tool, input], i) => beginCall(m, NOW + i, MAIN_LOOP, tool, targetOf(tool, input)))
   spawnLoop(m, NOW + 9, { id: 'a1', label: 'T25 pulse', parent: MAIN_LOOP })
@@ -214,6 +215,19 @@ const apply = (prev: Lane[], p: LanePlan, now = NOW, by = 'a1') => {
   return r
 }
 
+test('lane session: a Claude Code session id, validated with the field named, kept by later posts, survives a restore', () => {
+  const id = '0b1c2d3e-4f50-6789-abcd-ef0123456789'
+  const first = apply([], plan({ id: 'sib', session: id })).lanes
+  expect(first[0]).toMatchObject({ id: 'sib', session: id })
+  expect(apply(first, plan({ id: 'sib', pct: 5 })).lanes[0]).toMatchObject({ session: id })
+  expect(apply([], plan({ id: 'plain' })).lanes[0]!.session).toBeUndefined()
+  expect(refused({ lane: { id: 'sib', session: '../etc/passwd' } })).toMatch(/lane\.session .* is invalid/)
+  expect(refused({ lane: { id: 'sib', session: 5 } })).toMatch(/lane\.session .* is invalid/)
+  expect(refused({ lane: { id: 'sib', session: 'a'.repeat(65) } })).toMatch(/lane\.session .* is invalid/)
+  expect(restoreLanes(JSON.parse(JSON.stringify(first)))[0]).toMatchObject({ session: id })
+  expect(restoreLanes([{ id: 'sib', session: '../x' }])[0]!.session).toBeUndefined()
+})
+
 test('lane goal, dod and at: validated with the field named, upsert-only, dod replaces the list, at follows it', () => {
   const dod = [{ t: 'frames', state: 'done' }, { t: 'tests', state: 'todo' }]
   const first = apply([], plan({ id: 't30', goal: 'Board in the mod', dod, at: 1 })).lanes
@@ -245,12 +259,12 @@ test('intentOf: the Ticket line and the first sentence of the goal, never the re
     ['', ''],
     [undefined, ''],
     [42, ''],
-    // real prompts: a context sentence with a path is never the goal
-    ['Ticket: T33\nYou work on the "panel" mod at MOD=/Users/a/.claude/dev-mods/00000000/panel (edit it in place; ok). Read the spec. PROBLEM (user feedback): the terminal pane shows ONE main frame. Fix it.', 'T33 · the terminal pane shows ONE main frame.'],
-    ['Ticket: T34\nYou polish the Board scene of the "panel" mod: MOD=/Users/a/x ONLY under web/builtin/board/** and nothing else.\nMake each agent row readable at a glance. More.', 'T34 · Make each agent row readable at a glance.'],
-    ['Ticket: T35\nGoal: Show the real goal on the row. Then more.\nYou work on the "panel" mod at MOD=/Users/a/x.', 'T35 · Show the real goal on the row.'],
-    ['Ticket: T36\nYou work on the mod at MOD=/Users/a/b/c (in place).', 'T36'],
-    ['Goal: Fix the bug in ~/src/app/x.ts and MOD=/Users/a/b now.', 'Fix the bug in and now.'],
+    // Synthetic context sentences with paths are never the goal.
+    ['Ticket: T1\nYou work on Acme Notes at MOD=/work/acme-notes (edit it in place). Read the spec. PROBLEM (user feedback): the export button crashes on empty notes. Fix it.', 'T1 · the export button crashes on empty notes.'],
+    ['Ticket: T2\nYou polish the notes list: MOD=/work/acme-notes ONLY under src/** and nothing else.\nAdd a search box to the notes list. More.', 'T2 · Add a search box to the notes list.'],
+    ['Ticket: T3\nGoal: Export an empty notebook safely. Then more.\nYou work on Acme Notes at MOD=/work/acme-notes.', 'T3 · Export an empty notebook safely.'],
+    ['Ticket: T4\nYou work on Acme Notes at MOD=/work/acme-notes (in place).', 'T4'],
+    ['Goal: Fix export in ~/src/notes.ts and MOD=/work/acme-notes now.', 'Fix export in and now.'],
   ]
   for (const [prompt, intent] of table) expect(intentOf(prompt), String(prompt)).toBe(intent)
   expect(intentOf(`Ticket: ${'T'.repeat(80)}\nGoal: ${'g'.repeat(300)}`).length).toBeLessThanOrEqual(INTENT_CHARS)
@@ -266,7 +280,7 @@ test('lane validation names the field and says what is allowed', () => {
   expect(refused({ lane: { id: 't25', pct: -1 } })).toMatch(/lane\.pct -1/)
   expect(refused({ lane: { id: 't25', pct: '50' } })).toMatch(/lane\.pct "50"/)
   expect(refused({ lane: { id: 't25', pct: Number.NaN } })).toMatch(/lane\.pct/)
-  expect(refused({ lane: { id: 't25', colour: 'red' } })).toMatch(/^panel: lane\.colour is not a known field \(allowed: id, label, state, pct, step, note, goal, dod, at\)/)
+  expect(refused({ lane: { id: 't25', colour: 'red' } })).toMatch(/^panel: lane\.colour is not a known field \(allowed: id, label, state, pct, step, note, goal, dod, at, session\)/)
   expect(refused({ lane: 'nope' })).toMatch(/lane must be an object/)
   expect(refused({ lane: [] })).toMatch(/lane must be an object/)
   expect(refused({ lane_remove: 'Bad Id' })).toMatch(/lane_remove "Bad Id" is invalid/)

@@ -45,6 +45,21 @@ export function withPort(map: PortMap, folder: string, port: number): PortMap {
   const entries = Object.entries({ ...rest, [folder]: port })
   return Object.fromEntries(entries.slice(-MAX_REMEMBERED_FOLDERS))
 }
+/** The documented override (web/server.mjs): a valid value wins over the remembered port; the server still falls back to neighbours. */
+// (the engine's static check wants the literal name at the `$.env.get('CLAUDE_PANEL_PORT')` call in register.tsx)
+const MAX_PORT = 65535
+
+/** The env port when it is an integer in 1..65535 (0 means "any" and is not an override); null otherwise. */
+export function envPortOf(raw: string | undefined): number | null {
+  const text = (raw ?? '').trim()
+  if (!/^\d+$/.test(text)) return null
+  const port = Number(text)
+  return port > 0 && port <= MAX_PORT ? port : null
+}
+
+/** Which port to ask for: env override, else the live one, else the folder's remembered one, else the default. */
+export const preferredPort = (env: number | null, last: number | null, remembered: number | undefined): number => env ?? last ?? remembered ?? FIRST_PORT
+
 export const OPENSSL_ARGV = ['openssl', 'rand', '-hex', String(TOKEN_BYTES)] as const
 
 export type TokenSources = {

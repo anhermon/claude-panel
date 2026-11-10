@@ -7,7 +7,7 @@
 import type { BoardFrame, BoardLane, SwimlaneItem } from '../types'
 import { cut } from './blocks/common'
 import { endOf, insightOf, segmentsOfLoop } from './agent-insight'
-import { dropTicketNumber, plainTitle } from './agent-roles'
+import { plainTitle } from './agent-names'
 import { formatDuration } from './insight-format'
 import { FRAME_CAPS } from './board-frames'
 import { panelConfig } from './panel-config'
@@ -62,7 +62,13 @@ export function stripRouting(name: string): string {
   const note = ROUTING_SUFFIX.exec(name)?.[0]
   return note !== undefined && isRouting(note.replace(/[()\s]/g, '')) ? name.slice(0, name.length - note.length) : name
 }
-export const nameOf = (loop: PulseLoop): string => cut(stripRouting(dropTicketNumber(loop.name ?? loop.label)), LANE_CAPS.LABEL_CHARS)
+function cleanName(name: string): string {
+  const suffix = ROUTING_SUFFIX.exec(name)?.[0] ?? ''
+  const body = suffix === '' ? name : name.slice(0, name.length - suffix.length)
+  return plainTitle(body, false) + stripRouting(suffix)
+}
+
+export const nameOf = (loop: PulseLoop): string => cut(cleanName(loop.name ?? loop.label), LANE_CAPS.LABEL_CHARS)
 
 /** Is there anything to show as agents: a posted lane, or an agent (not the main loop) at work? */
 export const hasAgents = (lanes: readonly BoardLane[], loops: readonly PulseLoop[]): boolean =>
@@ -92,7 +98,7 @@ export function agentLanes(
       used.add(posted)
       rows.push({
         ...posted,
-        label: posted.label === posted.id ? nameOf(loop) : dropTicketNumber(posted.label),
+        label: posted.label === posted.id ? nameOf(loop) : cleanName(posted.label),
         step: posted.step !== '' ? posted.step : intent,
         note: posted.note !== '' ? posted.note : posted.step !== '' ? cut(intent, LANE_CAPS.NOTE_CHARS) : '',
         calls: loop.calls,
@@ -120,7 +126,11 @@ export function agentLanes(
     }
   }
   for (const lane of lanes) if (!used.has(lane)) rows.push(lane)
-  return rows.slice(0, LANE_CAPS.LANES)
+  return rows.slice(0, LANE_CAPS.LANES).map(row => ({
+    ...row, label: cleanName(row.label), goal: plainTitle(row.goal, false),
+    step: plainTitle(row.step, false), note: plainTitle(row.note, false),
+    dod: row.dod.map(item => ({ ...item, t: plainTitle(item.t, false) })),
+  }))
 }
 
 /** The checklist of every lane that has one as a `steps` frame titled with the goal (else the lane's label); the item `at` points to shows as doing. */
@@ -130,12 +140,12 @@ export function dodFrames(rows: readonly BoardLane[], nowMs = 0): { id: string; 
     .slice(0, panelConfig.dodFramesMax)
     .map(r => {
       const id = `${DOD_FRAME_PREFIX}${r.id}`.slice(0, FRAME_ID_CHARS).replace(/-+$/, '')
-      const items = r.dod.map((d, i) => ({ t: d.t, state: i === r.at && d.state === 'todo' ? ('doing' as const) : d.state }))
+      const items = r.dod.map((d, i) => ({ t: plainTitle(d.t, false), state: i === r.at && d.state === 'todo' ? ('doing' as const) : d.state }))
       // a lane at work always has an item in progress: with none marked, the first open one is it
       const open = items.findIndex(i => i.state === 'todo')
       if ((r.state === 'working' || r.state === 'testing') && open >= 0 && !items.some(i => i.state === 'doing')) items[open] = { t: items[open]?.t ?? '', state: 'doing' }
       const title = plainTitle(r.goal !== '' ? r.goal : r.label)
-      const agent = r.goal !== '' ? plainTitle(r.label) : '' // who, when the frame is titled with the goal and not with the agent's own name
+      const agent = r.goal !== '' ? plainTitle(r.label, false) : '' // who, when the frame is titled with the goal and not with the agent's own name
       const owner = agent.toLowerCase() === title.toLowerCase() ? '' : agent
       const since = nowMs > 0 && r.startedAt > 0 ? formatDuration(nowMs - r.startedAt) : ''
       return {

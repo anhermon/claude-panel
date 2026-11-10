@@ -8,7 +8,7 @@ import { externalRows, percentText, tokenParts } from './detail-external-logic.m
 const PERCENT = 100;
 const MIN_BAR_PCT = 1.5;
 
-function tokenBar(t) {
+export function tokenBar(t) {
   const wrap = h('div', 'x-tokens');
   const bar = h('div', 'x-bar');
   bar.setAttribute('role', 'img');
@@ -42,13 +42,13 @@ function contextMeter(c) {
 }
 
 /** The node of one run's rollout facts; `ext` is a normalized `external` (normalizeExternal). */
-export function renderExternal(ext) {
+export function renderExternal(ext, now) {
   const sec = h('section', 'm-sec x-sec');
   sec.append(h('h3', 'm-head', `${harnessWord(ext.harness) || 'Agent'} run`));
   if (ext.tokens !== null) sec.append(tokenBar(ext.tokens));
   if (ext.context !== null && ext.context.window !== null) sec.append(contextMeter(ext.context));
   const dl = h('dl', 'm-standing x-facts');
-  for (const [label, value] of externalRows(ext)) dl.append(h('dt', '', label), h('dd', '', value));
+  for (const [label, value] of externalRows(ext, now)) dl.append(h('dt', '', label), h('dd', '', value));
   sec.append(dl);
   return sec;
 }

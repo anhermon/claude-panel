@@ -1,7 +1,7 @@
 // The board's model, pure (no `$`, no I/O): the `frame` / `frame_remove` / `frames_clear` part of the `panel` tool and the
 // assembly of the board's data. The frames the model sends are UPSERT-ONLY (a frame call never replaces anything else of
 // the panel, so a subagent can call it safely), keyed by id, kept in the mod's memory (at most BOARD_CAPS.FRAMES) and
-// never in PanelState. AUTO frames (`now`, `ask`, `lanes`, `bars`, `delegation`, `pipeline`, `time-by-kind`, `time-sinks`, `repeats`, `improve`, and with a `.router/` folder `tickets` / `checks` / `router-events`) keep the board alive with no frame at all; the model
+// never in PanelState. AUTO frames (`now`, `ask`, `limits`, `lanes`, `bars`, `delegation`, `pipeline`, `time-by-kind`, `time-sinks`, `repeats`, `improve`, `sessions` (the other live Claude Code sessions), and with a `.router/` folder `tickets` / `checks` / `router-events`) keep the board alive with no frame at all; the model
 // overrides one by sending a frame with its id and silences one with `frame_remove`. Every refusal names the field.
 import type { BoardData, BoardFrame, BoardLane, PanelChoice, PanelStatus, PanelTask } from '../types'
 import { Invalid, cut, isAbsent, isPlain } from './blocks/common'
@@ -11,9 +11,15 @@ import { agentBars, agentLanes, agentSwimlane, DOING_TITLE, DOD_FRAME_PREFIX, do
 import { FRAME_CAPS, frameId, validateFrame } from './board-frames'
 import { INSIGHT_FRAME_IDS, insightFrames } from './insight-frames'
 import { nowFrame } from './now-frame'
+import { limitsFrameOf } from './limits-frame'
+import type { ProviderQuota } from './limits-quota'
+import type { LimitsUsage } from './limits-state'
+import { panelConfig } from './panel-config'
 import type { PulseEvent, PulseLoop } from './pulse-model'
 import { routerFrames, ROUTER_FRAME_IDS } from './router-frames'
 import type { RouterRun } from './router-state'
+import { sessionsFrame, SESSIONS_FRAME_ID } from './sessions-frame'
+import type { SessionRow } from './sessions-state'
 import { pushRecent, restoreRecent } from './variety'
 
 export const BOARD_CAPS = {
@@ -27,8 +33,8 @@ export const FRAMES_CLEAR_KEY = 'frames_clear'
 export const FRAME_INPUT_KEYS = [FRAME_KEY, FRAME_REMOVE_KEY, FRAMES_CLEAR_KEY] as const
 
 /** The ids of the frames the mod draws by itself. */
-export const AUTO = { NOW: 'now', ASK: 'ask', LANES: 'lanes', BARS: 'bars', DELEGATION: 'delegation', PIPELINE: 'pipeline', DOING: 'now-doing', TIMELINE: 'activity-timeline' } as const
-export const AUTO_IDS: readonly string[] = [...Object.values(AUTO), ...INSIGHT_FRAME_IDS, ...ROUTER_FRAME_IDS]
+export const AUTO = { NOW: 'now', ASK: 'ask', LIMITS: 'limits', LANES: 'lanes', BARS: 'bars', DELEGATION: 'delegation', PIPELINE: 'pipeline', DOING: 'now-doing', TIMELINE: 'activity-timeline' } as const
+export const AUTO_IDS: readonly string[] = [...Object.values(AUTO), ...INSIGHT_FRAME_IDS, ...ROUTER_FRAME_IDS, SESSIONS_FRAME_ID]
 /** An auto frame: one of AUTO, or the checklist frame of a lane (`dod-<lane id>`). */
 export const isAutoId = (id: string): boolean => AUTO_IDS.includes(id) || id.startsWith(DOD_FRAME_PREFIX)
 const AUTO_TITLES = { now: 'Now', ask: 'Question', lanes: 'Agents' } as const
@@ -112,7 +118,9 @@ export function applyFramePlan(prev: BoardModel, plan: FramePlan): FrameApplied 
     frames = at < 0 ? [...frames, frame] : frames.map((f, i) => (i === at ? frame : f))
     removedAuto = removedAuto.filter(id => id !== frame.id)
     notes.push(`frame ${frame.id} · ${frame.type}`)
-    recent = pushRecent(recent, frame.type)
+    // A viz frame is remembered by its kind: five different charts are five forms, not "viz" five times.
+    const kind = (frame as { kind?: unknown }).kind
+    recent = pushRecent(recent, frame.type === 'viz' && typeof kind === 'string' ? kind : frame.type)
   }
   // `recent` is not part of the change: re-sending the same frame is no change to the board (it is still remembered as a form)
   const isChanged = JSON.stringify([frames, removedAuto]) !== JSON.stringify([prev.frames, prev.removedAuto])
@@ -162,6 +170,11 @@ export type BoardInput = {
   hasAgentsTile?: boolean
   /** The router-kit run read from `<cwd>/.router/` (./router-io.ts); undefined when the session has none: nothing is drawn. */
   router?: RouterRun
+  /** Latest engine quota, context fill and optional cost; never kept with the model's frames. */
+  usage?: LimitsUsage
+  quota?: readonly ProviderQuota[]
+  /** The other live Claude Code sessions (./sessions-io.ts), ordered and capped; undefined or empty: nothing is drawn. */
+  sessions?: readonly SessionRow[]
   now: number
 }
 
@@ -186,6 +199,8 @@ function autoFrames(input: BoardInput): { ask: BoardFrame[]; rest: { id: string;
     })
   // A router-kit run (`.router/`): its tickets (or the checks of its one ticket) and latest events sit right under the task.
   for (const frame of routerFrames(input.router, input.now)) rest.push({ id: frame.id, frame })
+  const limits = limitsFrameOf(input.usage, input.now, panelConfig.limitsShowPct, input.quota)
+  if (limits !== undefined) rest.push({ id: AUTO.LIMITS, frame: { id: AUTO.LIMITS, ...limits } })
   const isTile = input.hasAgentsTile === true // the tile shows every agent row and its drill-down: no second copy here
   if (hasAgents(input.lanes, input.loops)) {
     // what each agent is doing right now sits above the agents frame, which has the detail
@@ -205,6 +220,8 @@ function autoFrames(input: BoardInput): { ask: BoardFrame[]; rest: { id: string;
   if (delegation !== undefined) rest.push({ id: AUTO.DELEGATION, frame: delegation })
   const pipeline = isTile ? undefined : pipelineFrame(agentRows(input), input.loops)
   if (pipeline !== undefined) rest.push({ id: AUTO.PIPELINE, frame: pipeline })
+  const sessions = sessionsFrame(input.sessions) // the other sessions on this machine, last: context, not this run's work
+  if (sessions !== undefined) rest.push({ id: SESSIONS_FRAME_ID, frame: sessions })
   return { ask, rest }
 }
 

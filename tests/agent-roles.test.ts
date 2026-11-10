@@ -12,7 +12,7 @@ test('ordinary agents have no role, with or without a run', () => {
   for (const hasRun of [false, true]) {
     expect(roleOf({ kind: 'subagent', type: 'general-purpose', label: 'Fix the lanes' }, hasRun)).toBeUndefined()
     expect(roleOf({ kind: 'subagent', type: 'Explore', label: 'Worker pool survey' }, hasRun)).toBeUndefined()
-    expect(roleOf({ kind: 'subagent', type: 'savvy-flow:savvy-light', label: 'T59 verifier chips' }, hasRun)).toBeUndefined()
+    expect(roleOf({ kind: 'subagent', type: 'example-tools:helper', label: 'T59 verifier chips' }, hasRun)).toBeUndefined()
     expect(roleOf({ kind: 'subagent' }, hasRun)).toBeUndefined()
   }
 })
@@ -101,13 +101,13 @@ test('tagOf is the leading ticket number, else the first characters', () => {
   expect(tagOf('login-form')).toBe('login-')
 })
 
-test('plainTitle drops the ticket number and the routing note, nothing else', () => {
-  expect(plainTitle('T64 · avatar redesign (sonnet/low)')).toBe('avatar redesign')
-  expect(plainTitle('T59: verifier chips')).toBe('verifier chips')
-  expect(plainTitle('t7 - fix lanes')).toBe('fix lanes')
+test('plainTitle reuses the canonical ticket cleaner', () => {
+  expect(plainTitle('T64 · avatar redesign (sonnet/low)')).toBe('Avatar redesign')
+  expect(plainTitle('T59: verifier chips')).toBe('Verifier chips')
+  expect(plainTitle('t7 - fix lanes')).toBe('Fix lanes')
   expect(plainTitle('Redesign agent avatars')).toBe('Redesign agent avatars')
   expect(plainTitle('Fix (read/write path)')).toBe('Fix (read/write path)')
-  expect(plainTitle('Tests for T64 fixes')).toBe('Tests for T64 fixes')
-  expect(plainTitle('T64')).toBe('T64')
+  expect(plainTitle('Tests for T64 fixes')).toBe('Tests for fixes')
+  expect(plainTitle('T64')).toBe('')
   expect(plainTitle('')).toBe('')
 })

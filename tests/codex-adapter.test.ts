@@ -1,4 +1,5 @@
-// The codex rollout adapter on a trimmed real-shaped rollout (tests/fixtures/codex): entries, steps, the brief, the state, the model, and
+import { EXAMPLE_THREAD } from './fixtures/codex/ids'
+// The codex rollout adapter on a synthetic rollout (tests/fixtures/codex): entries, steps, the brief, the state, the model, and
 // the bad input it must survive. Pure, no `$`.
 import { expect, test } from 'claude-code/testing'
 
@@ -7,10 +8,10 @@ import { CODEX, codexAdapter, rawBriefOf, sessionMetaOf } from '../hooks/harness
 import type { ToolEntry } from '../hooks/transcript-parse'
 import { ROLLOUT_FINISHED, ROLLOUT_SMOKE, ROLLOUT_UNFINISHED } from './fixtures/codex/fixtures'
 
-const NOW = Date.parse('2026-11-09T10:10:00.000Z')
+const NOW = Date.parse('2026-01-01T10:10:00.000Z')
 const MIN_MS = 60_000
 const tools = (text: string): ToolEntry[] => codexAdapter.parse(text, true).entries.filter((e): e is ToolEntry => e.kind === 'tool')
-const row = (type: string, payload: unknown, at = '2026-11-09T10:06:00.000Z'): string => JSON.stringify({ timestamp: at, ordinal: 1, type, payload })
+const row = (type: string, payload: unknown, at = '2026-01-01T10:06:00.000Z'): string => JSON.stringify({ timestamp: at, ordinal: 1, type, payload })
 const done = (item: unknown): string => row('event_msg', { type: 'item_completed', item, started_at_ms: 1000, completed_at_ms: 3000 })
 
 /** The cumulative `total_token_usage` of the last `token_count` row, as fresh + output (what the steps must add up to). */
@@ -22,7 +23,7 @@ function finalTotal(text: string): number {
 
 test('the finished rollout: the brief (not the AGENTS.md block), 2 says, 5 tools, 5 steps, nothing else', () => {
   const p = codexAdapter.parse(ROLLOUT_FINISHED, true)
-  expect(p.brief).toContain('Ticket: T99')
+  expect(p.brief).toContain('Ticket: T1')
   expect(p.brief).not.toContain('AGENTS.md')
   expect(p.entries.filter(e => e.kind === 'say')).toHaveLength(2)
   expect(p.entries.filter(e => e.kind === 'tool')).toHaveLength(5)
@@ -36,7 +37,7 @@ test('the finished rollout: the brief (not the AGENTS.md block), 2 says, 5 tools
 test('the steps add up to the final total_token_usage: fresh = input - cached, cacheRead = cached', () => {
   const p = codexAdapter.parse(ROLLOUT_FINISHED, true)
   expect(p.steps.reduce((sum, s) => sum + s.fresh + s.output, 0)).toBe(finalTotal(ROLLOUT_FINISHED))
-  expect(p.steps[0]).toMatchObject({ id: 'resp_fixture01', fresh: 18698 - 9856, output: 93, cacheRead: 9856 })
+  expect(p.steps[0]).toMatchObject({ id: 'response-example-001', fresh: 18698 - 9856, output: 93, cacheRead: 9856 })
 })
 
 test('the token_count rows alone give the same steps when there is no token_usage_record', () => {
@@ -48,11 +49,11 @@ test('the token_count rows alone give the same steps when there is no token_usag
 
 test('the failing command is an error entry with its exit code and first output line; the passing ones are not errors', () => {
   const [pwd, fail, write, edit, selftest] = tools(ROLLOUT_FINISHED)
-  expect(pwd).toMatchObject({ tool: 'Bash', label: "pwd; rg -n 'argparse' bin/report.py", error: '' })
-  expect(fail).toMatchObject({ tool: 'Bash', label: 'python3 bin/report_selftest.py --quick', ms: 3500 }) // first line of the command only
-  expect(fail?.error).toBe('exit 1: Traceback (most recent call last):')
-  expect(write).toMatchObject({ tool: 'Write', label: 'report_json.py', error: '' })
-  expect(edit).toMatchObject({ tool: 'Edit', label: 'report.py', error: '' })
+  expect(pwd).toMatchObject({ tool: 'Bash', label: "rg -n 'title' src/notes.ts", error: '' })
+  expect(fail).toMatchObject({ tool: 'Bash', label: 'node scripts/check-notes.mjs --empty-only', ms: 3500 }) // first line of the command only
+  expect(fail?.error).toBe('exit 1: Error: missing empty-title support')
+  expect(write).toMatchObject({ tool: 'Write', label: 'search.ts', error: '' })
+  expect(edit).toMatchObject({ tool: 'Edit', label: 'notes.ts', error: '' })
   expect(selftest).toMatchObject({ tool: 'Bash', ms: 12_250, error: '' })
 })
 
@@ -74,7 +75,7 @@ test('model, effort, the final report and the whole brief', () => {
   expect(codexAdapter.model('')).toEqual({})
   expect(codexAdapter.lastMessage(ROLLOUT_FINISHED)).toContain('Eval result: PASS')
   expect(codexAdapter.lastMessage(ROLLOUT_UNFINISHED)).toBe('')
-  expect(rawBriefOf(ROLLOUT_FINISHED)).toContain('Eval: python3 bin/report_selftest.py exits 0')
+  expect(rawBriefOf(ROLLOUT_FINISHED)).toContain('Eval: node scripts/check-notes.mjs exits 0')
 })
 
 test('the unfinished rollout has the same shape up to where it stops', () => {
@@ -85,7 +86,7 @@ test('the unfinished rollout has the same shape up to where it stops', () => {
 
 test('a tail: its cut first line is dropped, no brief is taken, a later user message stays an entry', () => {
   const lines = ROLLOUT_FINISHED.split('\n')
-  const tail = `{"timestamp":"2026-11-09T10:0${lines.slice(8).join('\n')}`
+  const tail = `{"timestamp":"2026-01-01T10:0${lines.slice(8).join('\n')}`
   const p = codexAdapter.parse(tail, false)
   expect(p.brief).toBe('')
   expect(p.entries.length).toBeGreaterThan(0)
@@ -99,8 +100,8 @@ test('the other tool items: MCP, web search, image view, a failed file change; u
     done({ type: 'McpToolCall', server: 's', tool: 't', status: 'failed', result: { isError: true, content: [{ type: 'text', text: 'boom\nmore' }] } }),
     done({ type: 'Extension', kind: 'web.search', query: 'codex rollout format', status: 'completed' }),
     done({ type: 'Extension', kind: 'image_gen.generation', result: 'AAAA' }),
-    done({ type: 'ImageView', path: 'file:///work/demo/shot.png' }),
-    done({ type: 'FileChange', changes: { '/work/demo/a.ts': { type: 'update' }, '/work/demo/b.ts': { type: 'update' } }, status: 'failed', stderr: 'denied\nx' }),
+    done({ type: 'ImageView', path: 'file:///work/acme-notes/shot.png' }),
+    done({ type: 'FileChange', changes: { '/work/acme-notes/a.ts': { type: 'update' }, '/work/acme-notes/b.ts': { type: 'update' } }, status: 'failed', stderr: 'denied\nx' }),
     done({ type: 'Reasoning', summary_text: [] }),
     done({ type: 'SomethingNew', foo: 1 }),
   ].join('\n')
@@ -159,7 +160,7 @@ test('work is bounded: more rows than MAX_ROWS are not all read', () => {
 })
 
 test('sessionMetaOf reads the first line; adapterOf knows codex only', () => {
-  expect(sessionMetaOf(ROLLOUT_FINISHED.split('\n')[0]!)).toEqual({ id: '01a1bfc5-36d6-77b1-9c8a-41ccc83cfee2', startedAt: Date.parse('2026-11-09T10:05:35.369Z'), cwd: '/work/demo' })
+  expect(sessionMetaOf(ROLLOUT_FINISHED.split('\n')[0]!)).toEqual({ id: EXAMPLE_THREAD, startedAt: Date.parse('2026-01-01T10:05:35.369Z'), cwd: '/work/acme-notes' })
   expect(sessionMetaOf('{"type":"user"}')).toBeUndefined()
   expect(sessionMetaOf('cut')).toBeUndefined()
   expect(adapterOf('codex-rollout')).toBe(codexAdapter)
@@ -169,8 +170,8 @@ test('sessionMetaOf reads the first line; adapterOf knows codex only', () => {
   expect(adapterOf(undefined)).toBeUndefined()
 })
 
-// ---- a real, short rollout (gpt-6.1-sol:low, one command): what the detail view needs of it ----------------------------------------
-test('the real smoke rollout: the task without delegation-kit preamble, the say, the command with its wall time and result note, the report last', () => {
+// ---- a synthetic short rollout (gpt-6.1-sol:low, one command): what the detail view needs of it ----------------------------------------
+test('the synthetic smoke rollout: the task without delegation-kit preamble, the say, the command with its wall time and result note, the report last', () => {
   const p = codexAdapter.parse(ROLLOUT_SMOKE, true)
   expect(p.brief.startsWith('Read-only task.')).toBe(true)
   expect(p.brief).not.toContain('Tools available to you')
@@ -179,12 +180,12 @@ test('the real smoke rollout: the task without delegation-kit preamble, the say,
   expect(p.entries.map(e => e.kind)).toEqual(['say', 'tool', 'say'])
   const call = p.entries[1] as ToolEntry
   // the harness says 3 microseconds (scheduling); the wall time between the call and its result is 398 ms
-  expect(call).toMatchObject({ tool: 'Bash', ms: 398, error: '', act: 'run', exit: 0, note: 'exit 0 · 7798 total (+5 lines)' })
+  expect(call).toMatchObject({ tool: 'Bash', ms: 398, error: '', act: 'run', exit: 0, note: 'exit 0 · 1200 total (+5 lines)' })
   expect(call.cmd).toContain('wc -l')
   const last = p.entries.at(-1)
   expect(last).toMatchObject({ kind: 'say' })
   expect(last?.kind === 'say' ? last.text : '').toContain('Eval result: PASS')
-  expect(last?.t).toBe(Date.parse('2026-11-09T11:51:20.506Z'))
+  expect(last?.t).toBe(Date.parse('2026-01-01T11:51:20.506Z'))
 })
 
 test('a reasoning summary is a "think" entry (markdown bold removed); one the harness kept encrypted is none', () => {
@@ -200,8 +201,8 @@ test('a reasoning summary is a "think" entry (markdown bold removed); one the ha
 test('a duration the harness reports is kept; a scheduling-time one (microseconds) gives way to the wall time', () => {
   const call = (duration: unknown): ToolEntry => {
     const text = [
-      row('response_item', { type: 'custom_tool_call', name: 'exec', input: 'x' }, '2026-11-09T10:06:00.000Z'),
-      row('event_msg', { type: 'item_completed', item: { type: 'CommandExecution', command: ['pwd'], exit_code: 0, aggregated_output: '', duration } }, '2026-11-09T10:06:02.000Z'),
+      row('response_item', { type: 'custom_tool_call', name: 'exec', input: 'x' }, '2026-01-01T10:06:00.000Z'),
+      row('event_msg', { type: 'item_completed', item: { type: 'CommandExecution', command: ['pwd'], exit_code: 0, aggregated_output: '', duration } }, '2026-01-01T10:06:02.000Z'),
     ].join('\n')
     return tools(text)[0] as ToolEntry
   }

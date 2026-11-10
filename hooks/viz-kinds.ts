@@ -233,5 +233,99 @@ export const VIZ_KIND_TABLE: Record<string, { shape: string; keys: string[] }> =
       "ground",
       "autoRotate"
     ]
+  },
+  "testresults": {
+    "shape": "A test or check run has suite outcomes, durations and individual failures.",
+    "keys": [
+      "unit",
+      "suites",
+      "failures"
+    ]
+  },
+  "hypotheses": {
+    "shape": "A debugging question has competing explanations, investigation states and evidence.",
+    "keys": [
+      "question",
+      "items"
+    ]
+  },
+  "decisionmatrix": {
+    "shape": "Options have scores against weighted criteria and an optional selected choice.",
+    "keys": [
+      "options",
+      "criteria",
+      "scores",
+      "chosen"
+    ]
+  },
+  "sources": {
+    "shape": "Research claims are supported by sources with provenance and confidence.",
+    "keys": [
+      "items"
+    ]
+  },
+  "limits": {
+    "shape": "Provider groups have quota windows, usage percentages and reset times, alongside context usage and cost.",
+    "keys": [
+      "groups",
+      "windows",
+      "context",
+      "cost"
+    ]
+  },
+  "riskgrid": {
+    "shape": "Risks have likelihood and impact scores with owners and mitigations.",
+    "keys": [
+      "items"
+    ]
+  },
+  "waveform": {
+    "shape": "An audio envelope has timed onsets, labelled sections and an optional measured playhead.",
+    "keys": [
+      "unit",
+      "durationS",
+      "peaks",
+      "onsets",
+      "bpm",
+      "playheadS",
+      "sections"
+    ]
+  },
+  "shotlist": {
+    "shape": "A video plan has shots with frame ranges, production tools, render states and beat alignment.",
+    "keys": [
+      "fps",
+      "shots",
+      "beatsAtFrames"
+    ]
+  },
+  "easing": {
+    "shape": "Motion curves map elapsed time to progress, with timing markers and peak velocities.",
+    "keys": [
+      "durationMs",
+      "curves",
+      "markers"
+    ]
+  },
+  "galton": {
+    "shape": "A distribution emerges from many random choices: balls drop through pegs, a histogram builds up against the theoretical binomial curve, and an observed series can be compared.",
+    "keys": [
+      "rows",
+      "balls",
+      "seed",
+      "p",
+      "observed"
+    ]
+  },
+  "particles": {
+    "shape": "A rate or load per source, where how dense the stream is should be the reading: one emitter lane per series, with the number and unit under it.",
+    "keys": [
+      "unit",
+      "series",
+      "style"
+    ]
   }
 }
+export const QUOTA_WARN_PCT = 60
+export const QUOTA_DANGER_PCT = 85
+export const VIZ_SCHEMAS: Record<string, import('./viz-schema').VizSchema> = {"waveform":{"type":"object","fields":{"unit":{"type":"enum","values":["s"],"optional":true},"durationS":{"type":"number","min":0,"exclusiveMin":true},"peaks":{"type":"array","item":{"type":"number","min":0,"max":1},"min":0,"max":400,"optional":true},"onsets":{"type":"array","item":{"type":"number","min":0},"min":0,"max":400},"bpm":{"type":"number","min":0,"exclusiveMin":true,"optional":true},"playheadS":{"type":"number","min":0,"optional":true},"sections":{"type":"array","item":{"type":"object","fields":{"label":{"type":"string","max":80},"fromS":{"type":"number","min":0},"toS":{"type":"number","min":0,"exclusiveMin":true}}},"min":0,"max":40,"optional":true}}},"shotlist":{"type":"object","fields":{"fps":{"type":"number","min":0,"exclusiveMin":true},"shots":{"type":"array","item":{"type":"object","fields":{"id":{"type":"string","max":80},"label":{"type":"string","max":80},"startFrame":{"type":"number","min":0,"integer":true,"max":4503599627370495.5},"frames":{"type":"number","min":1,"integer":true,"max":4503599627370495.5},"tool":{"type":"string","max":80,"optional":true},"style":{"type":"string","max":80,"optional":true},"state":{"type":"enum","values":["planned","rendering","done","failed"],"optional":true},"beatAligned":{"type":"boolean","optional":true}}},"min":1,"max":40},"beatsAtFrames":{"type":"array","item":{"type":"number","min":0,"integer":true,"max":4503599627370495.5},"min":0,"max":400,"optional":true}}},"easing":{"type":"object","fields":{"durationMs":{"type":"number","min":0,"exclusiveMin":true},"curves":{"type":"array","item":{"type":"object","fields":{"label":{"type":"string","max":80},"kind":{"type":"enum","values":["linear","easeIn","easeOut","easeInOut","spring","bounce","steps"]},"params":{"type":"object","fields":{"power":{"type":"number","min":0,"exclusiveMin":true,"max":8,"optional":true},"damping":{"type":"number","min":0,"exclusiveMin":true,"max":30,"optional":true},"frequency":{"type":"number","min":0,"exclusiveMin":true,"max":10,"optional":true},"steps":{"type":"number","min":0,"exclusiveMin":true,"integer":true,"max":100,"optional":true}},"optional":true}}},"min":1,"max":8},"markers":{"type":"array","item":{"type":"object","fields":{"label":{"type":"string","max":80},"atMs":{"type":"number","min":0}}},"min":0,"max":40,"optional":true}}},"testresults":{"type":"object","fields":{"unit":{"type":"string","max":80,"optional":true},"suites":{"type":"array","item":{"type":"object","fields":{"name":{"type":"string","max":80},"passed":{"type":"number","min":0},"failed":{"type":"number","min":0},"skipped":{"type":"number","min":0,"optional":true},"ms":{"type":"number","min":0,"optional":true}}},"min":1,"max":40},"failures":{"type":"array","item":{"type":"object","fields":{"name":{"type":"string","max":80},"message":{"type":"string","max":240,"optional":true},"file":{"type":"string","max":80,"optional":true}}},"min":0,"max":40,"optional":true}}},"hypotheses":{"type":"object","fields":{"question":{"type":"string","max":240},"items":{"type":"array","item":{"type":"object","fields":{"id":{"type":"string","max":80},"label":{"type":"string","max":80},"state":{"type":"enum","values":["confirmed","testing","open","ruled-out"]},"evidence":{"type":"array","item":{"type":"string","max":240},"min":0,"max":8,"optional":true},"confidence":{"type":"number","min":0,"max":1,"optional":true}}},"min":1,"max":40}}},"decisionmatrix":{"type":"object","fields":{"options":{"type":"array","item":{"type":"object","fields":{"id":{"type":"string","max":80},"label":{"type":"string","max":80}}},"min":1,"max":40},"criteria":{"type":"array","item":{"type":"object","fields":{"id":{"type":"string","max":80},"label":{"type":"string","max":80},"weight":{"type":"number","min":0}}},"min":1,"max":8},"scores":{"type":"map","item":{"type":"map","item":{"type":"number","min":0,"max":5}}},"chosen":{"type":"string","max":80,"optional":true}}},"sources":{"type":"object","fields":{"items":{"type":"array","item":{"type":"object","fields":{"title":{"type":"string","max":80},"url":{"type":"url","optional":true},"kind":{"type":"enum","values":["primary","secondary","vendor","forum","unknown"],"optional":true},"claim":{"type":"string","max":240,"optional":true},"confidence":{"type":"number","min":0,"max":1,"optional":true},"date":{"type":"string","max":80,"optional":true}}},"min":1,"max":40}}},"limits":{"type":"object","fields":{"windows":{"type":"array","item":{"type":"object","fields":{"label":{"type":"string","max":80},"usedPct":{"type":"number","min":0},"resetsAt":{"type":"date","optional":true},"tone":{"type":"enum","values":["info","ok","warn","danger","neutral"],"optional":true}}},"min":0,"max":40,"optional":true},"groups":{"type":"array","item":{"type":"object","fields":{"title":{"type":"string","max":80},"status":{"type":"enum","values":["fresh","stale","unavailable"],"optional":true},"windows":{"type":"array","item":{"type":"object","fields":{"label":{"type":"string","max":80},"usedPct":{"type":"number","min":0},"resetsAt":{"type":"date","optional":true},"tone":{"type":"enum","values":["info","ok","warn","danger","neutral"],"optional":true}}},"min":0,"max":40}}},"min":0,"max":40,"optional":true},"context":{"type":"object","fields":{"usedPct":{"type":"number","min":0,"max":100}},"optional":true},"cost":{"type":"object","fields":{"amount":{"type":"number","min":0},"unit":{"type":"string","max":80}},"optional":true}},"requiredOneOf":["windows","groups"]},"galton":{"type":"object","fields":{"rows":{"type":"number","min":2,"max":14,"integer":true},"balls":{"type":"number","min":1,"max":400,"integer":true},"seed":{"type":"number","min":0,"max":4294967295,"integer":true,"optional":true},"p":{"type":"number","min":0,"max":1,"optional":true},"observed":{"type":"array","item":{"type":"number","min":0,"integer":true},"min":3,"max":15,"optional":true}}},"particles":{"type":"object","fields":{"unit":{"type":"string","max":80},"series":{"type":"array","item":{"type":"object","fields":{"label":{"type":"string","max":80},"rate":{"type":"number","min":0},"tone":{"type":"enum","values":["ok","warn","danger","info"],"optional":true},"max":{"type":"number","min":0.000001,"optional":true}}},"min":1,"max":8},"style":{"type":"enum","values":["sparks","rain","flow"],"optional":true}}},"riskgrid":{"type":"object","fields":{"items":{"type":"array","item":{"type":"object","fields":{"label":{"type":"string","max":80},"likelihood":{"type":"number","min":1,"max":5,"integer":true},"impact":{"type":"number","min":1,"max":5,"integer":true},"mitigation":{"type":"string","max":240,"optional":true},"owner":{"type":"string","max":80,"optional":true}}},"min":1,"max":40}}}}

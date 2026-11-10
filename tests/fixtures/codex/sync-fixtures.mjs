@@ -1,4 +1,5 @@
 // Rebuilds fixtures.ts (the .jsonl files as strings: `claude plugin test` can import only code files) from the .jsonl fixtures here.
+// The JSONL inputs contain synthetic Acme Notes events.
 // Run: node tests/fixtures/codex/sync-fixtures.mjs
 import { readFileSync, writeFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'

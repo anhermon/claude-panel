@@ -157,8 +157,27 @@ test('no transcript and an event ring that moved on: the loop\'s own last call i
 })
 
 test('the tool outputs behind the logic stay in the mod: the transcript entries sent to the page carry no out, cmd, path or exit', () => {
-  const e = tool(NOW - MIN, { tool: 'Bash', label: 'npm test', act: 'run', cmd: 'npm test', path: '/Users/x/secret.ts', exit: 0, out: 'SECRET OUTPUT' })
+  const e = tool(NOW - MIN, { tool: 'Bash', label: 'npm test', act: 'run', cmd: 'npm test', path: '/home/example/secret.ts', exit: 0, out: 'SECRET OUTPUT' })
   const d = build({ read: read(parsed([e])) })
   expect(JSON.stringify(d.transcript)).not.toContain('SECRET OUTPUT')
   expect(JSON.stringify(d.transcript)).not.toContain('secret.ts')
+})
+
+
+test('Claude token split, unpaired failures, API struggles and turn stats reach detail metrics', () => {
+  const p: Parsed = {
+    ...parsed([tool(NOW, { error: 'failed' })], [{ t: NOW, id: 'request', fresh: 100, output: 20, cacheRead: 900 }]),
+    failedCalls: 4, apiErrors: 2, apiError: { t: NOW - MIN, lastT: NOW, text: 'Quota exceeded' },
+    turns: { count: 2, lastMs: 3000, avgMs: 2000, maxMs: 3000 },
+  }
+  const d = build({ read: read(p) })
+  expect(d.metrics.tokens).toMatchObject({ fresh: 100, cached: 900, output: 20 })
+  expect(d.metrics.errors).toBe(6)
+  expect(d.metrics.apiErrors).toBe(2)
+  expect(d.metrics.turns).toEqual(p.turns)
+  expect(d.struggles.items[0]).toMatchObject({ title: 'API requests failed', n: 2, evidence: 'Quota exceeded', outcome: 'open' })
+  expect(d.struggles.open).toBe(d.struggles.items.filter(i => i.outcome === 'open').length)
+  expect(build({ loop: undefined, read: read(p) }).metrics.errors).toBe(6)
+  expect(build({ read: read({ ...p, failedCalls: 0, apiErrors: 0 }) }).metrics.errors).toBe(3)
+  expect(build({ loop: undefined, read: read({ ...p, failedCalls: 0, apiErrors: 0 }) }).metrics.errors).toBe(1)
 })

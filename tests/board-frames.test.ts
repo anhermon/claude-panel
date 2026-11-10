@@ -219,3 +219,38 @@ test('viz: a known kind, a plain data object <= 12288 chars and 8 levels deep, c
   ]
   for (const [input, pattern] of table) expect(refusal(input)).toMatch(pattern)
 })
+
+// Mirrors neutral catalog examples; checks host refusal before a frame reaches the browser.
+const WORK_VIZ_CASES: [string, Record<string, unknown>, string, string][] = [
+  ['testresults', { suites: [{ name: 'Parser', passed: 3, failed: 0 }] }, 'suites', 'passed'],
+  ['hypotheses', { question: 'Why the delay?', items: [{ id: 'cache', label: 'Cache miss', state: 'open', confidence: 0.5 }] }, 'items', 'confidence'],
+  ['decisionmatrix', { options: [{ id: 'simple', label: 'Simple' }], criteria: [{ id: 'speed', label: 'Speed', weight: 2 }], scores: { simple: { speed: 4 } } }, 'criteria', 'weight'],
+  ['sources', { items: [{ title: 'Example Docs', confidence: 0.9 }] }, 'items', 'confidence'],
+  ['limits', { windows: [{ label: 'Window', usedPct: 50 }] }, 'windows', 'usedPct'],
+  ['riskgrid', { items: [{ label: 'Delay', likelihood: 2, impact: 4 }] }, 'items', 'impact'],
+]
+test('viz: all six work kinds are accepted and bad fields name their full path', () => {
+  for (const [kind, data, list, field] of WORK_VIZ_CASES) {
+    const input = ex('viz', { kind, data })
+    expect(validateFrame(input)).toEqual(input)
+    const bad = JSON.parse(JSON.stringify(data))
+    bad[list][0][field] = 'wrong'
+    expect(refusal(ex('viz', { kind, data: bad }))).toMatch(new RegExp(`frame\\.data\\.${list}\\[0\\]\\.${field}`))
+  }
+})
+
+// Motion kinds: top-level numbers and lanes, so each case names the bad field as a path inside `data`.
+const MOTION_VIZ_CASES: [string, Record<string, unknown>, Record<string, unknown>, RegExp][] = [
+  ['galton', { rows: 10, balls: 200, p: 0.5 }, { rows: 'wrong' }, /frame\.data\.rows must be a finite number/],
+  ['galton', { rows: 10, balls: 200 }, { balls: 401 }, /frame\.data\.balls must be a number from 1 to 400/],
+  ['galton', { rows: 10, balls: 200, observed: [1, 2, 3] }, { observed: [1, 'wrong', 3] }, /frame\.data\.observed\[1\] must be a finite number/],
+  ['particles', { unit: 'events/s', series: [{ label: 'Ingest', rate: 1200, tone: 'ok' }] }, { series: [{ label: 'Ingest', rate: 'wrong' }] }, /frame\.data\.series\[0\]\.rate must be a finite number/],
+  ['particles', { unit: 'events/s', series: [{ label: 'Ingest', rate: 1200 }] }, { style: 'snow' }, /frame\.data\.style must be one of sparks\|rain\|flow/],
+]
+test('viz: galton and particles are accepted and bad fields name their full path', () => {
+  for (const [kind, data, patch, pattern] of MOTION_VIZ_CASES) {
+    const input = ex('viz', { kind, data })
+    expect(validateFrame(input)).toEqual(input)
+    expect(refusal(ex('viz', { kind, data: { ...data, ...patch } }))).toMatch(pattern)
+  }
+})

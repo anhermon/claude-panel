@@ -7,6 +7,8 @@
 // Anything else has no role. The ticket is found by id in the description, name or dispatch intent: `01-slugify`, or `T01` / `ticket 1`
 // for a ticket whose id starts with that number. Both return undefined rather than guess.
 import type { RouterRun, RouterTicket } from './router-state'
+import { plainTitle } from './agent-names'
+export { plainTitle } from './agent-names'
 
 export const ROLES = ['router', 'worker', 'verifier', 'codex-worker', 'watchdog', 'qa', 'merger'] as const
 export type Role = (typeof ROLES)[number]
@@ -99,21 +101,8 @@ export function ticketBadgeOf(agent: RoleSubject, run: RouterRun | undefined): T
   return ticket === undefined ? undefined : badgeOf(ticket)
 }
 
-/** A leading ticket number (`T64`, `T64 ·`, `T64:`, `T64 -`) and a trailing routing note (`(sonnet/low)`) are bookkeeping, not the title of the work. */
-const LEADING_TICKET = /^T\d+\b[\s·:.—–-]*/i
-const TRAILING_ROUTING = /\s*\(\s*[a-z0-9._-]+(?:\/[a-z0-9._-]+){1,2}\s*\)\s*$/
-const ROUTING_WORD = /(?:sonnet|haiku|opus|fable|gpt|codex|gemini|agy|claude|low|medium|high|xhigh|max)/
-/** The text without a leading ticket number (`T64 · avatar redesign` -> `avatar redesign`); the text itself when nothing else is left. */
-export function dropTicketNumber(text: string): string {
-  const plain = text.trim().replace(LEADING_TICKET, '').trim()
-  return plain === '' ? text.trim() : plain
-}
-/** The plain title of a piece of work for a reader: the text without its ticket number and routing note (`T64 · avatar redesign (sonnet/low)` -> `avatar redesign`). Never empty when the text is not. */
-export function plainTitle(text: string): string {
-  const trimmed = text.trim()
-  const routing = TRAILING_ROUTING.exec(trimmed)?.[0]
-  return dropTicketNumber(routing !== undefined && ROUTING_WORD.test(routing) ? trimmed.slice(0, trimmed.length - routing.length) : trimmed)
-}
+/** Compatibility name for callers that used the old leading-number cleaner. */
+export const dropTicketNumber = (text: string): string => plainTitle(text, false)
 
 const TAG_FALLBACK_CHARS = 6
 /** A ticket id in a few characters for a diagram box: its leading number (`01`), else its first characters. */

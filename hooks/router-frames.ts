@@ -116,13 +116,13 @@ function itemOf(t: RouterTicket, all: readonly RouterTicket[]): TicketItem {
     id: cut(t.id, ROUTER_FRAME.TICKET_ID_CHARS),
     title: clipTitle(ticketTitle(t), ROUTER_FRAME.TICKET_TITLE_CHARS),
     stage: t.stage,
-    agent: cut(t.agent, ROUTER_FRAME.AGENT_CHARS),
+    agent: cut(plainTitle(t.agent, false), ROUTER_FRAME.AGENT_CHARS),
     ...(checks === undefined ? {} : { checks }),
     round: t.fixRound,
     maxRounds: t.maxRounds,
     verdict: t.result,
     eval: evalItemOf(t),
-    ...(note === undefined ? {} : { note: cut(note, ROUTER_FRAME.NOTE_CHARS) }),
+    ...(note === undefined ? {} : { note: cut(plainTitle(note, false), ROUTER_FRAME.NOTE_CHARS) }),
     ...(t.dependsOn.length === 0 ? {} : { dependsOn: t.dependsOn.slice(0, ROUTER_FRAME.DEPENDS_ITEMS).map(d => cut(d, ROUTER_FRAME.TICKET_ID_CHARS)) }),
   }
 }
@@ -211,7 +211,7 @@ function eventsFrame(events: readonly RouterEvent[], tickets: readonly RouterTic
       const text = full.length <= ROUTER_FRAME.EVENT_TEXT_CHARS ? full : `${who}${e.type}`
       const when = whenOf(e.ts, now)
       const tone = TONE_OF_EVENT[e.type]
-      return { ...(when === '' ? {} : { when: cut(when, ROUTER_FRAME.WHEN_CHARS) }), text: clipTitle(text, ROUTER_FRAME.EVENT_TEXT_CHARS), ...(tone === undefined ? {} : { tone }) }
+      return { ...(when === '' ? {} : { when: cut(when, ROUTER_FRAME.WHEN_CHARS) }), text: clipTitle(plainTitle(text, false), ROUTER_FRAME.EVENT_TEXT_CHARS), ...(tone === undefined ? {} : { tone }) }
     }),
   }
 }

@@ -53,14 +53,14 @@ export function whoText(rows: readonly BoardLane[]): string {
 }
 
 export function nowFrame(input: NowInput): BoardFrame {
-  const base: BoardFrame = { id: NOW_ID, type: 'now', title: NOW_TITLE, size: NOW_SIZE, text: cut(input.task, FRAME_CAPS.TEXT_CHARS), status: input.status }
+  const base: BoardFrame = { id: NOW_ID, type: 'now', title: NOW_TITLE, size: NOW_SIZE, text: cut(plainTitle(input.task, false), FRAME_CAPS.TEXT_CHARS), status: input.status }
   const rows = input.rows.filter(isAgent)
   const active = rows.filter(r => ACTIVE_STATES.includes(r.state)).sort(newest)
   const blocked = rows.filter(r => r.state === 'blocked').sort(newest)
   const focus = active[0] ?? blocked[0]
   if (focus === undefined) return base
   const isBlocked = active.length === 0
-  const activity = (focus.insight?.headline ?? '').trim() || focus.step.trim()
+  const activity = plainTitle((focus.insight?.headline ?? '').trim() || focus.step.trim(), false)
   const title = workTitle(focus, input.router)
   const headline = `${isBlocked ? BLOCKED_PREFIX : ''}${activity === '' ? title : `${title}${JOIN_ACTIVITY}${activity}`}`
   const last = rows.filter(r => r.state === 'done').sort(newest)[0]
@@ -68,7 +68,7 @@ export function nowFrame(input: NowInput): BoardFrame {
   return {
     ...base,
     text: cut(headline, FRAME_CAPS.TEXT_CHARS),
-    sub: cut(input.task, FRAME_CAPS.SUB_CHARS),
+    sub: cut(plainTitle(input.task, false), FRAME_CAPS.SUB_CHARS),
     ...(who === '' ? {} : { who }),
     ...(focus.startedAt > 0 ? { for: `${isBlocked ? FOR_BLOCKED : FOR_WORKING}${formatDuration(input.now - focus.startedAt)}` } : {}),
     ...(last === undefined ? {} : { last: cut(`${LAST_PREFIX}${workTitle(last, input.router)}`, FRAME_CAPS.SUB_CHARS) }),

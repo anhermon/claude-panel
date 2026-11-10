@@ -2,7 +2,7 @@
 // one-shot animation plays (FX), and the one-line caption in words with the task TITLE, never an id ("Fix transcript lookup: done").
 // Pure (no DOM); tested by event-fx.test.mjs. The animations themselves are CSS (agents-info.css, `.av[data-fx]`) and the beam (fx-layer.js).
 import { figureState } from './avatar-model.mjs';
-import { clipTitle, titleOf } from './title-of.mjs';
+import { clipTitle, plainTitle, titleOf } from './title-of.mjs';
 
 /** The one-shot animations: how long each plays (ms) and the glyph that bursts from the avatar (null: only the motion). */
 export const FX = Object.freeze({
@@ -43,11 +43,11 @@ export function captionOf(event, agents) {
   switch (event.kind) {
     case 'spawn': return `${head}: created`;
     case 'handoff': return `${head}: started`;
-    case 'work': return `${head}: ${event.text.replace(KIND_LABEL, '').toLowerCase() || 'new step'}`;
+    case 'work': return `${head}: ${plainTitle(event.text.replace(KIND_LABEL, ''), false).toLowerCase() || 'new step'}`;
     case 'progress': return `${head}: ${event.to}%`;
     case 'state': {
       const failed = event.to === 'failed' || (a && figureState(a) === 'failed');
-      return `${head}: ${STATE_PHRASE[failed ? 'failed' : event.to] ?? event.to}`;
+      return `${head}: ${STATE_PHRASE[failed ? 'failed' : event.to] ?? plainTitle(event.to, false)}`;
     }
     default: return head;
   }

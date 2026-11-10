@@ -2,7 +2,7 @@ import { expect, test } from 'claude-code/testing'
 
 import { planCommand, NO_BROWSER_TEXT } from '../hooks/commands'
 import { IMAGE_MAX_COLUMNS, IMAGE_MAX_ROWS, imageBox, pngSize } from '../hooks/png'
-import { hexOf, mintToken, portMapOf, serverArgv, serverUrl, TOKEN_PATTERN, withPort } from '../hooks/server'
+import { envPortOf, hexOf, mintToken, portMapOf, preferredPort, serverArgv, serverUrl, TOKEN_PATTERN, withPort } from '../hooks/server'
 import { emptyState, parsePort } from '../hooks/state'
 import type { PanelScene, PanelState } from '../types'
 
@@ -128,4 +128,13 @@ test('the link port map: odd stored values are dropped, the newest folder goes l
   expect(Object.keys(many)).toHaveLength(64)
   expect(many['/f79']).toBe(4079)
   expect(many['/f0']).toBeUndefined()
+})
+
+test('port: a valid CLAUDE_PANEL_PORT beats the live and remembered port; junk does not', () => {
+  expect(envPortOf('5000')).toBe(5000)
+  for (const bad of [undefined, '', '0', 'abc', '70000', '-1', '12.5']) expect(envPortOf(bad)).toBeNull()
+  expect(preferredPort(5000, 4801, 4802)).toBe(5000)
+  expect(preferredPort(null, 4801, 4802)).toBe(4801)
+  expect(preferredPort(null, null, 4802)).toBe(4802)
+  expect(preferredPort(null, null, undefined)).toBe(4717)
 })

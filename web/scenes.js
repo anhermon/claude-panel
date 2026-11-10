@@ -8,6 +8,7 @@
  * Liveness contract: an iframe's src changes ONLY when its scene's `rev` or `mtime` changes (or the user presses
  * reload). Re-rendering for any other state change updates text in place and leaves running scenes alone. */
 (function () {
+  const { plainTitle } = globalThis.PanelTitles;
   const { el, kids, iconButton } = globalThis.PanelBlocks;
 
   const SCENE_BASE = "s/"; // relative on purpose: the page lives at /<token>/
@@ -40,7 +41,7 @@
       seen.add(s.id);
       out.push({
         id: s.id,
-        title: typeof s.title === "string" ? s.title : "",
+        title: plainTitle(s.title, false),
         alt: typeof s.alt === "string" ? s.alt : "",
         span: SPANS.includes(s.span) ? s.span : DEFAULT_SPAN,
         height: clamp(num(s.height, DEFAULT_HEIGHT)),
@@ -118,11 +119,11 @@
   /* Cheap, idempotent text/layout updates; navigates only when rev or mtime moved. */
   function updateFrame(f, s) {
     f.root.className = "scene span-" + s.span;
-    f.root.setAttribute("aria-label", s.title || s.alt || s.id);
-    f.titleEl.textContent = s.title;
+    f.root.setAttribute("aria-label", plainTitle(s.title || s.alt || s.id, false));
+    f.titleEl.textContent = plainTitle(s.title, false);
     f.titleEl.hidden = !s.title;
-    f.alt.textContent = s.alt;
-    f.iframe.title = s.alt || s.title || s.id;
+    f.alt.textContent = plainTitle(s.alt, false);
+    f.iframe.title = plainTitle(s.alt || s.title || s.id, false);
     if (s.height !== f.baseHeight) { // a new height from the model wins over an earlier panel.fit()
       f.baseHeight = s.height;
       setBodyHeight(f, s.height);

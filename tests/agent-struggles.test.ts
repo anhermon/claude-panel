@@ -1,4 +1,4 @@
-// The Struggles report: what went wrong, with the quote of the error, not counts. Hand-built stories plus two real (trimmed, scrubbed)
+// The Struggles report: what went wrong, with the quote of the error, not counts. Hand-built stories plus two synthetic Acme Notes
 // finished sub-agent transcripts.
 import { expect, test } from 'claude-code/testing'
 
@@ -70,7 +70,7 @@ test('a refused tool is a wrong turn with the refusal quoted', () => {
   expect(r.items[0]?.evidence).toContain('Blocked')
 })
 
-test('real transcripts: every struggle has a quote and a time; nothing is a bare count', () => {
+test('synthetic transcripts: every struggle has a quote and a time; nothing is a bare count', () => {
   for (const text of [AGENTS_TILE_DRILLDOWN, METRICS_STRUGGLES_REDESIGN]) {
     const p = parseTranscript(text, true)
     const r = struggleReportOf(p.entries, { now: (p.entries.at(-1)?.t ?? 0) + 1000, isRunning: false })

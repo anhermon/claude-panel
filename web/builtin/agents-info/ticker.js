@@ -1,6 +1,7 @@
-// The event ticker: one line per status change ("Work-kind classifier testing", "Deep per-agent insight done · 26 min"), newest on top, each fading out after a while.
+// The event ticker: one line per status change ("Search box testing", "Export fix done · 26 min"), newest on top, each fading out after a while.
 // Only events the page has not shown yet get here (agents-info-logic.mjs newEvents), so a reload shows nothing. Reduced motion:
 // the lines appear and leave without a fade.
+import { plainTitle } from '../../kit/panel/plain-title.mjs';
 import { createAvatarView } from './avatar-set.js';
 
 const TTL_MS = 9000;
@@ -25,7 +26,7 @@ export function createTicker(listEl, hooks) {
         avatar?.set(hooks.stateOf(e.agent), null, hooks.harnessOf?.(e.agent));
         const dot = avatar ? avatar.el : document.createElement('i');
         const text = document.createElement('span');
-        text.textContent = hooks.textOf ? hooks.textOf(e) : e.text;
+        text.textContent = plainTitle(hooks.textOf ? hooks.textOf(e) : e.text, false);
         node.append(dot, text);
         listEl.prepend(node);
         const item = { node, avatar, timer: setTimeout(() => drop(item), TTL_MS) };

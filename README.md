@@ -38,10 +38,24 @@ licenses (`web/kit/LICENSES.md`).
 
 The model gets two tools:
 
-- `mcp__panel__panel`: puts one frame or card on the board (text, metric, bars, line, steps, diagram, timeline, compare, ask, viz, ...) or sets the task, status, context, done and next. Agents post a `lane` to show their own progress.
+- `mcp__panel__panel`: puts one frame or card on the board (text, metric, bars, line, steps, diagram, timeline, compare, ask, viz, ...) or sets the task, status, context, done and next. Agents post a `lane` to show their own progress; a lane for another Claude Code session can pass `session: <id>` so its row opens that session's transcript.
 - `mcp__panel__scene`: publishes a sandboxed HTML/JS folder (or inline `html`) as a scene, and takes a headless screenshot of it for the model to check.
 
 The `panel:panel-guide` skill (`skills/panel-guide`) tells the model how to choose a form and write a scene.
+
+With the mod active, Claude uses the panel on its own for work that needs more than a few tool calls: task + why first,
+then forms that fit the work and measured evidence. Short questions and acknowledgements stay in chat. Prompt context
+suggests forms from the current job and generic project markers. A local history of the last eight sessions helps avoid
+forms used in at least three of the last five sessions; among equally fitting forms, the suggestions rotate by session. Builds and operations
+can use test results, debugging hypotheses, research sources, decisions a decision matrix, reviews a risk grid, and long
+sessions measured limits. If Claude has not posted a task after six non-panel tool calls (task bookkeeping such as ToolSearch or TodoWrite does not count), the mod fills the empty task from
+the first sentence of the request, with private text scrubbed. Claude can replace that starting point at any time.
+
+The board adds a small **Limits** frame (id `limits`, viz kind `limits`) whenever readings exist. It groups Claude, Codex, AGY Gemini shared and the AGY Claude/GPT pool with 5-hour and weekly
+windows, reset countdowns and freshness, followed by context fill and formatted cost. Live Claude usage takes precedence.
+Optional local delegation-kit quotas refresh in the background every 120 seconds; missing tools or failed reads stay quiet.
+Snapshots older than 30 minutes are marked stale. Bars turn amber at 60% and red at 85%. Without readings it draws nothing.
+Replace it with a frame of the same id, or hide it with `frame_remove: "limits"`; `frames_clear` restores it.
 
 ## Options (`userConfig`)
 
@@ -49,12 +63,17 @@ All optional; the defaults are in `.claude-plugin/plugin.json`.
 
 | Key | Title | Type | Default | What it does |
 | --- | --- | --- | --- | --- |
+| `proactive` | Use the panel proactively | boolean | `true` | Enable automatic panel guidance, contextual form suggestions (and, after a task-only panel call, one nudge to add a form that fits), history recording and the task safety net. `false` leaves panel use on request. |
+| `autoTaskAfterCalls` | Calls before starting the task | number | `6` | Fill an empty task after this many non-panel tool calls following a work prompt. `0` disables this safety net. |
 | `doneRowMinutes` | Finished agent row (minutes) | number | `10` | How long a finished agent keeps its row on the board. |
+| `limitsShowPct` | Show limits from (%) | number | `0` | Show measured limits when any quota window or context fill reaches this percentage. `0` always shows available readings; `101` never shows the frame. |
+| `quotaEveryS` | Quota refresh (seconds) | number | `120` | Interval for local provider quota reads; `0` disables them. |
 | `dodFramesMax` | Checklist frames | number | `3` | At most this many agent checklist frames on the board at once. |
 | `stripRoutingSuffix` | Strip routing note from agent names | boolean | `true` | Drop a trailing (sonnet/high) style note from an agent's name on the board. |
 | `goalLabels` | Goal line labels | string | `goal,objective` | Comma-separated labels of the brief line that states an agent's goal. |
 | `ticketLabels` | Ticket line labels | string | `ticket` | Comma-separated labels of the brief line that names an agent's ticket. |
 | `insightMinSeconds` | Insight minimum (seconds) | number | `30` | The workflow-insight frames wait for this many seconds of agent time before they say anything. |
+| `sessionsFrame` | Other sessions frame | boolean | `true` | Draw a frame listing the other Claude Code sessions running on this machine (name, state, project, current task). |
 | `repeatMin` | Repeat: times | number | `4` | The same file touched or command run this many times is shown as repeated work. |
 | `retryMin` | Retry: times | number | `2` | A command run again right after failing this many times is shown as a retry. |
 | `similarMin` | Same task: agents | number | `3` | This many agents started with the same kind of task are shown as repeated work. |
@@ -86,7 +105,9 @@ Other environment variables: `CLAUDE_PANEL_PORT` (first port to try, default 471
 - The browser view is a Node server bound to `127.0.0.1` only. Every route sits under a random 128-bit token (`http://127.0.0.1:<port>/<token>/`), anything else is a 404, and a `Host` header other than `127.0.0.1:<port>` or `localhost:<port>` is refused (DNS rebinding). The token is kept in Claude Code's per-project store so the same project reopens the same link. The server only reads; the one write path is the page's `POST /event`, which sends a click back to the model.
 - State is written under `$TMPDIR/claude-panel/` (default `/tmp/claude-panel/`): per-session state files, board, pulse, live-frame and inline-scene folders, and screenshots. The OS cleans temp folders; nothing is written to your project or home folder by the panel itself.
 - Transcript text shown on the board (agent details) is passed through a redaction step first (home folders, key/token shapes, passwords in URLs), but treat the board as showing your session's work.
+- Form history uses one per-project store key (`panel.history`): generic jobs, form names, timestamps and opaque session keys only. Prompts, directory paths and branch names are not saved in that history.
 - Nothing is sent to any remote service by the mod. Scenes are model-written code: they run in a sandboxed iframe with a strict content-security policy, but with the CDN allow-list on (`web/scene-files.mjs`) a scene may load scripts from cdnjs, jsdelivr or unpkg in your browser. Do not put secrets in a scene folder.
+- The board's `Other sessions` frame (`sessionsFrame` option, on by default) is drawn from the `~/.claude/sessions` registry and `ps`, plus the last 128 KiB of each such session's transcript (title, branch, last prompt, redacted and cut to 80 characters). It is not sent to the model; turn it off with `sessionsFrame: false`.
 
 ## Develop and test
 

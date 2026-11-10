@@ -19,7 +19,10 @@ import { paneTree } from './pane'
 import { applyParts, boardAdopt, boardKept, boardNote, boardNoteScene, boardSceneDir, boardStart, boardVarietyHint } from './board-host'
 import { hasFramePart, planFrames } from './board-model'
 import { withBoard } from './board-scene'
-import { applyOptions } from './panel-config'
+import { applyOptions, panelConfig } from './panel-config'
+import { registerLimits } from './limits-host'
+import { limitsUsage } from './limits-state'
+import { ANY_TOOL_NAME, formNudgeLine, formsOfFrame, isCountedCall, NOT_A_MESSAGE, noteToolCall, recordForms, registerProactive, releaseSeed, TASK_WHY } from './proactive'
 import { parsePulseArgs, pulseAdoptLanes, pulseCommand, pulseLanes, pulseSelfCall, pulseStart, registerPulse } from './pulse-host'
 import type { PulseInit } from './pulse-host'
 import { hasLanePart, planLanes } from './pulse-lanes'
@@ -27,11 +30,13 @@ import { applyUserScene } from './pulse-scene'
 import { STAGE_LAYOUT, withShotFace } from './scene'
 import { allowedRoots, prepareScene, resolveRoots } from './scene-fs'
 import { sceneIo, sendData } from './scene-io'
-import { FIRST_PORT, mintToken, OPENSSL_ARGV, portMapOf, serverArgv, serverUrl, STORE_PORTS_KEY, STORE_TOKEN_KEY, TOKEN_PATTERN, withPort } from './server'
+import { envPortOf, mintToken, OPENSSL_ARGV, portMapOf, preferredPort, serverArgv, serverUrl, STORE_PORTS_KEY, STORE_TOKEN_KEY, TOKEN_PATTERN, withPort } from './server'
 import {
   BASELINE_TEXT,
   COMMAND_NAME,
   PANE_ID,
+  PASSIVE_BASELINE_TEXT,
+  PASSIVE_TOOL_DESCRIPTION,
   PLUGIN_NAME,
   SCENE_FULL_NAME,
   SCENE_INPUT_SCHEMA,
@@ -49,10 +54,10 @@ import { runShot } from './shot'
 import { applyInput, emptyState, parsePort, resultLine, withUrl } from './state'
 import type { ApplyResult } from './state'
 import { Invalid } from './blocks/common'
-import type { PanelBoardKeep, PanelRuntime, PanelState } from '../types'
+import { SCENE_FORM } from './variety'
+import type { PanelBoardKeep, PanelRuntime, PanelState, PanelTask } from '../types'
 
 // `/foo` (a slash command) and `!cmd` (a shell escape) are not messages to Claude: no events ride along.
-const NOT_A_MESSAGE = /^\s*[/!]/
 const SENT_NOTE_MS = 4000
 
 // The session values the mod keeps. `plugin` and `key` are literals. Bump a
@@ -211,7 +216,7 @@ function startServer($: Dollar, stateFile: string, token: string, roots: readonl
       const { lastPort } = await read($, runtimeAtom)
       const folder = await $.session.cwd().catch(() => '')
       const remembered = portMapOf(await $.store.get(STORE_PORTS_KEY).catch(() => undefined))[folder]
-      const argv = serverArgv({ pluginRoot: $.plugin.root, stateFile, token, port: lastPort ?? remembered ?? FIRST_PORT, roots })
+      const argv = serverArgv({ pluginRoot: $.plugin.root, stateFile, token, port: preferredPort(envPortOf(await $.env.get('CLAUDE_PANEL_PORT').catch(() => undefined)), lastPort, remembered), roots })
       for await (const { stream, text } of $.process.spawn({ argv })) {
         if (stream === 'stderr') log($, `web server: ${text.trim()}`)
         else if (!isPortRead) {
@@ -247,6 +252,22 @@ async function openPaneOnce($: Dollar): Promise<void> {
   })
   if (!box.isFirst) return
   await tryOpenPane($)
+}
+
+/** Proactive hooks use the same validator, atom update, mirror and pane path as a model task post. */
+export async function panelHasTask($: Dollar): Promise<boolean> {
+  return (await read($, stateAtom)).task !== null
+}
+
+export async function seedPanelTask($: Dollar, task: PanelTask): Promise<void> {
+  const now = await $.clock.now()
+  const state = await update($, stateAtom, prev => {
+    if (prev.task !== null) return prev
+    const outcome = applyInput(prev, { task }, now)
+    return outcome.isOk ? outcome.state : prev
+  })
+  await mirror($, state)
+  await openPaneOnce($)
 }
 
 // ---- the return channel: undelivered events ------------------------------------------------------------
@@ -338,10 +359,28 @@ async function shoot($: Dollar, state: PanelState, id: string, at: string): Prom
 export const register: Register = (on, options) => {
   applyOptions(options)
   registerPulse(on)
+  registerLimits(on)
+  registerProactive(on)
+  // The task safety net. Best effort: whatever fails here, the tool call itself still runs.
+  on('tool.call', { tool: ANY_TOOL_NAME }, async ($, e, next) => {
+    if (!isCountedCall(e)) return next(e)
+    try {
+      const title = await noteToolCall($, e.tool, await panelHasTask($))
+      if (title !== null) {
+        try {
+          await seedPanelTask($, { title, why: TASK_WHY })
+        } catch (error) {
+          await releaseSeed($)
+          throw error
+        }
+      }
+    } catch { /* the safety net never fails a call */ }
+    return next(e)
+  })
 
   on('session.start', async ($, e, next) => {
     resetLive()
-    await registerTool($, TOOL_NAME, TOOL_DESCRIPTION, TOOL_INPUT_SCHEMA, TOOL_FULL_NAME)
+    await registerTool($, TOOL_NAME, panelConfig.proactive ? TOOL_DESCRIPTION : PASSIVE_TOOL_DESCRIPTION, TOOL_INPUT_SCHEMA, TOOL_FULL_NAME)
     await registerTool($, SCENE_TOOL_NAME, SCENE_TOOL_DESCRIPTION, SCENE_INPUT_SCHEMA, SCENE_FULL_NAME)
     await $.command.register({
       name: COMMAND_NAME,
@@ -350,6 +389,8 @@ export const register: Register = (on, options) => {
     })
 
     const started = await next(e)
+
+    await limitsUsage($, true)
 
     const stateFile = await stateFilePath($)
     await update($, runtimeAtom, r => ({ ...r, stateFile }))
@@ -389,6 +430,7 @@ export const register: Register = (on, options) => {
       const parts = await applyParts($, plan, frames, agentId, await read($, stateAtom))
       await saveBoard($)
       if (parts.deny !== undefined) return { deny: parts.deny }
+      await recordForms($, formsOfFrame(frames.upsert))
       if (agentId !== undefined || !hasFramePart(frames)) return { result: parts.lines.join(RESULT_JOIN) }
       await openPaneOnce($)
       return { result: joinResult([...parts.lines, eventsResult(await takeEvents($))]) }
@@ -414,10 +456,14 @@ export const register: Register = (on, options) => {
     await openPaneOnce($)
     await keepBoard($)
     const parts = await applyParts($, plan, frames, agentId, state)
+    if (parts.deny === undefined) await recordForms($, formsOfFrame(frames.upsert))
     if (hasLanePart(plan) || hasFramePart(frames)) await saveBoard($)
     // The browser's events belong to the main session: a worker's call leaves them be.
     const events = agentId === undefined ? eventsResult(await takeEvents($)) : ''
-    return { result: joinResult([resultLine(state, outcome.trimmed), ...(parts.deny === undefined ? parts.lines : [parts.deny]), events]) }
+    // A task with nothing else on the board yet: one line asks the main session for the form that fits its evidence.
+    const hasForm = state.cards.length > 0 || (boardKept()?.frames.length ?? 0) > 0
+    const nudge = agentId === undefined && parts.deny === undefined ? await formNudgeLine($, input.task !== undefined, hasForm) : ''
+    return { result: joinResult([resultLine(state, outcome.trimmed), ...(parts.deny === undefined ? parts.lines : [parts.deny]), nudge, events]) }
   })
 
   on('tool.call', { tool: SCENE_FULL_NAME }, async ($, e) => {
@@ -459,6 +505,7 @@ export const register: Register = (on, options) => {
     }
 
     await mirror($, state)
+    if (action.kind === 'upsert') await recordForms($, [SCENE_FORM])
     if (action.kind === 'remove' && action.id === AGENTS_INFO_SCENE_ID) await update($, runtimeAtom, r => ({ ...r, isCrewOff: true }))
     await openPaneOnce($)
     const lines = [outcome.line]
@@ -509,10 +556,8 @@ export const register: Register = (on, options) => {
 
   on('prompt.compose', async ($, e, next) => {
     const { sections } = await next(e)
-    await keepBoard($)
-    const hint = boardVarietyHint()
     return {
-      sections: [...sections, { id: SECTION_ID, text: hint === '' ? BASELINE_TEXT : `${BASELINE_TEXT}\n${hint}`, scope: 'session' }],
+      sections: [...sections, { id: SECTION_ID, text: panelConfig.proactive ? BASELINE_TEXT : PASSIVE_BASELINE_TEXT, scope: 'session' }],
     }
   })
 

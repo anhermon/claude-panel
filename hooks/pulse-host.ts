@@ -18,6 +18,7 @@ import type { Lane, LanePlan } from './pulse-lanes'
 import { intentOf, targetOf, zoneOf } from './pulse-redact'
 import { createFlusher } from './pulse-flush'
 import { resolveBriefTitle } from './agent-names'
+import { readMainSessionMeta, resetMainMeta } from './agent-detail-host'
 import { resolveMeta } from './agent-meta'
 import { resolveProof } from './agent-proof'
 import { startRunsPoll, stopRunsPoll } from './pulse-runs-host'
@@ -99,10 +100,21 @@ async function syncList($: Dollar, p: Pulse): Promise<void> {
     p.flusher?.touch()
     for (const l of p.model.loops.values()) if (l.id !== MAIN_LOOP && l.status === 'done' && l.proof === undefined) void proofFromTranscript($, p, l.id, t)
     for (const l of p.model.loops.values()) if (l.id !== MAIN_LOOP && l.source !== 'external' && (l.model === undefined || l.effort === undefined)) void metaFromTranscript($, p, l.id, t)
+    void mainFromTranscript($, p, t)
   } catch {
     // no list (an old engine, a test): the labels stay what the spawn said
   } finally {
     p.isSyncing = false
+  }
+}
+
+/** The main session's model, git branch and AI title come from the tail of the main transcript (cached in agent-detail-host.ts; never throws). */
+async function mainFromTranscript($: Dollar, p: Pulse, t: number): Promise<void> {
+  try {
+    const meta = await readMainSessionMeta($, t)
+    if (meta !== undefined && setLoopMeta(p.model, MAIN_LOOP, meta)) p.flusher?.touch()
+  } catch {
+    // no main transcript read: the row stays as before
   }
 }
 
@@ -343,6 +355,7 @@ const hasRunningAgents = (p: Pulse): boolean => [...p.model.loops.values()].some
 /** Session start (and every reload): build the model, and when the pulse is on, its files and writer. */
 export async function pulseStart($: Dollar, init: PulseInit): Promise<void> {
   try {
+    resetMainMeta()
     const now = await $.clock.now()
     const dir = pulseDirOf(init.tmp, await $.session.id())
     pulse = { model: newModel(now), flusher: null, dir, isOn: await wantsOn($, init.isOff), lastSyncAt: 0, isSyncing: false }

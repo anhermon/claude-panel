@@ -218,7 +218,7 @@ test('scenes.js: fullscreen button calls requestFullscreen on the iframe and is 
   assert.equal(frameOf(c2, 'pulse').findAll((n) => n.tagName === 'BUTTON')[1].hidden, true);
 });
 
-const PAGE_SCRIPTS = ['blocks.js', 'scenes.js', 'events-client.js', 'workspace/layout.js', 'stage.js', 'rail.js', 'ui.js'];
+const PAGE_SCRIPTS = ['plain-title.js', 'blocks.js', 'scenes.js', 'events-client.js', 'workspace/layout.js', 'stage.js', 'rail.js', 'ui.js'];
 
 function pageEnv() {
   const env = loadBrowserScripts(PAGE_SCRIPTS);

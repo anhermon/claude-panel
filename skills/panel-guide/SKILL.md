@@ -6,6 +6,12 @@ description: Use before you build anything visual in the panel (a deck, chart, d
 
 The panel is a canvas you design, not a form. Pick the form by what the user must DO with it (glance, decide, follow, play), not by habit: the cheapest form that makes it glanceable. Skip the panel for a quick factual answer; never mirror the transcript.
 
+## Be proactive
+Use the panel by default, without being asked, for work with more than a few tool calls. Open with task + why before the bulk of the work. After the task, add one form that fits the evidence as soon as you have some; a task alone is not a board. Keep it true at milestones, remove stale frames, and clear it when done. Quick facts and acknowledgements need no panel call. Respect `proactive: false` when configured.
+
+## Context decides the form
+Read `<panel-context>` for the session's job, stack and suggestions. Pick from real evidence and the user's current need; avoid forms used in recent sessions unless the content demands them. Debugging can use `hypotheses`, research `sources`, decisions `decisionmatrix`, review `riskgrid`, and builds or operations `testresults`; use `limits` for measured constraints in long sessions. These are `viz` kinds (`frame.type: "viz"`, `frame.kind` names the form). Never invent measurements just to use a form.
+
 ## Pick the form
 Board frames (`panel {frame}`) are the cheap forms; a scene (`mcp__panel__scene`) is the expensive one. If your last two updates used the same form, prefer another. Remove frames that are no longer true (`frame_remove`) instead of piling up.
 | Context | Show | Form |
@@ -19,9 +25,21 @@ Board frames (`panel {frame}`) are the cheap forms; a scene (`mcp__panel__scene`
 | Waiting on the user | the decision and its options | `ask` + `choices`, maybe a `compare` of the options; no mascot |
 | Several agents | who does what, where their time went, what repeated | the automatic agent rows and the four insight frames below; add nothing unless something blocks |
 | Router-kit run (`.router/` in the session folder) | which tickets are verified, in flight, unverified or blocked; the checks of a failed ticket | the automatic `tickets` / `checks` / `router-events` frames below; add nothing |
+| Test run | suite outcomes and failures | `viz` `testresults` |
+| Debugging evidence | explanations grouped by state | `viz` `hypotheses` |
+| Weighted choice | scores and ranked totals | `viz` `decisionmatrix` |
+| Research evidence | claims and source confidence | `viz` `sources` |
+| Quotas and budget | usage and reset windows | `viz` `limits` |
+| Risk review | likelihood, impact and mitigation | `viz` `riskgrid` |
+| Audio timing | amplitude envelope, onsets and sections in seconds | `viz` `waveform` |
+| Video planning | shots by tool, frame ranges, render state and beat alignment | `viz` `shotlist` |
+| Animation timing | time versus progress, easing curves and peak velocity | `viz` `easing` |
+| Probability or sampling intuition | how a distribution emerges from random choices | `viz` `galton` |
+| Rate or load | a stream whose density is the reading | `viz` `particles` |
 | Done | the outcome and its proof | one `metric` or card summary; clear the stale frames |
-With agents running the board also draws four frames by itself, each only when there is enough measured: `time-by-kind` (a stacked bar per agent by kind of work), `time-sinks` (kinds ranked by share of all agent time, plus the longest stretches), `repeats` (files and commands touched again and again, retries, same-kind tasks) and `improve` (2-4 hints, each with its number and the setting that fired it). They are plain-worded and self-captioned: do not redraw them. Remove one with `frame_remove`, or replace it by sending a frame with the same id (`kindstack`, `sinks`, `repeats` are mod-drawn forms; `hints` is free to use). Not measured, so never claim it: which file or folder a stretch went to, tokens per kind (only per agent), and the time an agent spent reading a result.
+With agents running the board also draws four frames by itself, each only when there is enough measured: `time-by-kind` (a stacked bar per agent by kind of work), `time-sinks` (kinds ranked by share of all agent time, plus the longest stretches), `repeats` (files and commands touched again and again, retries, same-kind tasks) and `improve` (2-4 hints, each with its number and the setting that fired it). They are plain-worded and self-captioned: do not redraw them. The board also draws `sessions` ("Other sessions": the other Claude Code sessions on this machine, with state and current task) by itself, so never scrape transcripts for it; `frame_remove: "sessions"` silences it. Remove one with `frame_remove`, or replace it by sending a frame with the same id (`kindstack`, `sinks`, `repeats` are mod-drawn forms; `hints` is free to use). Not measured, so never claim it: which file or folder a stretch went to, tokens per kind (only per agent), and the time an agent spent reading a result.
 With a router-kit `.router/` folder in the session's working directory (`tickets/*/ticket.json`, `events.jsonl`) the board READS it and draws, with no call from you, `tickets` (2 or more tickets: stage, agent, checks passed/total, fix round n of max, verdict, why-note, dependencies; most relevant first, at most 12), `checks` (exactly one ticket: its verdict checks with evidence, or its eval checklist as "not run") and `router-events` (a `timeline` of the latest events). A worker's claim of done is NOT verified: a ticket is counted verified only with a verifier PASS, otherwise it shows as `unverified`; an unknown status shows as `draft` with its raw status in the note. They are mod-drawn forms: do not redraw them; remove one with `frame_remove`, or replace it by sending a frame with the same id (`tickets`, `checks` are mod-drawn forms; `router-events` is a plain `timeline`). Nothing is drawn when there is no `.router/`.
+The automatic `limits` frame shows provider quota groups with freshness and resets, context fill and formatted cost whenever readings exist (`limitsShowPct`, default 0; `quotaEveryS`, default 120 seconds, 0 disables provider reads); do not redraw it.
 `card` blocks (`table`, `diff`, `tree`, `callout`, ...) show on the browser page, not in the pane; a board frame or a scene shows in both.
 The `panel/ui` component kit, when the plugin ships it (`web/kit/ui`), gives scenes ready-made charts, gauges, callouts and forms; use it to save code, not as a house style. A scene can mix them.
 
@@ -124,9 +142,11 @@ Never autoplay: sound needs a first gesture (the deck counts a key or click). ma
 ## Assets (generate, never hot-link)
 Allowed files: html css js mjs json csv txt png jpg jpeg gif webp avif svg ico mp3 wav ogg oga m4a aac flac mp4 webm glb gltf bin obj stl hdr ktx2 woff2 (put Markdown for `<p-md src>` in `.txt`). Draw diagrams and charts as SVG, `<p-chart>` or `<p-diagram>`; build 3D from primitives or drop a `.glb` in the folder; make images with code, `screencapture -x`, or `sips -Z 1280 in.png --out out.png`. `curl` a file into the folder if you must; nothing loads from the network at view time. No storage APIs in the frame.
 
+Board `html` frames may contain `https://` links (`<a href="https://...">`); they open in a new tab. Other schemes and relative links are shown as plain text.
+
 ## Live preview, goto and live data
 The CLI pane shows a live-streamed preview of the workspace: every stage scene as a tile of one grid. Send `goto` alone with the id to move that live view (the result says `live: moved to #/2` or `live: not running`); the user toggles the preview with `/panel live on|off|status`. If the pane shows no picture, the user's terminal has no image support: the browser has everything.
-With agents running, the mod adds an Agents tile by itself: the ONE place for agent state (a 3D avatar, a satellite per agent, a ticker, a list with a row per agent incl. "Me", the main session). Clicking a row opens its transcript, metrics and struggles inside the tile (Back or Escape returns). While the tile exists the board drops its own agent rows, `now-doing`, `bars` and `pipeline` (checklists, `activity-timeline`, `delegation`, insight and your own frames stay); without it they come back. Post lanes as usual, it needs nothing else; `scene {remove: "agents-info"}` takes it off for the session.
+With agents running, the mod adds an Agents tile by itself: the ONE place for agent state (a 3D avatar, a satellite per agent, a ticker, a list with a row per agent incl. "Me", the main session). Clicking a row opens its transcript, metrics and struggles inside the tile (Back or Escape returns). While the tile exists the board drops its own agent rows, `now-doing`, `bars` and `pipeline` (checklists, `activity-timeline`, `delegation`, insight and your own frames stay); without it they come back. Post lanes as usual, it needs nothing else; a lane for another session can pass `session: <id>` so its row opens that session's transcript; `scene {remove: "agents-info"}` takes it off for the session.
 
 <!-- scene-input -->
 ```json

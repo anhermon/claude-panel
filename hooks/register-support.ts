@@ -64,8 +64,9 @@ export function sceneFs($: Dollar): SceneFs {
 
 export async function sceneEnv($: Dollar): Promise<SceneEnv> {
   const home = await $.env.get('HOME')
-  const scenesDir = inlineScenesDir(await tmpDir($), await $.session.id())
-  return { cwd: await $.session.cwd(), scenesDir, ...(home === undefined ? {} : { home }) }
+  const tmp = await tmpDir($)
+  const scenesDir = inlineScenesDir(tmp, await $.session.id())
+  return { cwd: await $.session.cwd(), scenesDir, tmp, ...(home === undefined ? {} : { home }) }
 }
 
 export async function registerTool(

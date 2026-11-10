@@ -1,6 +1,6 @@
 // line: a line chart (1-3 series) whose paths draw themselves. Axis-light: three faint gridlines, the min and max
 // written inside the plot, the last value at the end of each line. Plain SVG sized to its box (1 unit = 1 css px).
-import { CAPS, capText, scaleSeries } from '../board-logic.mjs';
+import { CAPS, capTitle, scaleSeries } from '../board-logic.mjs';
 import { PALETTE, h, nextId, nextPaint, uiScale, watchSize } from './dom.js';
 
 const PAD_TOP = 14;
@@ -12,7 +12,7 @@ const DOT_R = 4.5;
 const GRID = 3;
 const DRAW_MS_CLASS = 'drawn';
 
-const seriesOf = (f) => (Array.isArray(f.series) ? f.series.filter((s) => s && Array.isArray(s.points)).slice(0, CAPS.series) : []).map((s) => ({ label: capText(s.label, CAPS.label), points: s.points.filter(Number.isFinite).slice(-CAPS.points) }));
+const seriesOf = (f) => (Array.isArray(f.series) ? f.series.filter((s) => s && Array.isArray(s.points)).slice(0, CAPS.series) : []).map((s) => ({ label: capTitle(s.label, CAPS.label), points: s.points.filter(Number.isFinite).slice(-CAPS.points) }));
 const fmt = (v) => (Math.abs(v) >= 100 ? Math.round(v).toLocaleString('en-US') : String(Math.round(v * 10) / 10));
 
 function build(svg, list, w, h2, animate) {

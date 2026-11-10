@@ -83,7 +83,7 @@ const TARGET_JOIN = ' '
 
 const clean = (s: string): string => s.replace(CONTROL_CHARS, '').trim().slice(0, TARGET_CHARS)
 
-/** `/Users/x/secret/key.pem` -> `key.pem`; a trailing slash is ignored; anything that is not a string -> ''. */
+/** `/home/example/secret/key.pem` -> `key.pem`; a trailing slash is ignored; anything that is not a string -> ''. */
 export function baseName(path: unknown): string {
   if (typeof path !== 'string') return ''
   const parts = path.split(PATH_SEPARATORS).filter(p => p !== '')

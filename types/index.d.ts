@@ -308,6 +308,8 @@ export type BoardLane = {
   dod: { t: string; state: 'todo' | 'doing' | 'done' | 'failed' }[]
   /** Index into `dod` of the item in progress, or null. */
   at: number | null
+  /** The Claude Code session this lane stands for: its row opens that session's transcript. */
+  session?: string
   startedAt: number
   updatedAt: number
   by: string
@@ -356,6 +358,30 @@ export type SceneInput =
   | { remove: string; clear?: undefined }
   | { clear: true; remove?: undefined }
 
+/** Private session bookkeeping for proactive hooks; never mirrored to the browser. The raw prompt is never kept, only its redacted title. */
+export type ProactiveJob = 'build' | 'debug' | 'research' | 'review' | 'decide' | 'explain' | 'ops' | 'chat'
+export type ProactiveState = {
+  /** Job at the last context note. */
+  lastInjected: ProactiveJob | null
+  /** Job of the latest work prompt. */
+  job: ProactiveJob | null
+  /** Redacted task title (<= 80 chars) of the latest work prompt, used by the task safety net. */
+  title: string | null
+  calls: number
+  seeded: boolean
+  toolCounts: Record<string, number>
+  /** Session the counters belong to; a different id resets them. */
+  sessionKey: string | null
+  /** Context notes given this session. */
+  injections: number
+  /** Work prompts since the last context note. */
+  sinceInjection: number
+  /** Times a task-only panel call was nudged to add a form this session. */
+  formNudges: number
+  /** The prompt named motion or media work (animation, audio, video, 3D, particles): a domain tag, never the text. */
+  motion: boolean
+}
+
 export type PanelRuntime = {
   /** Absolute path of the mirrored state file, once the session has named it. */
   stateFile: string | null
@@ -394,6 +420,7 @@ declare module 'claude-code' {
       state: Shaped<PanelState>
       runtime: Shaped<PanelRuntime>
       board: Shaped<PanelBoardKeep>
+      proactive: Shaped<ProactiveState>
     }
   }
 }

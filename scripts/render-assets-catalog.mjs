@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Renders the panel/assets catalog scene in the REAL panel server + headless Chrome and checks it:
-//   node scripts/render-assets-catalog.mjs [--out DIR] [--sizes 1280x900,360x730] [--scheme dark|light|both] [--only kind,kind] [--settle MS]
+//   node scripts/render-assets-catalog.mjs [--out DIR] [--sizes 1280x900,360x730] [--scheme dark|light|both] [--only kind,kind] [--settle MS] [--asset-height PX]
 // Per size and colour scheme: PNG tiles <out>/assets-<w>x<h>-<scheme>-tN.png (the page cut into readable pieces), console errors (must be 0),
 // horizontal overflow (none), smallest text (>= MIN_FONT_PX), asset error panels (none), and SVG text that falls outside its svg (none).
 // Prints one JSON summary; exit 1 on any failure. Needs Chrome (web/shot.mjs finds it).
@@ -16,17 +16,22 @@ const SERVER = join(ROOT, 'web', 'server.mjs');
 const SCENE_DIR = join(ROOT, 'web', 'sample-scenes', 'assets-catalog');
 const TOKEN = 't';
 const SCENE_ID = 'assets-catalog';
+// Registry-driven samples include every asset kind (no external media needed).
+// Render a subset with --only <kind>,<kind> (for example --only waveform,galton).
 const DEFAULT_SIZES = ['1280x900', '360x730'];
 const SETTLE_MS = 3500;
 const SERVER_START_MS = 8000;
 const MIN_FONT_PX = 12;
 const OVERFLOW_SLACK_PX = 1;
 const CLIP_SLACK_PX = 2;
+const MIN_ASSET_HEIGHT = 200;
+const MAX_ASSET_HEIGHT = 640;
+const NATURAL_HEIGHT = 0;
 const TILE_HEIGHT = 1100;
 const PORT_LINE = /^PORT (\d+)/m;
 
 function parseArgs(argv) {
-  const o = { out: join(tmpdir(), 'panel-assets-catalog'), sizes: DEFAULT_SIZES, settle: SETTLE_MS, scheme: 'both', only: '' };
+  const o = { out: join(tmpdir(), 'panel-assets-catalog'), sizes: DEFAULT_SIZES, settle: SETTLE_MS, scheme: 'both', only: '', assetHeight: NATURAL_HEIGHT };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === '--out') o.out = resolve(argv[++i]);
@@ -34,6 +39,10 @@ function parseArgs(argv) {
     else if (a === '--settle') o.settle = Number(argv[++i]);
     else if (a === '--scheme') o.scheme = argv[++i];
     else if (a === '--only') o.only = argv[++i];
+    else if (a === '--asset-height') {
+      o.assetHeight = Number(argv[++i]);
+      if (!Number.isFinite(o.assetHeight) || o.assetHeight < MIN_ASSET_HEIGHT || o.assetHeight > MAX_ASSET_HEIGHT) throw new Error(`asset height must be ${MIN_ASSET_HEIGHT}..${MAX_ASSET_HEIGHT} px`);
+    }
     else throw new Error(`unknown option ${a}`);
   }
   return o;
@@ -66,7 +75,7 @@ const AUDIT = `(() => {
   }
   const errors = [...document.querySelectorAll('.pa-err')].map((e) => e.textContent.slice(0, 200));
   const clipped = [];
-  for (const svg of document.querySelectorAll('.pa-stage > svg')) {
+  for (const svg of document.querySelectorAll('.pa-stage svg')) {
     const box = svg.getBoundingClientRect();
     const kind = svg.closest('.pa').dataset.kind;
     for (const t of svg.querySelectorAll('text')) {
@@ -108,7 +117,10 @@ let server;
 let failed = false;
 try {
   server = await startServer(stateFile);
-  const url = `http://127.0.0.1:${server.port}/${TOKEN}/s/${SCENE_ID}/${args.only ? `?only=${encodeURIComponent(args.only)}` : ''}`;
+  const query = new URLSearchParams();
+  if (args.only) query.set('only', args.only);
+  if (args.assetHeight) query.set('assetHeight', String(args.assetHeight));
+  const url = `http://127.0.0.1:${server.port}/${TOKEN}/s/${SCENE_ID}/?${query}`;
   for (const sizeText of args.sizes) {
     const [width, height] = sizeText.split('x').map(Number);
     for (const scheme of schemes) {

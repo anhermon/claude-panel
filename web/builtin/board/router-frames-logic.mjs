@@ -1,9 +1,11 @@
+import { plainTitle } from '../../kit/panel/plain-title.mjs';
 // Pure logic of the two router frames (frames/tickets.js, frames/checks.js): what the page keeps of what the mod sent, the
 // stage -> look mapping that keeps "claimed done" and "verified done" visibly different, and the height each frame needs.
 // No DOM, no clock. Tested by router-frames-logic.test.mjs. Contract: the router-kit state (ticket.json / verdict.checks).
 
 export const STAGES = Object.freeze(['draft', 'ready', 'building', 'verifying', 'fixing', 'done', 'unproven', 'unverified', 'blocked']);
 export const ROUTER_CAPS = Object.freeze({ items: 12, checks: 12, title: 60, id: 12, agent: 20, note: 120, evidence: 400, deps: 3, afterTitle: 24, evalWhat: 60, evalEvidence: 120 });
+const TASK_TITLE = 'Task';
 const PASS = 'PASS';
 const FAIL = 'FAIL';
 
@@ -34,9 +36,9 @@ const verdictOf = (v) => (v === PASS || v === FAIL ? v : null);
 const EVAL_RESULTS = Object.freeze(['pass', 'fail', 'none']);
 const evalOfItem = (v) => {
   const e = isObj(v) ? v : {};
-  const what = cut(e.what, ROUTER_CAPS.evalWhat);
+  const what = cut(plainTitle(e.what, false), ROUTER_CAPS.evalWhat);
   const present = e.present === true && what !== '';
-  return { present, what, result: EVAL_RESULTS.includes(e.result) ? e.result : 'none', evidence: cut(e.evidence, ROUTER_CAPS.evalEvidence) };
+  return { present, what, result: EVAL_RESULTS.includes(e.result) ? e.result : 'none', evidence: cut(plainTitle(e.evidence, false), ROUTER_CAPS.evalEvidence) };
 };
 /** Is the eval a PASSING proof: present and passed. */
 export const evalProves = (e) => e.present && e.result === 'pass';
@@ -56,8 +58,8 @@ export function normalizeTickets(f) {
     const pass = total === null ? null : Math.min(total, whole(it.checks?.pass) ?? 0);
     const maxRounds = whole(it.maxRounds);
     return {
-      id: cut(it.id, ROUTER_CAPS.id), title: cut(it.title, ROUTER_CAPS.title), stage, verdict, proof, look: lookOf(stage, verdict, proof.result, proof.present),
-      agent: cut(it.agent, ROUTER_CAPS.agent), note: cut(it.note, ROUTER_CAPS.note),
+      id: cut(it.id, ROUTER_CAPS.id), title: cut(plainTitle(it.title || it.id, false), ROUTER_CAPS.title) || (it.id || it.title ? TASK_TITLE : ''), stage, verdict, proof, look: lookOf(stage, verdict, proof.result, proof.present),
+      agent: cut(plainTitle(it.agent, false), ROUTER_CAPS.agent), note: cut(plainTitle(it.note, false), ROUTER_CAPS.note),
       checks: total === null || total === 0 ? null : { pass, total },
       round: whole(it.round) || null, maxRounds: maxRounds || null,
       after: arr(it.dependsOn, ROUTER_CAPS.deps).map((d) => cut(d, ROUTER_CAPS.id)).filter(Boolean),
@@ -65,7 +67,7 @@ export function normalizeTickets(f) {
   }).filter((it) => it.title !== '' || it.id !== '');
   // "after 01-schema" reads as "after Booking schema": a dependency is named by its ticket's title when that ticket is in the list
   const titleOfId = new Map(items.map((it) => [it.id, it.title || it.id]));
-  for (const it of items) it.after = it.after.map((d) => cut(titleOfId.get(d) ?? d, ROUTER_CAPS.afterTitle));
+  for (const it of items) it.after = it.after.map((d) => cut(titleOfId.get(d) ?? (plainTitle(d, false) || TASK_TITLE), ROUTER_CAPS.afterTitle));
   const verified = items.filter((it) => it.look === 'verified').length;
   const s = isObj(f.summary) ? f.summary : {};
   // the counts the mod sent win (it saw all tickets, the page may have cut some); else count what is here
@@ -82,7 +84,7 @@ export function normalizeTickets(f) {
 
 export function normalizeChecks(f) {
   const items = arr(f.items, ROUTER_CAPS.checks).filter(isObj).map((it) => ({
-    item: cut(it.item, ROUTER_CAPS.title * 2), pass: it.pass === true ? true : it.pass === false ? false : null, evidence: cut(it.evidence, ROUTER_CAPS.evidence),
+    item: cut(plainTitle(it.item, false), ROUTER_CAPS.title * 2), pass: it.pass === true ? true : it.pass === false ? false : null, evidence: cut(plainTitle(it.evidence, false), ROUTER_CAPS.evidence),
   })).filter((it) => it.item !== '');
   const maxRounds = whole(f.maxRounds);
   const round = whole(f.round);

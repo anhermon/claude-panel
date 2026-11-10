@@ -1,0 +1,8 @@
+schema_version: "1.1"
+name: proactive-decision-without-panel-cue
+description: "A decision task uses task + why and a comparison form without being steered toward the panel."
+runs: 2
+execution:
+  max_turns: 12
+  timeout_seconds: 360
+  prompt: "Choose between a sorted array and a binary heap for a local work queue. We need fast insertion, fast removal of the smallest item, stable ordering for ties, and a small memory footprint. Write one small benchmark script (under 40 lines) in a scratch folder, run it for queue sizes 1000 and 100000, compare the measured results with the requirements, and recommend one option."

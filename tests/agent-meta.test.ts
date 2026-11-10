@@ -7,7 +7,7 @@ import { MAIN_LOOP, loopFor, newModel, setLoopMeta } from '../hooks/pulse-model'
 const NOW = 1_767_000_000_000
 
 test('parseMeta takes the model alias and the effort; anything else is left alone', () => {
-  const raw = '{"agentType":"savvy-flow:savvy-careful","model":"sonnet","effort":"high","toolUseId":"toolu_x"}'
+  const raw = '{"agentType":"example-tools:worker","model":"sonnet","effort":"high","toolUseId":"toolu_x"}'
   expect(parseMeta(raw)).toEqual({ model: 'sonnet', effort: 'high' })
   expect(parseMeta('{"effort":4000}')).toEqual({ effort: '4000' })
   expect(parseMeta('{"model":"sonnet"}')).toEqual({ model: 'sonnet' }) // an unknown effort stays unknown
@@ -24,4 +24,9 @@ test('setLoopMeta sets what is missing once and keeps what a run record already 
   expect(m.loops.get('a')).toMatchObject({ model: 'sonnet', effort: 'high' })
   expect(setLoopMeta(m, 'nope', { model: 'sonnet' })).toBe(false)
   expect(m.loops.has(MAIN_LOOP)).toBe(true)
+  expect(setLoopMeta(m, MAIN_LOOP, { model: 'claude-opus-4-6', branch: 'main', title: 'Initial title' })).toBe(true)
+  expect(m.loops.get(MAIN_LOOP)).toMatchObject({ model: 'claude-opus-4-6', branch: 'main', title: 'Initial title' })
+  expect(setLoopMeta(m, MAIN_LOOP, { model: 'claude-opus-4-6', branch: 'main', title: 'Initial title' })).toBe(false)
+  expect(setLoopMeta(m, MAIN_LOOP, { title: 'Updated title' })).toBe(true)
+  expect(m.loops.get(MAIN_LOOP)?.title).toBe('Updated title')
 })

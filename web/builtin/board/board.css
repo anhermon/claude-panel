@@ -87,6 +87,9 @@ body { background: radial-gradient(90vw 60vh at 78% -12%, #141a2e 0%, transparen
 .frame.quiet .quiet-dot { opacity: .85; }
 .fb { position: relative; flex: 1; min-height: 0; container-type: size; }
 .layer { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center; min-height: 0; overflow: hidden; }
+/* Viz content reports its natural height to the planner. Scrolling remains a fallback while loading/resizing. */
+.layer[data-kind] { justify-content: flex-start; overflow: auto; }
+.layer[data-kind] > .pa:not(.pa-fill) { flex: none; }
 .layer.fade-in { animation: fade-in .6s ease both; }
 .layer.fade-out { animation: fade-out .6s ease both; pointer-events: none; }
 @keyframes fade-in { from { opacity: 0; } }
@@ -371,6 +374,8 @@ body { background: radial-gradient(90vw 60vh at 78% -12%, #141a2e 0%, transparen
 .image img { flex: 1; min-height: 0; max-width: 100%; object-fit: contain; border-radius: .6em; }
 .image figcaption, .image-missing { color: var(--mut); font-size: max(var(--fs), min(3.6cqw, 9cqh)); text-align: center; }
 .html { height: 100%; overflow: hidden; font-size: max(var(--fs), min(4.2cqw, 12cqh)); line-height: 1.3; }
+.html a { color: var(--panel-accent, #7aa2ff); text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
+.html a:hover { text-decoration-thickness: 2px; }
 .html svg { display: block; max-width: 100%; max-height: 100cqh; margin: 0 auto; }
 .unsupported { display: flex; align-items: center; justify-content: center; height: 100%; color: var(--dim); font-size: var(--fs); font-style: italic; border: 1px dashed var(--line-hi); border-radius: .8em; }
 

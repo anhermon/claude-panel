@@ -1,3 +1,4 @@
+import { plainTitle } from '../../kit/panel/plain-title.mjs';
 // Pure logic of the four workflow-insight frames (frames/kindstack.js, sinks.js, repeats.js, hints.js): normalising what the
 // mod sent (hooks/insight-time.ts, insight-repeats.ts, insight-hints.ts; a hand-sent frame of the same type goes through the
 // same door), the little arithmetic of the drawings (which slices have room for a word, how dark a heat cell is), and an
@@ -38,16 +39,16 @@ export function normalizeKindStack(f) {
     const total = raw.reduce((a, s) => a + count(s.s), 0);
     const segs = raw.map((s) => ({ k: s.k, s: count(s.s), text: cut(s.text, IX_CAPS.label), share: total > 0 ? count(s.s) / total : 0 }))
       .map((s) => ({ ...s, showLabel: sliceFitsLabel(s.share, s.k) }));
-    return { label: cut(it.label, IX_CAPS.label), total: cut(it.total, IX_CAPS.label), tokens: cut(it.tokens, IX_CAPS.label), segs, detail: segs.slice(0, IX_CAPS.detail), more: Math.max(0, segs.length - IX_CAPS.detail) };
+    return { label: cut(plainTitle(it.label, false), IX_CAPS.label), total: cut(it.total, IX_CAPS.label), tokens: cut(it.tokens, IX_CAPS.label), segs, detail: segs.slice(0, IX_CAPS.detail), more: Math.max(0, segs.length - IX_CAPS.detail) };
   }).filter((it) => it.segs.length > 0);
-  return { caption: cut(f.caption, IX_CAPS.caption), foot: cut(f.foot, IX_CAPS.foot), items, kinds: kindsInOrder(new Set(items.flatMap((it) => it.segs.map((s) => s.k)))) };
+  return { caption: cut(plainTitle(f.caption, false), IX_CAPS.caption), foot: cut(f.foot, IX_CAPS.foot), items, kinds: kindsInOrder(new Set(items.flatMap((it) => it.segs.map((s) => s.k)))) };
 }
 
 // ---- sinks: kinds ranked by their share of all time ------------------------------------------------------------------------
 export function normalizeSinks(f) {
   const items = arr(f.items, IX_CAPS.sinks).filter((it) => isObj(it) && isKind(it.k))
     .map((it) => ({ k: it.k, pct: Math.min(PCT_MAX, count(it.pct)), text: cut(it.text, IX_CAPS.text), time: cut(it.time, IX_CAPS.label), meta: cut(it.meta, IX_CAPS.label) }));
-  return { caption: cut(f.caption, IX_CAPS.caption), foot: cut(f.foot, IX_CAPS.foot), items, notes: arr(f.notes, IX_CAPS.notes).map((n) => cut(n, IX_CAPS.text)).filter((n) => n !== '') };
+  return { caption: cut(plainTitle(f.caption, false), IX_CAPS.caption), foot: cut(f.foot, IX_CAPS.foot), items, notes: arr(f.notes, IX_CAPS.notes).map((n) => cut(n, IX_CAPS.text)).filter((n) => n !== '') };
 }
 
 // ---- repeats: a file x agent matrix and sentences --------------------------------------------------------------------------
@@ -55,11 +56,11 @@ export function normalizeSinks(f) {
 export const heatLevel = (n, max) => (n > 0 && max > 0 ? Math.max(1, Math.ceil((n / max) * HEAT_LEVELS)) : 0);
 
 export function normalizeRepeats(f) {
-  const cols = arr(f.cols, IX_CAPS.cols).map((c) => cut(c, IX_CAPS.label));
-  const raw = arr(f.rows, IX_CAPS.matrixRows).filter(isObj).map((r) => ({ label: cut(r.label, IX_CAPS.label), note: cut(r.note, IX_CAPS.label), cells: cols.map((_, i) => count(arr(r.cells, IX_CAPS.cols)[i])) }));
+  const cols = arr(f.cols, IX_CAPS.cols).map((c) => cut(plainTitle(c, false), IX_CAPS.label));
+  const raw = arr(f.rows, IX_CAPS.matrixRows).filter(isObj).map((r) => ({ label: cut(plainTitle(r.label, false), IX_CAPS.label), note: cut(r.note, IX_CAPS.label), cells: cols.map((_, i) => count(arr(r.cells, IX_CAPS.cols)[i])) }));
   const max = Math.max(0, ...raw.flatMap((r) => r.cells));
   const rows = raw.filter((r) => r.label !== '').map((r) => ({ ...r, levels: r.cells.map((n) => heatLevel(n, max)) }));
-  return { caption: cut(f.caption, IX_CAPS.caption), cols: rows.length > 0 ? cols : [], rows, foot: rows.length > 0 ? cut(f.foot, IX_CAPS.foot) : '', notes: arr(f.notes, IX_CAPS.notes).map((n) => cut(n, IX_CAPS.text)).filter((n) => n !== '') };
+  return { caption: cut(plainTitle(f.caption, false), IX_CAPS.caption), cols: rows.length > 0 ? cols : [], rows, foot: rows.length > 0 ? cut(f.foot, IX_CAPS.foot) : '', notes: arr(f.notes, IX_CAPS.notes).map((n) => cut(n, IX_CAPS.text)).filter((n) => n !== '') };
 }
 
 // ---- hints: text cards -----------------------------------------------------------------------------------------------------
@@ -67,7 +68,7 @@ export function normalizeHints(f) {
   const items = arr(f.items, IX_CAPS.hints).filter(isObj)
     .map((it) => ({ text: cut(it.text, IX_CAPS.text), evidence: cut(it.evidence, IX_CAPS.text), rule: cut(it.rule, IX_CAPS.text) }))
     .filter((it) => it.text !== '');
-  return { caption: cut(f.caption, IX_CAPS.caption), foot: cut(f.foot, IX_CAPS.foot), items };
+  return { caption: cut(plainTitle(f.caption, false), IX_CAPS.caption), foot: cut(f.foot, IX_CAPS.foot), items };
 }
 
 // ---- the height each frame needs (em of the text floor) ----------------------------------------------------------------------

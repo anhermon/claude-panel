@@ -1,3 +1,4 @@
+import { plainTitle } from '../../kit/panel/plain-title.mjs';
 // Pure logic of the two "what kind of work" frames: `doing` (one line per agent: kind glyph, name, kind, files; frames/doing.js)
 // and `swimlane` (one lane per agent over the session, bars by kind; frames/swimlane.js). No DOM, no clock of its own.
 // Tested by doing-logic.test.mjs.
@@ -24,7 +25,7 @@ export function doingRows(lanes, now) {
     .filter((l) => isObj(l) && isObj(l.insight))
     .map((l) => {
       const { kind } = liveKind(l.insight, l.state, now);
-      return { id: l.id, name: cut(l.label, DOING_CAPS.name), kind, files: l.insight.files.slice(0, DOING_CAPS.files), running: RUNNING.has(l.state), isMain: l.insight.isMain };
+      return { id: l.id, name: cut(plainTitle(l.label, false), DOING_CAPS.name), kind, files: l.insight.files.slice(0, DOING_CAPS.files), running: RUNNING.has(l.state), isMain: l.insight.isMain };
     });
   return [...rows.filter((r) => r.running), ...rows.filter((r) => !r.running)].slice(0, DOING_CAPS.rows);
 }
@@ -42,7 +43,7 @@ export function normalizeSwimlane(f) {
       .slice(-SWIMLANE_CAPS.segs)
       .map((s) => ({ k: s.k, a: sec(s.a), b: sec(s.b) }))
       .filter((s) => s.b > s.a);
-    return { label: cut(it.label, SWIMLANE_CAPS.label), state: SWIMLANE_STATES.has(it.state) ? it.state : 'done', from, to: Math.max(to, ...segs.map((s) => s.b)), segs };
+    return { label: cut(plainTitle(it.label, false), SWIMLANE_CAPS.label), state: SWIMLANE_STATES.has(it.state) ? it.state : 'done', from, to: Math.max(to, ...segs.map((s) => s.b)), segs };
   });
   const end = Math.max(1, ...items.map((i) => i.to));
   return { items, end, kinds: byKindOrder(new Set(items.flatMap((i) => i.segs.map((s) => s.k)))) };

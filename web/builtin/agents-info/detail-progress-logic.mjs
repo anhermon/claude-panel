@@ -1,3 +1,4 @@
+import { plainTitle } from '../../kit/panel/plain-title.mjs';
 // Pure logic of the Progress and Struggles tabs: what the mod wrote (hooks/agent-progress.ts AgentProgress, hooks/agent-struggles.ts
 // StruggleReport inside live/detail.json) -> clean data, and what the drawing needs (phase segments, checklist count, outcome words,
 // the grouped struggle rows). No DOM, no clock of its own. A field the data lacks stays empty: nothing is invented here.
@@ -29,7 +30,7 @@ const text = (v, max) => cut(v, max);
 
 function normalizePhase(raw) {
   if (!isObj(raw) || num(raw.a) === null || num(raw.b) === null || raw.b < raw.a) return null;
-  return { label: text(raw.label, PCAPS.short) || 'work', kind: pick(raw.kind, PHASE_KINDS, 'other'), a: raw.a, b: raw.b, ms: raw.b - raw.a, n: count(raw.n), failed: raw.failed === true, isCurrent: raw.isCurrent === true };
+  return { label: text(plainTitle(raw.label, false), PCAPS.short) || 'work', kind: pick(raw.kind, PHASE_KINDS, 'other'), a: raw.a, b: raw.b, ms: raw.b - raw.a, n: count(raw.n), failed: raw.failed === true, isCurrent: raw.isCurrent === true };
 }
 
 const normalizePlanItem = (raw) => (isObj(raw) && typeof raw.text === 'string' && raw.text !== '' ? { text: text(raw.text, PCAPS.item), state: pick(raw.state, PLAN_STATES, 'todo'), evidence: text(raw.evidence, PCAPS.short) } : null);
@@ -41,12 +42,12 @@ function normalizeFolder(raw) {
 
 function normalizeCheck(raw) {
   if (!isObj(raw) || typeof raw.label !== 'string') return null;
-  return { label: text(raw.label, PCAPS.short), cmd: text(raw.cmd, PCAPS.title), outcome: pick(raw.outcome, ['pass', 'fail', 'running'], 'running'), result: text(raw.result, PCAPS.short), t: num(raw.t), runs: count(raw.runs) || 1 };
+  return { label: text(plainTitle(raw.label, false), PCAPS.short), cmd: text(raw.cmd, PCAPS.title), outcome: pick(raw.outcome, ['pass', 'fail', 'running'], 'running'), result: text(raw.result, PCAPS.short), t: num(raw.t), runs: count(raw.runs) || 1 };
 }
 
 const normalizeDecision = (raw) => (isObj(raw) && typeof raw.quote === 'string' && raw.quote !== '' && num(raw.t) !== null ? { t: raw.t, quote: text(raw.quote, PCAPS.quote) } : null);
 const normalizeIssue = (raw) => (isObj(raw) && typeof raw.title === 'string' && raw.title !== ''
-  ? { kind: pick(raw.kind, ISSUE_KINDS, 'failure'), title: text(raw.title, PCAPS.title), evidence: text(raw.evidence, PCAPS.quote), t: num(raw.t), outcome: raw.outcome === 'resolved' ? 'resolved' : 'open' }
+  ? { kind: pick(raw.kind, ISSUE_KINDS, 'failure'), title: text(plainTitle(raw.title, false), PCAPS.title), evidence: text(raw.evidence, PCAPS.quote), t: num(raw.t), outcome: raw.outcome === 'resolved' ? 'resolved' : 'open' }
   : null);
 
 /** Whatever `progress` holds -> clean progress; missing or malformed -> the empty one (nothing shown, nothing invented). Never throws. */
@@ -60,8 +61,8 @@ export function normalizeProgress(raw) {
   const issueList = list(issues.list, PCAPS.issues).map(normalizeIssue).filter((i) => i !== null);
   return {
     isEmpty: !isObj(raw),
-    now: { say: text(now.say, PCAPS.quote), sayT: num(now.sayT), call, pace: text(now.pace, PCAPS.title), laneStep: text(now.laneStep, PCAPS.short), laneNote: text(now.laneNote, PCAPS.title) },
-    plan: { source: pick(plan.source, PLAN_SOURCES, 'none'), label: text(plan.label, PCAPS.title), items: list(plan.items, PCAPS.plan).map(normalizePlanItem).filter((i) => i !== null) },
+    now: { say: text(now.say, PCAPS.quote), sayT: num(now.sayT), call, pace: text(now.pace, PCAPS.title), laneStep: text(plainTitle(now.laneStep, false), PCAPS.short), laneNote: text(plainTitle(now.laneNote, false), PCAPS.title) },
+    plan: { source: pick(plan.source, PLAN_SOURCES, 'none'), label: text(plainTitle(plan.label, false), PCAPS.title), items: list(plan.items, PCAPS.plan).map(normalizePlanItem).filter((i) => i !== null) },
     phases: list(r.phases, PCAPS.phases).map(normalizePhase).filter((p) => p !== null),
     phaseNote: text(r.phaseNote, PCAPS.title),
     done: {
@@ -79,7 +80,7 @@ export function normalizeProgress(raw) {
 function normalizeStruggleItem(raw) {
   if (!isObj(raw) || !STRUGGLE_KINDS.includes(raw.kind) || typeof raw.title !== 'string' || num(raw.t) === null) return null;
   return {
-    kind: raw.kind, title: text(raw.title, PCAPS.title), evidence: text(raw.evidence, PCAPS.quote), t: raw.t, lastT: num(raw.lastT) ?? raw.t, n: count(raw.n) || 1,
+    kind: raw.kind, title: text(plainTitle(raw.title, false), PCAPS.title), evidence: text(raw.evidence, PCAPS.quote), t: raw.t, lastT: num(raw.lastT) ?? raw.t, n: count(raw.n) || 1,
     outcome: raw.outcome === 'resolved' ? 'resolved' : 'open', hint: text(raw.hint, PCAPS.title), recent: raw.recent === true,
   };
 }
@@ -89,12 +90,12 @@ export function normalizeStruggles(raw) {
   const r = isObj(raw) ? raw : {};
   const items = list(r.items, PCAPS.struggles).map(normalizeStruggleItem).filter((i) => i !== null);
   return {
-    headline: text(r.headline, PCAPS.title),
+    headline: text(plainTitle(r.headline, false), PCAPS.title),
     badge: count(r.badge),
     open: count(r.open),
     resolved: count(r.resolved),
     items,
-    calm: list(r.calm, PCAPS.calm).filter((c) => isObj(c) && typeof c.title === 'string').map((c) => ({ title: text(c.title, PCAPS.title), n: count(c.n) })),
+    calm: list(r.calm, PCAPS.calm).filter((c) => isObj(c) && typeof c.title === 'string').map((c) => ({ title: text(plainTitle(c.title, false), PCAPS.title), n: count(c.n) })),
   };
 }
 

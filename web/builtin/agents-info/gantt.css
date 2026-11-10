@@ -48,7 +48,7 @@
 .g-lab[hidden] { display: none; }
 .g-chev { position: absolute; left: 0; top: 50%; transform: translateY(-50%); max-width: 100%; padding: 0 12px 0 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; border-radius: 4px; color: var(--fg); font-size: max(12px, .8em); font-weight: 650; line-height: 16px; background: linear-gradient(90deg, rgba(11, 12, 16, .92) 75%, transparent); pointer-events: none; }
 
-/* what an agent IS: its type verbatim (monospace, so "savvy-flow:savvy-careful" reads as the engine's name) and model:effort; on a row (beside the kind) and on a crew tile (under the chips) */
+/* what an agent IS: its type verbatim (monospace, so "example-tools:worker" reads as the engine's name) and model:effort; on a row (beside the kind) and on a crew tile (under the chips) */
 .ident { display: inline-flex; flex-wrap: wrap; align-items: baseline; gap: 0 6px; min-width: 0; max-width: 100%; font-size: max(12px, .8em); line-height: 1.4; color: var(--mut); }
 .ident[hidden], .ident > [hidden] { display: none; }
 .ident-type[hidden] { display: none; }
@@ -58,6 +58,10 @@
 .ident-model { font-variant-numeric: tabular-nums; font-weight: 650; white-space: nowrap; }
 .gantt .ident { order: 2; }
 .crew-txt > .ident:not([hidden]) { display: flex; }
+/* a tile is narrow: the type and the model wrap inside it instead of being clipped */
+.crew-txt > .ident:not([hidden]) { flex-wrap: wrap; }
+.crew-txt .ident-type { flex-wrap: wrap; white-space: normal; overflow-wrap: anywhere; }
+.crew-txt .ident-model { white-space: normal; overflow-wrap: anywhere; min-width: 0; }
 
 /* wide list: the left part of the row ~38%, the track the other ~62%, on the same column as the axis */
 @container gantt (min-width: 600px) {

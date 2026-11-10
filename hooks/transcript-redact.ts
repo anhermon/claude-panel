@@ -44,7 +44,19 @@ const NAMED_SECRET = /\b([A-Za-z0-9_.-]*(?:token(?!s)|secret|passw(?:or)?d|api[_
 const SECRET_FLAG = /(--?(?:token|password|passwd|pass|secret|api-?key|auth|key)\b)(\s+|=)(?!-)("[^"]*"|'[^']*'|\S+)/gi
 const TOKEN_SHAPES =
   /\b(?:sk|pk|rk)-[A-Za-z0-9_-]{16,}|\bgh[pousr]_[A-Za-z0-9]{20,}|\bxox[abprs]-[A-Za-z0-9-]{10,}|\bAKIA[0-9A-Z]{16}\b|\bAIza[0-9A-Za-z_-]{30,}|\beyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]*/g
-const LONG_BLOB = /[A-Za-z0-9_-]{40,}|[A-Za-z0-9+]{40,}/g
+const MIN_BLOB = 40
+const LONG_BLOB = new RegExp(`[A-Za-z0-9_-]{${MIN_BLOB},}`, 'g')
+const HAS_DIGIT = /\d/
+const HAS_LETTER = /[A-Za-z]/
+const PATH_SEPARATOR = '/'
+const HEADER_LINE = /\b(authorization|cookie|x-api-key|set-cookie)(\s*:\s*)[^\r\n]+/gi
+const PATH_BOUNDARY = /[\s"'`<>]/
+const maskBlob = (run: string, offset: number, text: string): string => {
+  if (!HAS_DIGIT.test(run) || !HAS_LETTER.test(run)) return run
+  const before = text.slice(0, offset).split(PATH_BOUNDARY).at(-1) ?? ''
+  const after = text.slice(offset + run.length).split(PATH_BOUNDARY)[0] ?? ''
+  return `${before}${run}${after}`.includes(PATH_SEPARATOR) ? run : REDACTED
+}
 const HOME_PATH = /(?:\/Users|\/home)\/[^/\s"'`]+/g
 
 /** Text -> one safe line: control characters out, secrets and the home folder replaced, whitespace collapsed. Not shortened. */
@@ -52,12 +64,13 @@ export function scrubText(text: string): string {
   return text
     .replace(CONTROL_CHARS, ' ')
     .replace(PRIVATE_KEY_BLOCK, REDACTED)
+    .replace(HEADER_LINE, `$1$2${REDACTED}`)
     .replace(URL_USERINFO, `$1${REDACTED}@`)
     .replace(AUTH_HEADER, `$1 ${REDACTED}`)
     .replace(NAMED_SECRET, `$1$2${REDACTED}`)
     .replace(SECRET_FLAG, `$1$2${REDACTED}`)
     .replace(TOKEN_SHAPES, REDACTED)
-    .replace(LONG_BLOB, REDACTED)
+    .replace(LONG_BLOB, maskBlob)
     .replace(HOME_PATH, HOME_MARK)
     .replace(SPACES, ' ')
     .trim()

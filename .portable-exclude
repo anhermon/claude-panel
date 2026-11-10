@@ -1,0 +1,10 @@
+# Dev-tree-only fleet files: not part of the public repo (one rsync exclude pattern per line, anchored at the plugin root).
+/hooks/fleet-contract.ts
+/hooks/fleet-host.ts
+/hooks/fleet-hub.ts
+/hooks/fleet-validate.ts
+/scripts/fleet.mjs
+/tests/fleet-*.test.ts
+/web/fleet/
+/scripts/export-portable.sh
+/scripts/sync-sessions.sh

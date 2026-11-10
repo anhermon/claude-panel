@@ -1,3 +1,4 @@
+import { plainTitle } from '../../kit/panel/plain-title.mjs';
 // Pure helpers of the agent rows (frames/lanes.js): what a row says and how it is worded. No DOM, no clock of its own.
 
 const MS_MIN = 60_000;
@@ -26,7 +27,7 @@ export function elapsedMs(lane, now) {
 export const callsLabel = (calls) => (Number.isInteger(calls) && calls >= 0 ? `${calls} ${calls === 1 ? 'call' : 'calls'}` : '');
 
 /** The row's headline: what the agent is after (goal), else its own label. */
-export const laneTitle = (lane) => lane.goal || lane.label;
+export const laneTitle = (lane) => plainTitle(lane.goal || lane.label, false);
 
 /** The row's progress: the posted pct, else the share of its checklist that is done, else null (unknown). */
 export function lanePct(lane) {

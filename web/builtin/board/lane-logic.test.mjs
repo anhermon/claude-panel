@@ -26,7 +26,7 @@ test('callsLabel, laneTitle, lanePct', () => {
   assert.equal(callsLabel(undefined), '');
   assert.equal(callsLabel(-3), '');
   assert.equal(laneTitle({ goal: 'Fix the board', label: 'T34' }), 'Fix the board');
-  assert.equal(laneTitle({ goal: '', label: 'T34' }), 'T34');
+  assert.equal(laneTitle({ goal: '', label: 'T34' }), '');
   assert.equal(lanePct({ pct: 40, dod: [] }), 40);
   assert.equal(lanePct({ pct: null, dod: [{ state: 'done' }, { state: 'todo' }, { state: 'doing' }, { state: 'done' }] }), 50);
   assert.equal(lanePct({ pct: null, dod: [] }), null);

@@ -5,12 +5,14 @@
 // off, state change, kind of work change, progress step, finished). Event ids only grow, so the page can tell which are new.
 import type { BoardLane, PanelStatus } from '../types'
 import type { AgentProof } from './agent-proof'
+import { plainTitle, PLACEHOLDER_BASE } from './agent-names'
 import { roleOf, ticketBadgeOf } from './agent-roles'
 import type { RoleSubject, TicketBadge } from './agent-roles'
 import { agentLanes, hasAgents } from './board-agents'
 import { segmentsOfLoop } from './agent-insight'
 import { isNotStartedLoop } from './not-started'
 import type { PulseEvent, PulseLoop } from './pulse-model'
+import { tallyErrors } from './pulse-tally'
 import type { RouterRun } from './router-state'
 import { KIND_META } from './work-kinds'
 import type { BoardInput } from './board-model'
@@ -33,7 +35,14 @@ export const AGENTS_INFO_CAPS = {
   /** The newest stretches of one kind of work kept per agent (the gantt bar), and the grid a running stretch's moving end is rounded to (so the file is not rewritten every flush). */
   SEGS: 48,
   SEG_ROUND_MS: 10_000,
+  /** A running agent whose last tool call has had no answer for at least this long while quiet gets the heuristic "may be waiting" hint. */
+  WAITING_HINT_MS: 20_000,
+  TOOL_CHARS: 40,
+  BRANCH_CHARS: 60,
 } as const
+
+/** Heuristic hint that a quiet live agent's pending tool call has had no answer for >= WAITING_HINT_MS (a long tool looks the same). */
+export type WaitingHint = { tool: string; target?: string }
 
 /** One stretch of one kind of work on the clock (ms), as the swimlane frame gets them (hooks/agent-insight.ts segmentsOfLoop). */
 export type AgentSeg = { k: string; a: number; b: number }
@@ -68,7 +77,7 @@ export type AgentRow = {
   files: string[]
   /** The stretches of work it did, oldest first (the gantt bar); empty for a lane no loop backs. */
   segs?: AgentSeg[]
-  /** The agent type EXACTLY as the engine names it (`general-purpose`, `savvy-flow:savvy-careful`, `Explore`), namespace included; null when not known. */
+  /** The agent type EXACTLY as the engine names it (`general-purpose`, `example-tools:worker`, `Explore`), namespace included; null when not known. */
   agentType?: string | null
   /** Its role in a router-kit run (`router`, `worker`, `verifier`, ...), else null: an ordinary agent looks as before (hooks/agent-roles.ts). */
   role?: string | null
@@ -78,10 +87,17 @@ export type AgentRow = {
   proof?: AgentProof | null
   /** Only on a run of another harness (codex, agy) ingested from a run record (hooks/pulse-ingest.ts); a Claude agent carries none of these. `calls`: its tool calls so far. */
   harness?: string
-  /** The model and effort the agent was started with (`sonnet`, `high`; an inherited effort is spelled `high*`): absent when not known, never guessed. A Claude subagent's come from its meta file (hooks/agent-meta.ts). */
+  /** The model and effort the agent was started with (`sonnet`, `high`; an inherited effort is spelled `high*`): absent when not known, never guessed. A Claude subagent's come from its meta file (hooks/agent-meta.ts); the main session's model comes from its transcript. */
   model?: string
   effort?: string
+  /** For the main session ("Me"), the git branch and AI session title from its transcript when known. */
+  branch?: string
+  title?: string
   calls?: number
+  /** Sum of failed tool calls on the loop's tally when > 0; absent when 0. */
+  errors?: number
+  /** Heuristic "may be waiting" hint when a live agent's last tool call has had no answer for >= 20 s while quiet; absent otherwise. */
+  mayBeWaiting?: WaitingHint
   confidence?: 'exact' | 'guessed'
   /** A short remark for the row's tooltip, e.g. that its log was matched by folder and time; for a not-started attempt, why and how often it was retried. */
   note?: string
@@ -106,12 +122,12 @@ export type AgentsInfoData = {
 /** What a diff compares: the fields whose change the person should see. */
 export type Snapshot = { agents: AgentRow[] }
 
-const TICKET_ID = /^[A-Za-z]{1,4}-?\d+/
 const WORKING_STATES: readonly AgentState[] = ['working', 'testing']
 const MAIN_NAME = 'main'
 /** How the main session is named on its row. */
 export const MAIN_ROW_NAME = 'Me'
 const FINISHED = 'done'
+const FAILED_STAGES: readonly string[] = ['failed', 'fail', 'rejected', 'error']
 const MS_PER_MINUTE = 60_000
 const MS_PER_SECOND = 1000
 const SECONDS_PER_MINUTE = 60
@@ -122,10 +138,10 @@ const GUESSED_NOTE = 'log matched by folder and time'
 const clip = (s: string, max: number): string => (s.length <= max ? s : `${s.slice(0, Math.max(0, max - 1)).trimEnd()}${ELLIPSIS}`)
 const oneLine = (s: string): string => s.replace(/\s+/g, ' ').trim()
 
-/** The short name of an agent for the ticker: its ticket id when the label starts with one ("T43 Fix lanes" -> "T43"), else the start of the label. */
+/** The task title for the ticker, cleaned before clipping. */
 export function shortNameOf(label: string): string {
-  const name = oneLine(label)
-  return clip(TICKET_ID.exec(name)?.[0] ?? name, AGENTS_INFO_CAPS.SHORT_CHARS)
+  const name = plainTitle(label, false) || PLACEHOLDER_BASE
+  return clip(name, AGENTS_INFO_CAPS.SHORT_CHARS)
 }
 
 /** How long, in the words of the ticker: "42 s", "26 min", "2 h 5 min". */
@@ -145,14 +161,28 @@ function roleInfoOf(lane: BoardLane, loops: readonly PulseLoop[], router: Router
   return { role: role ?? null, ticket: isMain ? null : (ticketBadgeOf(subject, router) ?? null), proof: isMain ? null : (loop?.proof ?? null) }
 }
 
-/** What an agent is: its type verbatim and the model and effort it runs on, from the pulse loop (the main session has none of them). */
-function identityOf(lane: BoardLane, loops: readonly PulseLoop[]): Pick<AgentRow, 'agentType' | 'model' | 'effort'> {
-  const loop = lane.insight?.isMain === true ? undefined : loops.find(l => l.id === (lane.loop ?? lane.id))
+/** What an agent is: its type verbatim and the model and effort it runs on, from the pulse loop (the main session gets model/effort/branch/title from its transcript, while agentType stays null). */
+export function identityOf(lane: BoardLane, loops: readonly PulseLoop[]): Pick<AgentRow, 'agentType' | 'model' | 'effort' | 'branch' | 'title'> {
+  const isMain = lane.insight?.isMain === true
+  const loop = loops.find(l => l.id === (lane.loop ?? lane.id)) ?? (isMain ? loops.find(l => l.kind === 'main') : undefined)
   return {
-    agentType: loop?.type ?? null,
+    agentType: isMain ? null : (loop?.type ?? null),
     ...(loop?.model === undefined ? {} : { model: loop.model }),
     ...(loop?.effort === undefined ? {} : { effort: loop.effort }),
+    ...(isMain && loop?.branch !== undefined ? { branch: clip(oneLine(loop.branch), AGENTS_INFO_CAPS.BRANCH_CHARS) } : {}),
+    ...(isMain && loop?.title !== undefined ? { title: clip(plainTitle(loop.title, false), AGENTS_INFO_CAPS.NAME_CHARS) } : {}),
   }
+}
+
+/** Heuristic "may be waiting" hint: a live agent with an unanswered tool call (`busy > 0`) that has been quiet for >= 20 s. Never set for done, failed, or not-started agents. */
+function waitingOf(loop: PulseLoop | undefined, isDone: boolean, ticket: TicketBadge | null | undefined, now: number): Pick<AgentRow, 'mayBeWaiting'> {
+  if (loop === undefined || isDone || loop.status === 'done' || loop.outcome !== undefined) return {}
+  if (FAILED_STAGES.includes((ticket?.stage ?? '').toLowerCase())) return {}
+  if (loop.busy <= 0 || loop.lastTool === '' || now - loop.lastAt < AGENTS_INFO_CAPS.WAITING_HINT_MS) return {}
+  const tool = clip(oneLine(loop.lastTool), AGENTS_INFO_CAPS.TOOL_CHARS)
+  if (tool === '') return {}
+  const target = clip(oneLine(loop.lastTarget), AGENTS_INFO_CAPS.HEADLINE_CHARS)
+  return { mayBeWaiting: target === '' ? { tool } : { tool, target } }
 }
 
 /** The lane's stretches of work (the swimlane frame's data, in ms): the newest SEGS; a running loop's moving end is rounded so the file only changes now and then. Empty when no loop backs the lane. */
@@ -183,18 +213,20 @@ function externalOf(lane: BoardLane, loops: readonly PulseLoop[]): Pick<AgentRow
 function rowOf(lane: BoardLane, now: number, loops: readonly PulseLoop[], router: RouterRun | undefined, events: readonly PulseEvent[] = []): AgentRow {
   const insight = lane.insight
   const meta = KIND_META[insight?.kind ?? FALLBACK_KIND]
-  const loop = loops.find(l => l.id === (lane.loop ?? lane.id))
+  const isMain = insight?.isMain === true
+  const loop = loops.find(l => l.id === (lane.loop ?? lane.id)) ?? (isMain ? loops.find(l => l.kind === 'main') : undefined)
   const isNotStarted = loop !== undefined && isNotStartedLoop(loop)
   const isDone = lane.state === FINISHED || isNotStarted // a not-started attempt has stopped (its bar must not run to now), though it is not "done"
-  const isMain = insight?.isMain === true
   // A delegated run has its OWN clock (the record's start and end); a lane somebody posted for it only says when that post was first and last made.
   const isRun = loop?.source === 'external'
   const startedAt = isRun ? loop.startedAt : lane.startedAt
+  const roleInfo = roleInfoOf(lane, loops, router)
+  const errors = tallyErrors(loop?.tally)
   return {
     id: lane.id,
     loop: lane.loop ?? lane.id,
     isMain,
-    name: isMain ? MAIN_ROW_NAME : clip(oneLine(lane.label), AGENTS_INFO_CAPS.NAME_CHARS),
+    name: isMain ? MAIN_ROW_NAME : clip(plainTitle(lane.label, false), AGENTS_INFO_CAPS.NAME_CHARS),
     short: isMain ? MAIN_ROW_NAME : shortNameOf(lane.label),
     state: lane.state,
     pct: lane.pct,
@@ -209,8 +241,10 @@ function rowOf(lane: BoardLane, now: number, loops: readonly PulseLoop[], router
     files: (insight?.files ?? []).slice(0, AGENTS_INFO_CAPS.FILES).map(f => clip(f, AGENTS_INFO_CAPS.FILE_CHARS)),
     segs: segsOfLane(lane, loops, events, now),
     ...identityOf(lane, loops),
-    ...roleInfoOf(lane, loops, router),
+    ...roleInfo,
     ...externalOf(lane, loops),
+    ...waitingOf(loop, isDone, roleInfo.ticket, now),
+    ...(errors > 0 ? { errors } : {}),
   }
 }
 
@@ -272,20 +306,21 @@ export function diffAgents(prev: readonly AgentRow[] | null, next: readonly Agen
   }
   for (const a of next) {
     if (a.isMain || a.notStarted === true) continue // the session's own row says nothing in the ticker (the big avatar's mood is its voice); an attempt that never started did not start
+    const short = shortNameOf(a.name)
     const old = before.get(a.id)
     if (old === undefined) {
-      add(a, 'handoff', MAIN_NAME, a.id, `${MAIN_NAME} → ${a.short}`, true)
-      add(a, 'spawn', '', a.state, `${a.short} started`, true)
+      add(a, 'handoff', MAIN_NAME, a.id, `${MAIN_NAME} → ${short}`, true)
+      add(a, 'spawn', '', a.state, `${short} started`, true)
       continue
     }
     if (old.state !== a.state) {
       const spent = a.state === FINISHED ? ` · ${spokenDuration((a.endedAt ?? now) - a.startedAt)}` : ''
-      add(a, 'state', old.state, a.state, `${a.short} ${STATE_WORDS[a.state]}${spent}`, true)
+      add(a, 'state', old.state, a.state, `${short} ${STATE_WORDS[a.state]}${spent}`, true)
     }
     if (old.kind !== a.kind && a.kind !== null && old.kind !== null && !QUIET_KINDS.includes(a.kind) && a.state !== FINISHED)
-      add(a, 'work', old.kind, a.kind, `${a.short} · ${labelOfKind(a.kind)}`)
+      add(a, 'work', old.kind, a.kind, `${short} · ${labelOfKind(a.kind)}`)
     const step = a.pct === null ? 0 : Math.abs(a.pct - (old.pct ?? 0))
-    if (a.pct !== null && a.pct !== old.pct && (step >= AGENTS_INFO_CAPS.PROGRESS_STEP || a.pct >= 100)) add(a, 'progress', String(old.pct ?? ''), String(a.pct), `${a.short} ${a.pct}%`)
+    if (a.pct !== null && a.pct !== old.pct && (step >= AGENTS_INFO_CAPS.PROGRESS_STEP || a.pct >= 100)) add(a, 'progress', String(old.pct ?? ''), String(a.pct), `${short} ${a.pct}%`)
   }
   return out
 }

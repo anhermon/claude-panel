@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
 
-import { EXTERNAL_CAPS, externalRows, normalizeExternal, percentText, tokenParts, windowWord } from './detail-external-logic.mjs';
+import { EXTERNAL_CAPS, externalRows, normalizeExternal, percentText, resetText, tokenParts, windowWord } from './detail-external-logic.mjs';
 import { normalizeDetail } from './detail-logic.mjs';
 
 const FIXTURE = JSON.parse(readFileSync(new URL('./fixtures/codex-detail.json', import.meta.url), 'utf8'));
@@ -91,4 +91,22 @@ test('normalizeDetail on the real runs keeps think and note entries and the exte
   assert.equal(normalizeDetail(abs(FIXTURE[SMOKE])).metrics.elapsedMs, 18304);
   const think = normalizeDetail({ ...abs(FIXTURE[RICH]), transcript: { ...abs(FIXTURE[RICH]).transcript, entries: [{ t: NOW, kind: 'think', text: 'weighing options' }] } });
   assert.deepEqual(think.transcript.entries.map((e) => e.kind), ['think']);
+});
+
+
+test('rate reset instants survive normalization and render relative minutes or a dated clock time', () => {
+  const MS_SEC = 1000;
+  const MS_MIN = 60 * MS_SEC;
+  const MS_DAY = 24 * 60 * MS_MIN;
+  const MINUTES = 42;
+  const soon = (NOW + MINUTES * MS_MIN) / MS_SEC;
+  const later = (NOW + 2 * MS_DAY) / MS_SEC;
+  const e = normalizeExternal(base({ rate: { primary: { usedPct: 10, windowMinutes: 300, resetsAt: soon }, secondary: { usedPct: 20, windowMinutes: 10080, resetsAt: later } } }));
+  assert.equal(e.rate.primary.resetsAt, soon);
+  assert.match(rowOf(externalRows(e, NOW), '5-hour limit'), /resets in 42 min/);
+  assert.match(rowOf(externalRows(e, NOW), 'Weekly limit'), /resets at .+\d.+:/);
+  assert.equal(resetText(soon, NOW + MS_DAY), 'resets in 0 min');
+  assert.equal(resetText(null, NOW), '');
+  assert.equal(resetText(soon, undefined), '');
+  assert.equal(normalizeExternal(base({ rate: { primary: { usedPct: 1, resetsAt: 'bad' } } })).rate.primary.resetsAt, null);
 });

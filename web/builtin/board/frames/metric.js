@@ -1,5 +1,5 @@
 // metric: a big number that counts up to its value, a label, an optional delta chip and sparkline.
-import { CAPS, capText, formatMetric, parseMetric, safeColor, scaleSeries } from '../board-logic.mjs';
+import { CAPS, capText, capTitle, formatMetric, parseMetric, safeColor, scaleSeries } from '../board-logic.mjs';
 import { h, nextPaint, tween, toneColor } from './dom.js';
 
 const COUNT_MS = 1100;
@@ -46,7 +46,7 @@ export function render(el, f, ctx) {
   const box = h('div', { class: 'metric', style: tone ? `--tone:${tone}` : (safeColor(f.color) ? `--tone:${safeColor(f.color)}` : null) },
     valueEl,
     h('div', { class: 'metric-meta' },
-      f.label && h('span', { class: 'metric-label', text: capText(f.label, CAPS.label) }),
+      f.label && h('span', { class: 'metric-label', text: capTitle(f.label, CAPS.label) }),
       delta && h('span', { class: 'chip', 'data-tone': f.tone ?? 'muted', text: delta })),
     Array.isArray(f.spark) && sparkSvg(f.spark));
   el.append(box);
@@ -64,7 +64,7 @@ export function update(el, f, ctx) {
   if (hasSpark) box.querySelector('.spark').replaceWith(sparkSvg(f.spark));
   const parts = parseMetric(f.value);
   show(el, f, ctx, parts ? s.n ?? 0 : null);
-  box.querySelector('.metric-label')?.replaceChildren(capText(f.label, CAPS.label));
+  box.querySelector('.metric-label')?.replaceChildren(capTitle(f.label, CAPS.label));
   box.querySelector('.chip')?.replaceChildren(capText(f.delta, CAPS.status));
   return true;
 }

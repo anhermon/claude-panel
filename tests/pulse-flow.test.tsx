@@ -94,7 +94,7 @@ test('pulse on: no scene of its own (the board is the one built-in scene), the f
   await flush()
   expect(data().pulse).toBeDefined() // the feed is in the data; the decorative pulse frame is not on the board by itself
   expect(frameIds()).not.toContain('pulse')
-  await $.tool.call({ tool: 'Read', file_path: '/Users/x/secret/key.pem' })
+  await $.tool.call({ tool: 'Read', file_path: '/home/example/secret/key.pem' })
   await flush()
   expect(snap().loops[0]).toMatchObject({ id: 'main', calls: 1, lastTool: 'Read', lastTarget: 'key.pem', files: ['key.pem'] })
   expect(snap().events.at(-1)).toMatchObject({ loop: 'main', tool: 'Read', target: 'key.pem' })
@@ -120,8 +120,8 @@ test('main and subagent calls land in their own loops; only a tool name and a sh
   await $.tool.call({ tool: 'Bash', command: 'git push --force origin main' })
   await $.tool.call({ tool: 'WebFetch', url: 'https://user:pw@docs.example.com/private?token=SECRET', prompt: 'SECRET' })
   await $.tool.call({ tool: 'WebSearch', query: 'SECRET-SEARCH', mode: 'standard' })
-  await $.tool.call({ tool: 'Read', file_path: '/Users/x/proj/src/app.ts', agentId: AGENT })
-  await $.tool.call({ tool: 'Read', file_path: '/Users/x/proj/src/state.ts', agentId: AGENT })
+  await $.tool.call({ tool: 'Read', file_path: '/home/example/proj/src/app.ts', agentId: AGENT })
+  await $.tool.call({ tool: 'Read', file_path: '/home/example/proj/src/state.ts', agentId: AGENT })
   await $.tool.call({ tool: 'Bash', command: 'npm test -- --token SECRET', agentId: AGENT })
   await flush()
   const s = snap()
@@ -137,7 +137,7 @@ test('main and subagent calls land in their own loops; only a tool name and a sh
   // with zero effort from anyone the board shows one row per agent (name, state, current action) and the time per agent (main is not an agent: no bar for it)
   expect(data().frames.map((f: Json) => [f.id, f.type, f.size])).toEqual([['now-doing', 'doing', 's'], ['lanes', 'lanes', 'l'], ['bars', 'bars', 's'], ['activity-timeline', 'swimlane', 'm']])
   // the rows say what each agent is FOR (spawn description + the ticket and first goal sentence of its prompt), never a shell word
-  expect(data().lanes.map((l: Json) => [l.label, l.state, l.step, l.calls])).toEqual([['main', 'working', '', 3], ['pulse', 'working', 'T25 (P0) · Wire the pulse into the board.', 3]])
+  expect(data().lanes.map((l: Json) => [l.label, l.state, l.step, l.calls])).toEqual([['main', 'working', '', 3], ['pulse', 'working', '(P0) · Wire the pulse into the board', 3]])
   expect(JSON.stringify(data().lanes)).not.toMatch(/Bash|npm|WebSearch|WebFetch/)
   expect(data().frames.find((f: Json) => f.id === 'bars').title).toBe('Time per agent')
   expect(data().frames.find((f: Json) => f.id === 'bars').items.map((i: Json) => [i.label, i.value])).toEqual([['pulse', 0]]) // the test clock has not moved: 0 minutes

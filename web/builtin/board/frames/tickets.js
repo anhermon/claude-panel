@@ -22,10 +22,10 @@ const rowEl = (it) => {
     roundText(it) ? chipEl('tk-round', roundText(it), 'warn') : null,
     afterText(it) ? h('span', { class: 'tk-after', text: afterText(it) }) : null,
   ].filter(Boolean);
-  const full = it.title || it.id; // the title says what the work is; the id is only the hover text
+  const full = it.title;
   return h('li', { class: 'tk-row', 'data-look': it.look, 'data-tone': look.tone },
     h('i', { class: 'tk-mark', 'aria-hidden': 'true', text: look.mark }),
-    h('b', { class: 'tk-title', title: it.id && it.title ? `${it.title} (${it.id})` : full, text: full }),
+    h('b', { class: 'tk-title', title: full, text: full }),
     h('span', { class: 'tk-stage', text: look.label }),
     proof ? h('p', { class: 'tk-proof', title: it.proof.evidence || proof }, h('i', { 'aria-hidden': 'true', text: '✓' }), proof) : null,
     meta.length > 0 ? h('div', { class: 'tk-meta' }, meta) : null,

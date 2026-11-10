@@ -1,5 +1,5 @@
 // The Progress of an agent: now, plan (posted or derived, evidence-based), done, decisions in its own words, issues, and the phases over
-// its real time. Hand-built stories plus two real (trimmed, scrubbed) finished sub-agent transcripts.
+// its real time. Hand-built stories plus two synthetic Acme Notes finished sub-agent transcripts.
 import { expect, test } from 'claude-code/testing'
 
 import { phasesOf, progressOf } from '../hooks/agent-progress'
@@ -80,8 +80,8 @@ test('a decision is a sentence in the agent\'s own words that states a choice; q
   expect(r.decisions[0]?.t).toBe(T0 + 20 * SEC)
 })
 
-test('decisions on the real transcripts are real quotes from the agent', () => {
-  for (const [text, expected] of [[METRICS_STRUGGLES_REDESIGN, "Directory arg doesn't work on this node; use the glob."], [AGENTS_TILE_DRILLDOWN, 'Sed failed on macOS; use Edit.']] as const) {
+test('decisions on the synthetic transcripts are quotes from the synthetic agent', () => {
+  for (const [text, expected] of [[METRICS_STRUGGLES_REDESIGN, "I will return an empty export instead because a blank notebook is valid."], [AGENTS_TILE_DRILLDOWN, 'I will use a case-insensitive filter because note titles may use mixed case.']] as const) {
     const p = parseTranscript(text, true)
     const last = p.entries.at(-1)?.t ?? 0
     const r = progressOf({ entries: p.entries, brief: p.briefFull ?? '', lane: undefined, state: 'done', endedAt: last, now: last + 1000 })
@@ -159,7 +159,7 @@ test('phases: consecutive calls of one kind are one labelled stretch over real t
   expect(phasesOf(tools, { from: T0 + 10 * SEC, now: T0 + 300 * SEC, isRunning: true }).at(-1)?.isCurrent).toBe(true)
 })
 
-test('phases on the real transcripts: labelled, ordered, covering the run; no calls at all says why instead', () => {
+test('phases on the synthetic transcripts: labelled, ordered, covering the run; no calls at all says why instead', () => {
   for (const text of [AGENTS_TILE_DRILLDOWN, METRICS_STRUGGLES_REDESIGN]) {
     const p = parseTranscript(text, true)
     const last = p.entries.at(-1)?.t ?? 0

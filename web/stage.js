@@ -12,6 +12,7 @@
  * Liveness contract: a frame navigates ONLY when its scene's rev or mtime changes (or the user presses reload), and then
  * the URL carries the last position the deck reported (#/h/v/f), so a deck reloads on the slide it was showing. */
 (function () {
+  const { plainTitle } = globalThis.PanelTitles;
   const { el, kids, isTextEntry, within } = globalThis.PanelBlocks;
   const Scenes = globalThis.PanelScenes;
   const Layout = globalThis.PanelWorkspaceLayout;
@@ -81,10 +82,10 @@
     return f;
   }
   function updateFrame(f, s) {
-    f.title = s.title || s.id;
+    f.title = plainTitle(s.title || s.id, false);
     paintStrip(f);
-    f.alt.textContent = s.alt;
-    f.iframe.title = s.alt || s.title || s.id;
+    f.alt.textContent = plainTitle(s.alt, false);
+    f.iframe.title = plainTitle(s.alt || s.title || s.id, false);
     const version = s.rev + "-" + s.mtime;
     if (version !== f.version) {
       f.version = version;
@@ -173,6 +174,8 @@
       moreEl.hidden = true;
       container.appendChild(moreEl);
       window.addEventListener("resize", applyLayout);
+      /* The stage can change size without a window resize (rail, drawer, first layout): measure again whenever it does. */
+      if (typeof ResizeObserver === "function") new ResizeObserver(() => applyLayout()).observe(container);
     }
     const live = new Set(tileScenes.map((s) => s.id));
     const isFirstSync = frames.size === 0;

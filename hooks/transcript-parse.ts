@@ -40,7 +40,13 @@ export type ToolEntry = {
 export type Entry = SayEntry | ToolEntry
 export type Step = { t: number; id: string; fresh: number; output: number; cacheRead: number }
 
+export type TurnStats = { count: number; lastMs: number; avgMs: number; maxMs: number }
+
 export type Parsed = {
+  apiErrors?: number
+  failedCalls?: number
+  apiError?: { t: number; lastT: number; text: string }
+  turns?: TurnStats
   /** The first message the agent was given (a parent's brief); '' when the piece does not hold it. */
   brief: string
   /** The same brief with its line breaks (for the numbered and bulleted items); '' when the piece does not hold it. */
@@ -50,9 +56,17 @@ export type Parsed = {
   steps: Step[]
   /** How many lines were not JSON (the cut first line is not counted). */
   skipped: number
+  /** The last assistant message's model, the transcript's gitBranch and the ai-title row when present in the piece. */
+  model?: string
+  branch?: string
+  title?: string
 }
 
+export const SESSION_META_CAPS = { MODEL_CHARS: 80, BRANCH_CHARS: 80, TITLE_CHARS: 80 } as const
+const SYNTHETIC_MODEL = '<synthetic>'
 const FIRST_USER_PLACEHOLDER = ''
+const SKIP_PREFIXES = ['{"type":"api-request', '{"type":"file-history-snapshot']
+const TURN_DURATION = 'turn_duration'
 const READ_TOOLS = new Set(['Read', 'NotebookRead'])
 const SEARCH_TOOLS = new Set(['Grep', 'Glob', 'LS', 'WebSearch', 'WebFetch', 'ToolSearch'])
 const EDIT_TOOLS = new Set(['Edit', 'MultiEdit', 'NotebookEdit', 'apply_patch'])
@@ -118,12 +132,13 @@ function userText(content: unknown): string {
 export function parseTranscript(text: string, isWhole: boolean): Parsed {
   const lines = text.split('\n')
   if (!isWhole) lines.shift()
-  const out: Parsed = { brief: FIRST_USER_PLACEHOLDER, briefFull: FIRST_USER_PLACEHOLDER, entries: [], steps: [], skipped: 0 }
+  const out: Parsed = { brief: FIRST_USER_PLACEHOLDER, briefFull: FIRST_USER_PLACEHOLDER, entries: [], steps: [], skipped: 0, apiErrors: 0, failedCalls: 0, turns: { count: 0, lastMs: 0, avgMs: 0, maxMs: 0 } }
+  let turnTotalMs = 0
   const open = new Map<string, ToolEntry>()
   const stepAt = new Map<string, number>()
   let isFirstUser = true
   for (const line of lines) {
-    if (line.trim() === '') continue
+    if (line.trim() === '' || SKIP_PREFIXES.some(prefix => line.startsWith(prefix))) continue
     let row: unknown
     try {
       row = JSON.parse(line)
@@ -131,10 +146,38 @@ export function parseTranscript(text: string, isWhole: boolean): Parsed {
       out.skipped++
       continue
     }
-    if (!isObj(row) || !isObj(row.message)) continue
+    if (!isObj(row)) continue
+    if (row.type === 'system' && row.subtype === TURN_DURATION && typeof row.durationMs === 'number' && Number.isFinite(row.durationMs) && row.durationMs >= 0) {
+      const turns = out.turns!
+      turns.count++
+      turns.lastMs = row.durationMs
+      turnTotalMs += row.durationMs
+      turns.avgMs = turnTotalMs / turns.count
+      turns.maxMs = Math.max(turns.maxMs, row.durationMs)
+    }
+    if (row.isApiErrorMessage === true) out.apiErrors!++
+    if (typeof row.gitBranch === 'string') {
+      const branch = clip(scrubText(row.gitBranch).trim(), SESSION_META_CAPS.BRANCH_CHARS)
+      if (branch !== '') out.branch = branch
+    }
+    if (row.type === 'ai-title' && typeof row.aiTitle === 'string') {
+      const title = excerpt(row.aiTitle, SESSION_META_CAPS.TITLE_CHARS)
+      if (title !== '') out.title = title
+    }
+    if (row.type === 'assistant' && isObj(row.message) && typeof row.message.model === 'string') {
+      const model = row.message.model.trim()
+      if (model !== '' && model !== SYNTHETIC_MODEL) out.model = clip(model, SESSION_META_CAPS.MODEL_CHARS)
+    }
+    if (!isObj(row.message)) continue
+    for (const block of Array.isArray(row.message.content) ? row.message.content : []) {
+      if (isObj(block) && block.type === 'tool_result' && block.is_error === true) out.failedCalls!++
+    }
     const t = Date.parse(str(row.timestamp))
     if (!Number.isFinite(t)) continue
     const { message } = row
+    if (row.isApiErrorMessage === true) {
+      out.apiError = { t: out.apiError?.t ?? t, lastT: t, text: errorLine(message.content) }
+    }
     if (row.type === 'assistant') {
       const id = str(message.id)
       const step = stepOf(id, t, message.usage)

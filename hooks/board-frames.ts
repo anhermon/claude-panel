@@ -2,12 +2,13 @@
 // out. Pure: no `$`, no I/O. Every refusal throws `Invalid` with a message that names the field (`frame.items[2].label`)
 // and says the cap; an over-cap value is refused, never cut (a chart label that loses its end would change what the
 // chart says). Unknown keys are refused with the field named. The shape is the `BoardFrame` type in types/index.d.ts.
+import { validateVizData } from './viz-schema'
 import type { BoardFrame, BoardFrameType } from '../types'
 import { Invalid, isAbsent, isPlain } from './blocks/common'
 import type { Plain } from './blocks/common'
 import { ROUTER_CAPS, ROUTER_STAGES } from './router-state'
 import { INSIGHT_KINDS } from './work-kinds'
-import { VIZ_KIND_TABLE as vizKindTable } from './viz-kinds'
+import { VIZ_KIND_TABLE as vizKindTable, VIZ_SCHEMAS } from './viz-kinds'
 
 export const FRAME_CAPS = {
   ID_PATTERN: /^[a-z0-9-]{1,24}$/,
@@ -530,6 +531,7 @@ function buildViz(o: Plain, at: string): Record<string, unknown> {
   const size = JSON.stringify(o.data).length
   if (size > FRAME_CAPS.VIZ_DATA_CHARS) throw new Invalid(`${at}.data is ${size} characters; the limit is ${FRAME_CAPS.VIZ_DATA_CHARS}: send fewer items or shorter labels`)
   if (depthOf(o.data, FRAME_CAPS.VIZ_DEPTH + 1) > FRAME_CAPS.VIZ_DEPTH) throw new Invalid(`${at}.data nests deeper than ${FRAME_CAPS.VIZ_DEPTH} levels: flatten it`)
+  if (VIZ_SCHEMAS[kind]) validateVizData(o.data, VIZ_SCHEMAS[kind], `${at}.data`)
   return defined({ kind, data: o.data, caption: optText(o.caption, `${at}.caption`, FRAME_CAPS.VIZ_CAPTION_CHARS) })
 }
 

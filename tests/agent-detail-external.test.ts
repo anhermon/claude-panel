@@ -1,4 +1,4 @@
-// The detail of a codex run: the Transcript, Progress, Struggles and Metrics tabs built from a REAL (trimmed, redacted) rollout and its
+// The detail of a codex run: the Transcript, Progress, Struggles and Metrics tabs built from a synthetic rollout and its
 // delegation-kit rows (tests/fixtures/codex), the run's own clock, the token split, the no-rollout case and the proof. Pure: no `$`.
 import { expect, test } from 'claude-code/testing'
 
@@ -56,7 +56,7 @@ test('transcript: the brief (the task, no preamble), what it said, the command w
   expect(detail.brief.startsWith('Read-only task.')).toBe(true)
   expect(t.entries.map(e => e.kind)).toEqual(['say', 'tool', 'say'])
   const call = t.entries[1]
-  expect(call).toMatchObject({ kind: 'tool', tool: 'Bash', error: '', note: 'exit 0 · 7798 total (+5 lines)' })
+  expect(call).toMatchObject({ kind: 'tool', tool: 'Bash', error: '', note: 'exit 0 · 1200 total (+5 lines)' })
   expect(call).not.toHaveProperty('cmd') // the evidence fields stay in the mod
   const last = t.entries.at(-1)
   expect(last?.kind === 'say' ? last.text : '').toContain('Eval result: PASS')
@@ -91,7 +91,7 @@ test('a rollout with a failed command, a file change and an encrypted reasoning 
   expect(detail.metrics.errors).toBe(1)
   const tools = detail.transcript.entries.filter(e => e.kind === 'tool')
   expect(tools.map(e => e.kind === 'tool' && e.tool)).toEqual(['Bash', 'Bash', 'Write', 'Edit', 'Bash'])
-  expect(tools[1]).toMatchObject({ error: 'exit 1: Traceback (most recent call last):', note: 'exit 1 · Traceback (most recent call last): (+2 lines)' })
+  expect(tools[1]).toMatchObject({ error: 'exit 1: Error: missing empty-title support', note: 'exit 1 · Error: missing empty-title support (+2 lines)' })
   // Progress: phases from the commands (read / edit / tests), the failure as a concrete issue
   expect(detail.progress.phases.map(p => p.kind)).toEqual(['run', 'edit', 'run'])
   expect(detail.progress.phases[0]?.failed).toBe(true)
@@ -102,7 +102,7 @@ test('a rollout with a failed command, a file change and an encrypted reasoning 
 
 test('proof: the brief\'s Eval line and the Eval result of the final message, for a brief that is no ticket and for one that is', () => {
   expect(make(DELEGATIONS_SMOKE, ROLLOUT_SMOKE).detail.external.proof).toMatchObject({ result: 'pass', eval: expect.stringContaining('lists exactly 5 files') })
-  expect(make(DELEGATIONS, ROLLOUT_FINISHED).detail.external.proof).toEqual({ eval: 'python3 bin/report_selftest.py exits 0', what: 'python3 bin/report_selftest.py exits 0', result: 'pass' })
+  expect(make(DELEGATIONS, ROLLOUT_FINISHED).detail.external.proof).toEqual({ eval: 'node scripts/check-notes.mjs exits 0', what: 'node scripts/check-notes.mjs exits 0', result: 'pass' })
   const failing = ROLLOUT_SMOKE.replaceAll('Eval result: PASS', 'Eval result: FAIL')
   expect(make(DELEGATIONS_SMOKE, failing).detail.external.proof?.result).toBe('fail')
   const silent = ROLLOUT_SMOKE.replaceAll('Eval result: PASS', 'done')

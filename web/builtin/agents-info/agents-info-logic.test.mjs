@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { CAPS, elapsedMs, formatDuration, formatTokens, layoutFor, legendOf, maxEventId, moodOf, moodOfAgent, newEvents, normalizeData, satellitesOf, shareOf, sortAgents, summaryOf, waitingLabelOf } from './agents-info-logic.mjs';
+import { CAPS, WAITING_TOOLTIP, elapsedMs, formatDuration, formatErrors, formatTokens, layoutFor, legendOf, maxEventId, moodOf, moodOfAgent, newEvents, normalizeData, satellitesOf, shareOf, sortAgents, summaryOf, waitingChipOf, waitingLabelOf } from './agents-info-logic.mjs';
 import { feedOf } from './list-view.js';
 
 const agent = (over = {}) => ({ id: 'a', isMain: false, name: 'A', short: 'A', state: 'working', pct: 10, startedAt: 0, endedAt: null, tokens: 100, kind: 'logic', kindLabel: 'Logic', kindColor: '#7c9cff', kindGlyph: 'ƒ', headline: 'h', files: [], ...over });
@@ -171,4 +171,36 @@ test('normalizeData: harness, model and effort are optional strings (agent, and 
   assert.deepEqual([d.agents[0].harness, d.agents[0].model, d.agents[0].effort, d.agents[0].ticket.harness], ['codex', 'gpt-6.1-sol', 'high', 'agy']);
   assert.deepEqual([d.agents[1].harness, d.agents[1].model, d.agents[1].effort], [null, null, null]);
   assert.deepEqual([d.agents[2].harness, d.agents[2].model], [null, null]);
+});
+
+test('normalizeData, waitingChipOf and formatErrors: mayBeWaiting, errors, branch and title', () => {
+  const d = normalizeData({
+    agents: [
+      agent({ id: 'main', isMain: true, model: 'claude-opus-4-6', branch: 'feat/panel-rows', title: 'Session title' }),
+      agent({ id: 'w', state: 'working', mayBeWaiting: { tool: 'Bash', target: 'npm test' }, errors: 3 }),
+      agent({ id: 'd', state: 'done', mayBeWaiting: { tool: 'Bash' }, errors: 1 }),
+      agent({ id: 'f', state: 'working', ticket: { id: '01', stage: 'failed', text: 'failed' }, mayBeWaiting: { tool: 'Edit' } }),
+      agent({ id: 'n', state: 'waiting', notStarted: true, mayBeWaiting: { tool: 'Read' }, errors: -2 }),
+    ],
+  });
+  const [me, w, done, failed, notStarted] = d.agents;
+  assert.equal(me.model, 'claude-opus-4-6');
+  assert.equal(me.branch, 'feat/panel-rows');
+  assert.equal(me.title, 'Session title');
+  assert.deepEqual(w.mayBeWaiting, { tool: 'Bash', target: 'npm test' });
+  assert.equal(w.errors, 3);
+  const chip = waitingChipOf(w);
+  assert.equal(chip.text, 'may be waiting · Bash');
+  assert.equal(chip.title.includes('a long tool looks the same'), true);
+  assert.equal(chip.title, `Bash: npm test — ${WAITING_TOOLTIP}`);
+  assert.equal(done.mayBeWaiting, null);
+  assert.equal(waitingChipOf(done), null);
+  assert.equal(failed.mayBeWaiting, null);
+  assert.equal(waitingChipOf(failed), null);
+  assert.equal(notStarted.mayBeWaiting, null);
+  assert.equal(waitingChipOf(notStarted), null);
+  assert.equal(notStarted.errors, 0);
+  assert.equal(formatErrors(0), '');
+  assert.equal(formatErrors(1), '1 error');
+  assert.equal(formatErrors(3), '3 errors');
 });

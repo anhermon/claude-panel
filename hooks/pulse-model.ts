@@ -79,6 +79,9 @@ export type PulseLoop = {
   harness?: string
   model?: string
   effort?: string
+  /** Git branch and AI title read from the main session transcript (hooks/pulse-host.ts); absent on subagents or when unknown. */
+  branch?: string
+  title?: string
   runId?: string
   source?: 'external'
   /** `guessed`: its transcript was matched by folder and time, not by thread id. */
@@ -154,17 +157,22 @@ export function setLoopProof(m: PulseModel, id: string, proof: AgentProof): bool
   return true
 }
 
-/** The model and effort a subagent was started with (hooks/agent-meta.ts); a field already held is kept. Returns whether it changed the model. */
-export function setLoopMeta(m: PulseModel, id: string, meta: { model?: string; effort?: string }): boolean {
+/** The model and effort a subagent was started with (hooks/agent-meta.ts), or the main session's model/branch/title from its transcript; a subagent field already held is kept. Returns whether it changed the model. */
+export function setLoopMeta(m: PulseModel, id: string, meta: { model?: string; effort?: string; branch?: string; title?: string }): boolean {
   const loop = m.loops.get(id)
   if (loop === undefined) return false
-  const model = loop.model === undefined ? meta.model : undefined
-  const effort = loop.effort === undefined ? meta.effort : undefined
-  if (model === undefined && effort === undefined) return false
-  if (model !== undefined) loop.model = cutText(model, PULSE_CAPS.NAME_CHARS)
-  if (effort !== undefined) loop.effort = cutText(effort, PULSE_CAPS.NAME_CHARS)
-  m.isDirty = true
-  return true
+  const isMain = id === MAIN_LOOP
+  const nextModel = meta.model !== undefined && (isMain || loop.model === undefined) ? cutText(meta.model, PULSE_CAPS.NAME_CHARS) : undefined
+  const nextEffort = meta.effort !== undefined && (isMain || loop.effort === undefined) ? cutText(meta.effort, PULSE_CAPS.NAME_CHARS) : undefined
+  const nextBranch = isMain && meta.branch !== undefined ? cutText(meta.branch, PULSE_CAPS.NAME_CHARS) : undefined
+  const nextTitle = isMain && meta.title !== undefined ? cutText(meta.title, PULSE_CAPS.LABEL_CHARS) : undefined
+  let changed = false
+  if (nextModel !== undefined && nextModel !== '' && nextModel !== loop.model) { loop.model = nextModel; changed = true }
+  if (nextEffort !== undefined && nextEffort !== '' && nextEffort !== loop.effort) { loop.effort = nextEffort; changed = true }
+  if (nextBranch !== undefined && nextBranch !== '' && nextBranch !== loop.branch) { loop.branch = nextBranch; changed = true }
+  if (nextTitle !== undefined && nextTitle !== '' && nextTitle !== loop.title) { loop.title = nextTitle; changed = true }
+  if (changed) m.isDirty = true
+  return changed
 }
 
 /** The loop for `id`, created as an untitled subagent when it is new (a call can arrive before its spawn is seen): its label is an activity placeholder, never the id. */
@@ -403,6 +411,7 @@ export function restoreLanes(json: unknown): Lane[] {
         startedAt: num(raw.startedAt),
         updatedAt: num(raw.updatedAt),
         by: typeof raw.by === 'string' ? raw.by.slice(0, PULSE_CAPS.ID_CHARS) : MAIN_LOOP,
+        ...(typeof raw.session === 'string' && LANE_CAPS.SESSION_PATTERN.test(raw.session) ? { session: raw.session } : {}),
       })
     }
   return out
@@ -410,7 +419,8 @@ export function restoreLanes(json: unknown): Lane[] {
 
 /** The fields of an ingested run (harness, model, effort, run id, outcome, cursor), re-validated. */
 function restoreExternal(loop: PulseLoop, raw: Record<string, unknown>): void {
-  for (const key of ['harness', 'model', 'effort', 'runId'] as const) if (typeof raw[key] === 'string' && raw[key] !== '') loop[key] = text(raw[key], PULSE_CAPS.ID_CHARS)
+  for (const key of ['harness', 'model', 'effort', 'runId', 'branch'] as const) if (typeof raw[key] === 'string' && raw[key] !== '') loop[key] = text(raw[key], PULSE_CAPS.ID_CHARS)
+  if (typeof raw.title === 'string' && raw.title !== '') loop.title = text(raw.title, PULSE_CAPS.LABEL_CHARS)
   if (raw.source === 'external') loop.source = 'external'
   if (raw.confidence === 'exact' || raw.confidence === 'guessed') loop.confidence = raw.confidence
   if (isOutcome(raw.outcome)) loop.outcome = raw.outcome

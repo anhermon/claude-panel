@@ -20,9 +20,15 @@ import { hasLanePart } from './pulse-lanes'
 import type { LanePlan } from './pulse-lanes'
 import { ROUTER_IO, readRouter } from './router-io'
 import type { RouterRead } from './router-io'
+import { newSessionsCache, readSessions } from './sessions-io'
+import type { SessionsCache } from './sessions-io'
+import type { SessionRow } from './sessions-state'
+import { panelConfig } from './panel-config'
 import { PLUGIN_NAME } from './spec'
 import { watchedFolder } from './watch'
 import { agentsInfoLive, agentsInfoNote, agentsInfoPush } from './agents-info-host'
+import { limitsUsage } from './limits-state'
+import { quotaRead, resetQuota } from './limits-io'
 
 type Dollar = EngineInterface
 
@@ -42,6 +48,11 @@ type Board = {
   routerRoot?: string
   poll?: { cancel: () => void }
   isPolling?: boolean
+  /** The other live sessions (./sessions-io.ts) as last read, what that read remembers, and a guard so two reads never overlap. */
+  sessions?: SessionRow[]
+  sessionsKey?: string
+  sessionsCache?: SessionsCache
+  isScanning?: boolean
 }
 let board: Board | null = null
 
@@ -51,9 +62,9 @@ function log($: Dollar, text: string): void {
 
 const sliceOf = (s: PanelState): Slice => ({ status: s.status, task: s.task, ask: s.ask, choices: Array.isArray(s.choices) ? s.choices : [] })
 
-function inputOf(b: Board, now: number): BoardInput {
+async function inputOf($: Dollar, b: Board, now: number): Promise<BoardInput> {
   const parts = pulseBoardParts(now)
-  return { ...b.slice, lanes: parts.lanes as BoardLane[], loops: parts.loops, pulse: parts.pulse, events: parts.events, hasAgentsTile: agentsInfoLive(), router: b.router?.run, now }
+  return { ...b.slice, lanes: parts.lanes as BoardLane[], loops: parts.loops, pulse: parts.pulse, events: parts.events, hasAgentsTile: agentsInfoLive(), router: b.router?.run, quota: quotaRead($, now, panelConfig.quotaEveryS, boardRefresh), usage: await limitsUsage($), sessions: b.sessions, now }
 }
 
 /** Read `.router/` again (cheap: a listing and a stat per file unless something changed); a change wakes the writer. Never throws. */
@@ -76,8 +87,28 @@ async function routerTick($: Dollar, b: Board): Promise<void> {
   }
 }
 
+/** Read the other live sessions again (mtime-gated, tail-only; nothing at all while the setting is off); a change wakes the writer. Never throws. */
+async function sessionsTick($: Dollar, b: Board): Promise<void> {
+  if (b.isScanning === true) return
+  b.isScanning = true
+  try {
+    b.sessionsCache ??= newSessionsCache()
+    const rows = await readSessions($, b.sessionsCache, await $.session.id(), await $.clock.now(), panelConfig.sessionsFrame)
+    const key = JSON.stringify(rows)
+    if (key === (b.sessionsKey ?? '[]')) return
+    b.sessionsKey = key
+    b.sessions = rows
+    b.flusher?.touch()
+  } catch (err) {
+    log($, `board: could not read the other sessions: ${String(err)}`)
+  } finally {
+    b.isScanning = false
+  }
+}
+
 /** Session start (and every reload): the scene's files, the model read back, the writer. Quiet when the board is not built yet. */
 export async function boardStart($: Dollar, tmp: string, state: PanelState): Promise<void> {
+  resetQuota()
   board?.poll?.cancel()
   board = null
   setPulseListener(null)
@@ -93,7 +124,13 @@ export async function boardStart($: Dollar, tmp: string, state: PanelState): Pro
     })
     board = b
     await routerTick($, b)
-    b.poll = $.clock.every(ROUTER_IO.POLL_MS, () => void routerTick($, b))
+    await sessionsTick($, b)
+    b.poll = $.clock.every(ROUTER_IO.POLL_MS, () => {
+      void routerTick($, b)
+      void sessionsTick($, b)
+      void $.clock.now().then(now => quotaRead($, now, panelConfig.quotaEveryS, boardRefresh))
+      b.flusher?.touch() // Freshness can change even when a failed quota refresh retains the old snapshot.
+    })
     setPulseListener({ touch: () => b.flusher?.touch(), flushNow: () => b.flusher?.flushNow() ?? Promise.resolve() })
     b.flusher.touch()
   } catch (err) {
@@ -103,7 +140,7 @@ export async function boardStart($: Dollar, tmp: string, state: PanelState): Pro
 
 /** Write live/data.json when what the person would see changed. */
 async function flush($: Dollar, b: Board): Promise<void> {
-  const input = inputOf(b, await $.clock.now())
+  const input = await inputOf($, b, await $.clock.now())
   await agentsInfoPush($, input) // the agents scene shares this writer (./agents-info-host.ts); it never throws
   const data = assembleBoard(b.model, input)
   const key = contentKey(data)
@@ -124,8 +161,11 @@ export function boardNote(state: PanelState): void {
   agentsInfoNote(state)
   if (board === null) return
   board.slice = sliceOf(state)
-  board.flusher?.touch()
+  boardRefresh()
 }
+
+/** Host observations share the board's coalescing refresh; no separate timer. */
+export const boardRefresh = (): void => board?.flusher?.touch()
 
 /** The model as it stands now, as plain data for the session state (undefined: nothing is kept in memory). */
 export const boardKept = (): BoardModel | undefined => board?.model
@@ -153,7 +193,7 @@ export async function applyFrames($: Dollar, plan: FramePlan, state: PanelState)
   if (!applied.isOk) return { deny: applied.error }
   b.model = applied.model
   if (board === null) board = b // no board scene yet: the model still lives in memory (see boardStart)
-  const onBoard = assembleFrames(b.model, inputOf(b, await $.clock.now())).length
+  const onBoard = assembleFrames(b.model, await inputOf($, b, await $.clock.now())).length
   if (applied.isChanged && b.dir !== '') {
     try {
       await writeLive($, b.dir, MODEL_FILE_NAME, MODEL_TEMP_NAME, JSON.stringify(b.model) + '\n')

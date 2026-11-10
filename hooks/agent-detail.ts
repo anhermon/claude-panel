@@ -15,7 +15,7 @@ import type { PulseEvent, PulseLoop } from './pulse-model'
 import { splitKey, TALLY_VERBS } from './pulse-tally'
 import { timeByKind } from './work-spans'
 import { KIND_META, WORK_KINDS } from './work-kinds'
-import type { Entry, Parsed, ToolEntry } from './transcript-parse'
+import type { Entry, Parsed, ToolEntry, TurnStats } from './transcript-parse'
 
 export const DETAIL_VERSION = 1
 export const DETAIL_CAPS = {
@@ -80,10 +80,12 @@ export type AgentDetail = {
     activeMs: number
     idleMs: number
     calls: number
-    /** The pulse's count of failed calls with a target, retries among them; null when the pulse has no tally. */
+    /** Failed tools (the largest transcript/entry/tally count) plus API errors; null with no source. */
     errors: number | null
+    apiErrors?: number
+    turns?: TurnStats | null
     retries: number | null
-    tokens: { total: number | null; series: SeriesPoint[]; steps: number; coveredFromT: number | null }
+    tokens: { fresh?: number; cached?: number; output?: number; total: number | null; series: SeriesPoint[]; steps: number; coveredFromT: number | null }
     kinds: { kind: string; label: string; color: string; ms: number }[]
     tools: { tool: string; n: number }[]
     files: { name: string; reads: number; edits: number }[]
@@ -136,6 +138,8 @@ function filesOf(loop: PulseLoop | undefined): AgentDetail['metrics']['files'] {
 
 /** The label of a pulse call that failed (the pulse keeps no message). */
 const FAILED_CALL = 'call failed'
+const API_ERROR_TITLE = 'API requests failed'
+const API_ERROR_NOUN = 'API error'
 /** The pulse's own entry for handing work to another agent: not a tool call of the agent that is open. */
 const PULSE_SPAWN_TOOL = 'spawn'
 
@@ -190,6 +194,17 @@ export function buildDetail(args: {
   const tally = Object.values(loop?.tally ?? {})
   const briefFull = subject.isMain ? brief : (read?.parsed.briefFull ?? '') || (read?.headFull ?? '') || brief
   const isRunning = subject.endedAt === null && subject.state !== 'done'
+  const apiErrors = read?.parsed.apiErrors ?? 0
+  const failedEntries = entries.filter(isToolEntry).filter(e => Boolean(e.error)).length
+  const failedCalls = Math.max(read?.parsed.failedCalls ?? 0, failedEntries, sum(tally.map(e => e.err)))
+  const struggles = struggleReportOf(read?.parsed.entries ?? [], { now, isRunning })
+  const apiError = read?.parsed.apiError
+  if (apiErrors > 0) {
+    struggles.items.unshift({ kind: 'wrong-turn', title: API_ERROR_TITLE, evidence: apiError?.text ?? '', t: apiError?.t ?? now, lastT: apiError?.lastT ?? now, n: apiErrors, outcome: 'open', hint: '', noun: API_ERROR_NOUN, recent: true })
+    struggles.open++
+    struggles.badge++
+    struggles.headline = `${apiErrors} ${API_ERROR_NOUN}${apiErrors === 1 ? '' : 's'}${struggles.items.length > 1 ? `; ${struggles.headline}` : '.'}`
+  }
   return {
     v: DETAIL_VERSION,
     id: subject.id,
@@ -216,10 +231,15 @@ export function buildDetail(args: {
       activeMs: Math.min(activeMs, elapsedMs),
       idleMs: Math.max(0, elapsedMs - activeMs),
       calls: loop?.calls ?? entries.filter(isToolEntry).length,
-      errors: loop?.tally === undefined ? null : sum(tally.map(e => e.err)),
+      errors: read === null && loop?.tally === undefined && failedCalls === 0 ? null : failedCalls + apiErrors,
+      apiErrors,
+      turns: read?.parsed.turns ?? null,
       retries: loop?.tally === undefined ? null : sum(tally.map(e => e.retry)),
       tokens: {
         total: loop?.tokens ?? (steps.length > 0 ? sum(steps.map(s => s.fresh + s.output)) : null),
+        fresh: sum(steps.map(s => s.fresh)),
+        cached: sum(steps.map(s => s.cacheRead)),
+        output: sum(steps.map(s => s.output)),
         series: tokenSeries(steps),
         steps: steps.length,
         coveredFromT: steps[0]?.t ?? null,
@@ -229,7 +249,7 @@ export function buildDetail(args: {
       files: filesOf(loop),
     },
     // Struggles and progress read the transcript's own entries only: the pulse's stand-ins carry no durations or messages, and its tally says the rest.
-    struggles: struggleReportOf(read?.parsed.entries ?? [], { now, isRunning }),
+    struggles,
     progress: progressOf({ entries: read?.parsed.entries ?? [], brief: briefFull, lane: args.lane, state: subject.state, endedAt: subject.endedAt, now }),
   }
 }

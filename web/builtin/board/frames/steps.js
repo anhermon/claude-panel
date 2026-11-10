@@ -1,7 +1,7 @@
 // steps: a checklist with its progress in the header ("2 of 5 done" + a thin bar). todo = empty ring, doing = pulsing accent ring
 // (with the owner and the time under it when the data says them), done = a muted one-liner with a green check (drawn in), failed = red cross.
 // An open item wraps to 2 lines; the font grows when there are few items and shrinks (to the text floor) when there are many.
-import { CAPS, capText } from '../board-logic.mjs';
+import { CAPS, capText, capTitle } from '../board-logic.mjs';
 import { h } from './dom.js';
 import { fitStack } from './fit.js';
 
@@ -19,7 +19,7 @@ export function render(el, f, ctx) {
   const items = (Array.isArray(f.items) ? f.items : []).filter((i) => i && typeof i === 'object').slice(0, CAPS.steps);
   const states = items.map((it) => (STATES.includes(it.state) ? it.state : 'todo'));
   const doneCount = states.filter((s) => s === 'done').length;
-  const owner = [capText(f.owner, CAPS.title), capText(f.since, CAPS.label)].filter(Boolean).join(' · ');
+  const owner = [capTitle(f.owner, CAPS.title), capText(f.since, CAPS.label)].filter(Boolean).join(' · ');
   const doingAt = states.indexOf('doing');
   const list = h('ol', { class: 'steps-list' }, items.map((it, i) => {
     const state = states[i];

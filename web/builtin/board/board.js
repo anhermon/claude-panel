@@ -7,6 +7,7 @@ import panel from 'panel';
 import { CHANGE_GAP_MS, createChangeQueue, isCallsBars, isQuiet, moreCount, normalizeData, planGrid } from './board-logic.mjs';
 import { frameModule } from './frames/index.js';
 import { MODE_SCROLL, SCROLL_MAX_FRAMES, chooseMode, hasMoreBelow, maxScrollTop, nextScrollTop, planScroll, positionLabel, reachedCount } from './scroll-logic.mjs';
+import { sizeVizPlan } from './viz-sizing.mjs';
 
 const POLL_MS = 1000;
 const FADE_MS = 600;
@@ -16,6 +17,7 @@ const ENTER_STAGGER_MS = 70;
 const QUIET_CHECK_MS = 5000;
 const MIN_MOVE_PX = 1;
 const RESIZE_DEBOUNCE_MS = 150;
+const CONTENT_SLACK_PX = 1;
 const FLIP_EASING = 'cubic-bezier(.2,.8,.2,1)';
 
 const $ = (id) => document.getElementById(id);
@@ -30,18 +32,31 @@ const reducedQuery = matchMedia('(prefers-reduced-motion: reduce)');
 const queue = createChangeQueue({ gap: CHANGE_GAP_MS });
 const entries = new Map(); // frame id -> { el, fb, layer, mod, frame, dispose: [], changedAt }
 const box = { pulse: null, total: 0, timer: 0 };
+let contentLayout = 0;
 
 const emit = (name, data) => { try { panel.emit(name, data); } catch { /* the host is not listening */ } };
 
-function layerCtx(entry) {
-  return { emit, frameId: entry.frame.id, pulse: () => box.pulse, get reduced() { return reducedQuery.matches; }, onDispose: (fn) => entry.layerDispose.push(fn) };
+function layerCtx(entry, layer = entry.layer) {
+  return {
+    emit, frameId: entry.frame.id, pulse: () => box.pulse, get reduced() { return reducedQuery.matches; }, onDispose: (fn) => entry.layerDispose.push(fn),
+    onContentHeight: (bodyPx) => {
+      const live = entries.get(entry.frame.id);
+      if (!live || live.layer !== layer) return;
+      const chrome = live.el.offsetHeight - live.fb.offsetHeight;
+      const need = Math.ceil(bodyPx + chrome);
+      if (Math.abs(need - (live.vizHeight ?? 0)) < CONTENT_SLACK_PX) return;
+      live.vizHeight = need;
+      cancelAnimationFrame(contentLayout);
+      contentLayout = requestAnimationFrame(layout);
+    },
+  };
 }
 
 function drawLayer(entry, frame, layer) {
   entry.layerDispose = [];
   const mod = frameModule(frame.type);
   try {
-    mod.render(layer, frame, layerCtx({ ...entry, frame }));
+    mod.render(layer, frame, layerCtx({ ...entry, frame }, layer));
   } catch (err) {
     console.warn('board: frame failed', frame.id, err?.message);
     layer.replaceChildren();
@@ -105,6 +120,7 @@ function update(entry, frame) {
   entry.fb.append(next);
   const drawn = drawLayer(entry, frame, next);
   Object.assign(entry, { layer: next, mod: drawn.mod, dispose: drawn.dispose });
+  entry.vizHeight = 0;
   old.classList.add('fade-out');
   setTimeout(() => { disposeAll(oldDispose); old.remove(); next.classList.remove('fade-in'); }, reducedQuery.matches ? 0 : FADE_MS);
 }
@@ -131,9 +147,11 @@ function layout() {
   const before = new Map(live.map((e) => [e.frame.id, e.el.getBoundingClientRect()]));
   const frames = live.map((e) => e.frame);
   const view = { aspect: innerWidth / Math.max(1, innerHeight), width: innerWidth, height: innerHeight };
-  const fitPlan = planGrid(frames, view);
+  const heights = new Map(live.filter((e) => e.frame.type === 'viz').map((e) => [e.frame.id, e.vizHeight ?? 0]));
+  const measuredView = { height: boardEl.clientHeight, gap: parseFloat(getComputedStyle(boardEl).rowGap) || 0 };
+  const fitPlan = sizeVizPlan(planGrid(frames, view), heights, measuredView);
   const mode = chooseMode(fitPlan);
-  const plan = mode === MODE_SCROLL ? planScroll(frames, view) : fitPlan;
+  const plan = mode === MODE_SCROLL ? sizeVizPlan(planScroll(frames, view), heights, measuredView) : fitPlan;
   const modeChanged = document.documentElement.dataset.mode !== mode;
   document.documentElement.dataset.mode = mode;
   document.documentElement.dataset.narrow = plan.narrow ? 'true' : 'false';
