@@ -107,7 +107,7 @@ Other environment variables: `CLAUDE_PANEL_PORT` (first port to try, default 471
 - Transcript text shown on the board (agent details) is passed through a redaction step first (home folders, key/token shapes, passwords in URLs), but treat the board as showing your session's work.
 - Form history uses one per-project store key (`panel.history`): generic jobs, form names, timestamps and opaque session keys only. Prompts, directory paths and branch names are not saved in that history.
 - Nothing is sent to any remote service by the mod. Scenes are model-written code: they run in a sandboxed iframe with a strict content-security policy, but with the CDN allow-list on (`web/scene-files.mjs`) a scene may load scripts from cdnjs, jsdelivr or unpkg in your browser. Do not put secrets in a scene folder.
-- The board's `Other sessions` frame (`sessionsFrame` option, on by default) is drawn from the `~/.claude/sessions` registry and `ps`, plus the last 128 KiB of each such session's transcript (title, branch, last prompt, redacted and cut to 80 characters). It is not sent to the model; turn it off with `sessionsFrame: false`.
+- The board's `Other sessions` frame (`sessionsFrame` option, on by default) is drawn from the `~/.claude/sessions` registry and `ps`, plus the last 128 KiB of each such session's transcript (title, branch, and what it is doing now: the tool call in flight, else the first sentence of its latest reply, else its last prompt; redacted and cut to 80 characters). Sessions that may be waiting for you come first, and clicking a card opens that session's transcript in the Agents tile. It is not sent to the model; turn it off with `sessionsFrame: false`.
 
 ## Develop and test
 

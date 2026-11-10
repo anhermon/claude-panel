@@ -6,6 +6,7 @@ import { CONFIG_DEFAULTS, configOf } from '../hooks/panel-config'
 import { validateFrame } from '../hooks/board-frames'
 import { applyFramePlan, assembleFrames, isAutoId, newBoardModel, planFrames } from '../hooks/board-model'
 import type { BoardInput } from '../hooks/board-model'
+import { isAgentsUiEvent } from '../hooks/agents-info-scene'
 import { sessionsFrame } from '../hooks/sessions-frame'
 import type { SessionRow } from '../hooks/sessions-state'
 
@@ -28,11 +29,19 @@ test('one statusboard card per session, in columns busy / may be waiting / idle;
   expect(validateFrame(frame)).toEqual(frame)
   expect(frame).toMatchObject({ id: 'sessions', type: 'viz', kind: 'statusboard', title: 'Other sessions' })
   const data = (frame as unknown as { data: { columns: { id: string; items: Record<string, unknown>[] }[] } }).data
-  expect(data.columns.map(c => c.id)).toEqual(['busy', 'waiting', 'idle'])
-  expect(data.columns[0]!.items[0]).toEqual({ title: 'Fix login', sub: 'make the login page work', tags: ['alpha', 'feature/x', 'now'] })
-  expect(data.columns[2]!.items[0]).toEqual({ title: 'Docs', tags: ['beta', '5m'] })
+  expect(data.columns.map(c => c.id)).toEqual(['waiting', 'busy', 'idle'])
+  expect(data.columns[0]).toMatchObject({ title: 'Needs you: may be waiting', tone: 'warn' })
+  expect(data.columns[1]!.items[0]).toEqual({ title: 'Fix login', sub: 'make the login page work', tags: ['alpha', 'feature/x', 'now'], open: 'a' })
+  expect(data.columns[2]!.items[0]).toEqual({ title: 'Docs', tags: ['beta', '5m'], open: 'b' })
   const onlyIdle = (sessionsFrame([ROWS[1]!])! as unknown as { data: { columns: unknown[] } }).data.columns
   expect(onlyIdle).toHaveLength(1)
+})
+
+test('every card carries `open`, the session id the page opens the transcript of; a row id that is not a safe id gets none', () => {
+  const frame = sessionsFrame([...ROWS, { id: 'bad id!', title: 'X', state: 'idle', project: 'p' }])!
+  expect(validateFrame(frame)).toEqual(frame)
+  const items = (frame as unknown as { data: { columns: { items: { open?: string }[] }[] } }).data.columns.flatMap(c => c.items)
+  expect(items.map(i => i.open)).toEqual(['c', 'a', 'b', undefined])
 })
 
 test('on the board it is an auto frame: frame_remove silences it, a posted frame with its id replaces it, frames_clear brings it back', () => {
@@ -57,4 +66,10 @@ test('the setting `sessionsFrame` defaults to on, and only a boolean changes it'
   expect(configOf().sessionsFrame).toBe(true)
   expect(configOf({ sessionsFrame: false }).sessionsFrame).toBe(false)
   expect(configOf({ sessionsFrame: 'no' }).sessionsFrame).toBe(true)
+})
+
+test('a card click is for the Agents tile alone: it is not quoted to the model, even from a page that posts it', () => {
+  expect(isAgentsUiEvent({ scene: 'board', name: 'session-open' })).toBe(true)
+  expect(isAgentsUiEvent({ scene: 'board', name: 'answer' })).toBe(false)
+  expect(isAgentsUiEvent({ scene: 'other', name: 'session-open' })).toBe(false)
 })

@@ -236,6 +236,25 @@ test('change queue: a target that changes while waiting is honoured (latest wins
   assert.equal(q.shown()[0].text, '2');
 });
 
+test('change queue: a removal and a clear reach the shown frames without a reload, and a repost after the clear comes back', () => {
+  const q = createChangeQueue();
+  const raw = (ids) => normalizeData({ frames: ids.map((id) => ({ id, type: 'text', text: id })) }).frames;
+  const drain = (from) => { const ops = []; for (let t = from; ; t += CHANGE_GAP_MS) { const op = q.step(t); if (!op) break; ops.push(`${op.kind}:${op.id}`); } return ops; };
+  q.setTarget(raw(['a', 'b', 'c', 'd']));
+  assert.equal(q.step(0).kind, 'init');
+  q.setTarget(raw(['a', 'c', 'd'])); // one frame removed
+  assert.deepEqual(drain(CHANGE_GAP_MS), ['remove:b']);
+  assert.deepEqual(q.shown().map((f) => f.id), ['a', 'c', 'd']);
+  q.setTarget(raw([])); // frames_clear: the data holds no frames at all
+  assert.equal(q.pending(), true);
+  assert.deepEqual(drain(10 * CHANGE_GAP_MS), ['remove:a', 'remove:c', 'remove:d']);
+  assert.deepEqual(q.shown(), []);
+  assert.equal(q.waitMs(20 * CHANGE_GAP_MS), null);
+  q.setTarget(raw(['x', 'a'])); // reposted frames, one of them reusing a removed id
+  assert.deepEqual(drain(30 * CHANGE_GAP_MS), ['add:x', 'add:a']);
+  assert.deepEqual(q.shown().map((f) => f.id), ['x', 'a']);
+});
+
 test('isQuiet flips after QUIET_AFTER_MS', () => {
   assert.equal(isQuiet(QUIET_AFTER_MS - 1, 0), false);
   assert.equal(isQuiet(QUIET_AFTER_MS, 0), true);

@@ -53,5 +53,7 @@ export function withAgentsInfo(prev: PanelState, dir: string, now: number): Pane
  */
 export const AGENT_EVENT = 'agent'
 export const AGENT_CLOSE_EVENT = 'agent-close'
+/** A card of the board's Other sessions frame (`session-open`): the page routes it to the Agents tile itself; a page that still posts it must not quote it to the model either. */
+export const SESSION_OPEN_EVENT = 'session-open'
 export const isAgentsUiEvent = (e: { scene: string; name: string }): boolean =>
-  e.scene === AGENTS_INFO_SCENE_ID && (e.name === AGENT_EVENT || e.name === AGENT_CLOSE_EVENT)
+  (e.scene === AGENTS_INFO_SCENE_ID && (e.name === AGENT_EVENT || e.name === AGENT_CLOSE_EVENT)) || (e.scene === 'board' && e.name === SESSION_OPEN_EVENT)

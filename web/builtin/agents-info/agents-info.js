@@ -13,6 +13,7 @@ import { createDetail } from './detail-view.js';
 import { fxKindOf, captionOf } from './event-fx.mjs';
 import { beam } from './fx-layer.js';
 import { createList } from './list-view.js';
+import { sessionRowOf } from './session-row.mjs';
 import { createTicker } from './ticker.js';
 import { titleOf } from './title-of.mjs';
 
@@ -86,9 +87,23 @@ const detail = createDetail($('detail'), { emit, onClose: closed });
 const HOST_OPEN = 'open-agent';
 const HOST_TAB = 'tab';
 const HOST_CLOSE = 'close';
+const HOST_OPEN_SESSION = 'open-session'; // a card of the board's Other sessions frame, routed by the page (web/events-client.js)
 panel.on(HOST_OPEN, (d) => { if (typeof d?.id === 'string') select(d.id); });
 panel.on(HOST_TAB, (d) => detail.tab(d?.name));
 panel.on(HOST_CLOSE, () => detail.close());
+/** A session that is not one of this tile's agents: its detail is built by the host from the session's own transcript. */
+panel.on(HOST_OPEN_SESSION, (d) => {
+  const row = sessionRowOf(d);
+  if (row === null) return;
+  const known = view.agents.find((a) => a.id === row.id);
+  if (known) { select(known.id); return; }
+  box.selected = row.id;
+  app.dataset.view = 'detail';
+  list.select(null);
+  crew.pick(null);
+  paintMood();
+  detail.open(row);
+});
 
 // ---- drawing
 function apply(data, fresh) {

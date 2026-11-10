@@ -19,6 +19,7 @@ import { liveHost } from './live'
 import { pulseBoardParts } from './pulse-host'
 import { isBuiltin } from './pulse-scene'
 import { PULSE_STATE_DIR } from './pulse-io'
+import type { SessionRow } from './sessions-state'
 import { PLUGIN_NAME } from './spec'
 
 type Dollar = EngineInterface
@@ -46,6 +47,12 @@ type Host = {
 }
 const NO_VIEW = { openId: null, tab: AGENT_TABS[0].name }
 const host: Host = { dir: null, prev: null, events: [], nextId: 0, lastKey: '', wasCrew: false, onCrew: null, view: NO_VIEW, buttonsKey: '' }
+
+/** The other live sessions the board's frame shows (board-host.ts pushes them): the only ones a click on a card may open. */
+let otherSessions: readonly SessionRow[] = []
+export const agentsInfoSessions = (rows: readonly SessionRow[]): void => {
+  otherSessions = rows
+}
 
 /** register.tsx's answer to "an agent exists": register the scene (once per module instance). */
 export function setAgentsInfoListener(fn: (() => void) | null): void {
@@ -84,6 +91,7 @@ const detailSource: DetailSource = {
   dir: () => host.dir,
   rows: () => host.prev ?? [],
   pulse: now => pulseBoardParts(now),
+  sessions: () => otherSessions,
 }
 
 /** Start the drill-down loop (once per module instance, see ./agent-detail-host.ts); `bind` says where the page's clicks land. */

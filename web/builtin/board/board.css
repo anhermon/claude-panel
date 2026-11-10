@@ -29,6 +29,7 @@
   --inset: max(10px, calc(var(--vu) * 2.2));
   --gap: max(8px, calc(var(--vu) * 1.15));
   --t: max(var(--fs), min(4.4cqw, 13cqh));
+  --read-max: calc(var(--fs) * 1.2); /* the biggest body text of a text-heavy frame (html, steps, timeline, text-sub): ~17px at the floor, grows with the stage */
   --ease: cubic-bezier(.2, .8, .2, 1);
   --scroll-tail: 44px; /* room under the last frame for the fade and the position chip */
 }
@@ -118,8 +119,8 @@ body { background: radial-gradient(90vw 60vh at 78% -12%, #141a2e 0%, transparen
 .text-main { font-weight: 700; line-height: 1.1; letter-spacing: -.02em; overflow-wrap: anywhere;
   font-size: var(--hl, max(var(--fs2), min(14cqw, 36cqh))); }
 .text[data-len="mid"] .text-main, .now .text-main { font-size: var(--hl, max(var(--fs2), min(10cqw, 26cqh))); }
-.text[data-len="long"] .text-main { font-size: var(--hl, max(calc(var(--fs2) * .78), min(7.4cqw, 21cqh))); }
-.text-sub { color: var(--mut); font-size: max(var(--fs), min(3.8cqw, 11cqh)); line-height: 1.25; overflow-wrap: anywhere; }
+.text[data-len="long"] .text-main { font-size: var(--hl, min(max(calc(var(--fs2) * .78), min(7.4cqw, 21cqh)), calc(var(--read-max) * 1.8))); }
+.text-sub { color: var(--mut); font-size: min(max(var(--fs), min(3.8cqw, 11cqh)), calc(var(--read-max) * 1.2)); line-height: 1.25; overflow-wrap: anywhere; }
 .now .text-body { align-items: flex-start; }
 .now-meta { display: flex; flex-wrap: wrap; align-items: center; gap: .3em .8em; min-width: 0; }
 .now .text-body { gap: .3em; }
@@ -175,7 +176,7 @@ body { background: radial-gradient(90vw 60vh at 78% -12%, #141a2e 0%, transparen
 
 /* ---- steps ------------------------------------------------------------------------------------------------------- */
 /* top-aligned list; frames/fit.js picks the font (bigger when there are few items) and spreads the spare height (--spread) */
-.steps { height: 100%; overflow: hidden; font-size: var(--fs); }
+.steps { height: 100%; overflow-x: hidden; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--line-hi) transparent; font-size: var(--fs); }
 .steps-list { list-style: none; padding: 0; display: flex; flex-direction: column; gap: calc(.5em + var(--spread, 0px)); }
 .step { display: flex; align-items: flex-start; gap: .7em; font-weight: 600; line-height: 1.3; min-width: 0; }
 .steps-head { display: flex; align-items: center; gap: .7em; margin-bottom: .55em; color: var(--mut); font-weight: 650; font-variant-numeric: tabular-nums; }
@@ -239,7 +240,7 @@ body { background: radial-gradient(90vw 60vh at 78% -12%, #141a2e 0%, transparen
 .diagram .edge-label { fill: var(--mut); font-weight: 600; text-anchor: middle; dominant-baseline: central; }
 
 /* ---- timeline ---------------------------------------------------------------------------------------------------- */
-.timeline { list-style: none; padding: 0; display: flex; height: 100%; font-size: max(var(--fs), min(3.4cqw, 11cqh)); }
+.timeline { list-style: none; padding: 0; display: flex; height: 100%; font-size: min(max(var(--fs), min(3.4cqw, 11cqh)), var(--read-max)); }
 .tl-item { --tone: var(--acc); position: relative; flex: 1 1 0; min-width: 0; display: grid; grid-template-rows: minmax(0, 1fr) 1.7em minmax(0, 1fr); justify-items: center; text-align: center; padding: 0 .35em; }
 .tl-item::before, .tl-item::after { content: ''; position: absolute; top: calc(50% - 1px); height: 2px; background: #2c3350; }
 .tl-item::before { left: 0; right: 50%; }
@@ -373,7 +374,9 @@ body { background: radial-gradient(90vw 60vh at 78% -12%, #141a2e 0%, transparen
 .image { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .4em; height: 100%; min-height: 0; }
 .image img { flex: 1; min-height: 0; max-width: 100%; object-fit: contain; border-radius: .6em; }
 .image figcaption, .image-missing { color: var(--mut); font-size: max(var(--fs), min(3.6cqw, 9cqh)); text-align: center; }
-.html { height: 100%; overflow: hidden; font-size: max(var(--fs), min(4.2cqw, 12cqh)); line-height: 1.3; }
+.html { height: 100%; overflow-x: hidden; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--line-hi) transparent; font-size: min(max(var(--fs), min(4.2cqw, 12cqh)), var(--read-max)); line-height: 1.3; }
+.html::-webkit-scrollbar { width: 6px; }
+.html::-webkit-scrollbar-thumb { background: var(--line-hi); border-radius: 99px; }
 .html a { color: var(--panel-accent, #7aa2ff); text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
 .html a:hover { text-decoration-thickness: 2px; }
 .html svg { display: block; max-width: 100%; max-height: 100cqh; margin: 0 auto; }

@@ -192,5 +192,13 @@
     return null;
   }
 
-  globalThis.PanelScenes = { sync, normScenes, onMessage, sceneIdOf, createBody, load, sceneUrl, constants: { LOAD_TIMEOUT_MS, ID_RE } };
+  /* A host message for the card of scene `id` (panel-host, heard by the scene's panel.on); false when that card is not here. */
+  function hostCommand(id, name, data) {
+    const f = frames.get(id);
+    if (!f || !f.iframe.contentWindow) return false;
+    f.iframe.contentWindow.postMessage({ type: "panel-host", name, data }, "*");
+    return true;
+  }
+
+  globalThis.PanelScenes = { sync, normScenes, onMessage, sceneIdOf, hostCommand, createBody, load, sceneUrl, constants: { LOAD_TIMEOUT_MS, ID_RE } };
 })();

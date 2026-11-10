@@ -17,6 +17,7 @@ import { readEvents } from './events'
 import { readEventsText } from './events-io'
 import type { PulseEvent, PulseLoop } from './pulse-model'
 import type { BoardLane } from '../types'
+import type { SessionRow, SessionState } from './sessions-state'
 import { briefFullOf, briefOf, parseTranscript } from './transcript-parse'
 
 type Dollar = EngineInterface
@@ -61,6 +62,8 @@ export type DetailSource = {
   dir: () => string | null
   rows: () => readonly AgentRow[]
   pulse: (now: number) => { loops: readonly PulseLoop[]; events: readonly PulseEvent[]; lanes?: readonly BoardLane[] }
+  /** The other live sessions as the board's `sessions` frame last drew them: only these may be opened by a bare session id. */
+  sessions?: () => readonly SessionRow[]
 }
 export type DetailBind = { eventsFile: string; isCurrent: () => Promise<boolean> }
 
@@ -81,6 +84,15 @@ export function resetMainMeta(): void {
   state.paths.delete(MAIN_LOOP_ID)
   state.misses.delete(MAIN_LOOP_ID)
 }
+
+/** The words of the detail view (detail-view.js STATE_WORD) for a session's state: an idle session is not running. */
+const SESSION_STATE_WORD: Record<SessionState, AgentRow['state']> = { busy: 'working', waiting: 'waiting', idle: 'done' }
+
+/** A card of the Other sessions frame as the row the detail is built for: the session itself, named and stated as its card says. */
+const sessionSubject = (s: SessionRow, now: number): AgentRow => ({
+  id: s.id, loop: s.id, isMain: false, name: s.title, short: s.title, state: SESSION_STATE_WORD[s.state], pct: null, startedAt: now, endedAt: null, tokens: null,
+  kind: null, kindLabel: 'Other session', kindColor: '', kindGlyph: '', headline: '', files: [],
+})
 
 const clampPages = (v: unknown): number => (typeof v === 'number' && Number.isFinite(v) ? Math.min(DETAIL_CAPS.MAX_PAGES, Math.max(1, Math.floor(v))) : 1)
 
@@ -175,10 +187,13 @@ export async function readMainSessionMeta($: Dollar, now: number): Promise<MainS
 
 async function refresh($: Dollar, source: DetailSource, want: Want, now: number): Promise<void> {
   const dir = source.dir()
-  const row = source.rows().find(r => r.id === want.id)
+  const listed = source.rows().find(r => r.id === want.id)
+  const card = listed === undefined ? source.sessions?.().find(s => s.id === want.id) : undefined
+  const row = listed ?? (card === undefined ? undefined : sessionSubject(card, now))
   if (dir === null || row === undefined) return
   const { loops, events, lanes } = source.pulse(now)
   const lane = lanes?.find(l => l.id === row.id)
+  const session = card === undefined ? lane?.session : card.id
   const loop = loops.find(l => l.id === row.loop)
   const laneInfo = lane === undefined ? undefined : { step: lane.step, note: lane.note, goal: lane.goal, dod: lane.dod, at: lane.at }
   // A codex run with a record: its rollout is read through the harness adapter (./agent-detail-external.ts); a run that is not one of those continues below.
@@ -195,11 +210,11 @@ async function refresh($: Dollar, source: DetailSource, want: Want, now: number)
     await writeLive($, dir, DETAIL_FILE_NAME, DETAIL_TEMP_NAME, JSON.stringify(own === undefined ? ext.detail : { ...ext.detail, run: own.run }) + '\n')
     return
   }
-  const path = await locate($, row.loop, now, lane?.session)
+  const path = await locate($, row.loop, now, session)
   const size = path === undefined ? undefined : await sizeOf($, path)
   const sig = `${want.id}|${want.pages}|${size ?? ''}|${row.state}|${Math.floor(now / DETAIL_HOST.REFRESH_MS)}`
   if (sig === state.lastSig) return
-  const read = path === undefined || size === undefined ? undefined : await readTranscript($, path, size, want.pages, row.isMain || lane?.session !== undefined)
+  const read = path === undefined || size === undefined ? undefined : await readTranscript($, path, size, want.pages, row.isMain || session !== undefined)
   // A run of another harness (codex) with no transcript read: say what is true for it, from its record, not Claude Code's words.
   const own = read === undefined && loop?.source === 'external' ? await loadRunDetail($, loop) : undefined
   const detail = buildDetail({
