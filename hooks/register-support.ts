@@ -5,7 +5,7 @@ import type { EngineInterface } from 'claude-code'
 
 import { inlineScenesDir } from './scene-fs'
 import type { SceneEnv, SceneFs } from './scene-fs'
-import { COMMAND_OPEN_ARG, PANE_ID, PANE_TITLE, PLUGIN_NAME, SCENE_TOOL_NAME } from './spec'
+import { COMMAND_GLOBAL_ARG, COMMAND_OPEN_ARG, PANE_ID, PANE_TITLE, PLUGIN_NAME, SCENE_TOOL_NAME } from './spec'
 
 export type Dollar = EngineInterface
 export type Reserved = { tool: unknown; tool_use_id: unknown; agentId?: unknown; requestMeta?: unknown }
@@ -16,8 +16,8 @@ export type Reserved = { tool: unknown; tool_use_id: unknown; agentId?: unknown;
 const FALLBACK_TMP_DIR = '/tmp'
 const STATE_DIR_NAME = 'claude-panel'
 export const COMMAND_DESCRIPTION =
-  'Show the live panel pane; "/panel open" opens the browser view, "/panel open <scene>" one scene, "/panel live on|off|status" the live stage preview, "/panel pulse on|off|status" the ambient pulse'
-export const COMMAND_ARG_HINT = `[${COMMAND_OPEN_ARG} [scene-id] | live on|off|status | pulse on|off|status]`
+  'Show the live panel pane; "/panel open" opens the browser view, "/panel open <scene>" one scene, "/panel global" the read-only overview of every Claude Code session of the last 48 hours, "/panel live on|off|status" the live stage preview, "/panel pulse on|off|status" the ambient pulse'
+export const COMMAND_ARG_HINT = `[${COMMAND_OPEN_ARG} [scene-id] | ${COMMAND_GLOBAL_ARG} | live on|off|status | pulse on|off|status]`
 const DARWIN = 'Darwin'
 const OPEN_MAC = 'open'
 const OPEN_LINUX = 'xdg-open'

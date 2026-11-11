@@ -1,8 +1,8 @@
-// What `/panel`, `/panel open` and `/panel open <id>` answer and open. Pure:
+// What `/panel`, `/panel open`, `/panel open <id>` and `/panel global` answer and open. Pure:
 // the mod runs `open` / `xdg-open` for the plan's `open` url.
 import type { PanelState } from '../types'
 import { STAGE_LAYOUT, sceneUrl, withSep } from './scene'
-import { COMMAND_OPEN_ARG } from './spec'
+import { COMMAND_GLOBAL_ARG, COMMAND_OPEN_ARG } from './spec'
 
 export const LIVE_ARG = 'live'
 export const LIVE_USAGE = 'usage: /panel live on|off|status'
@@ -19,6 +19,9 @@ export function parseLiveArgs(args: string): { verb: LiveVerb } | { usage: strin
 /** The location hash the stage page reads to pick its stage scene: `#stage=<id>`. */
 export const STAGE_HASH = '#stage='
 export const NO_BROWSER_TEXT = 'Panel pane opened; the browser view is not running.'
+export const NO_BROWSER_GLOBAL_TEXT = 'The browser view is not running yet, so the global view cannot be opened.'
+/** The path of the global view (every session of this machine, read-only) below the panel's url. */
+export const GLOBAL_PATH = 'global/'
 
 export type CommandPlan = {
   /** The reply. */
@@ -32,6 +35,11 @@ export function planCommand(args: string, state: PanelState): CommandPlan {
   const [verb, id] = args.trim().split(/\s+/)
   const { url } = state
   const wantsOpen = verb === COMMAND_OPEN_ARG
+  if (verb === COMMAND_GLOBAL_ARG) {
+    if (url === null) return { text: NO_BROWSER_GLOBAL_TEXT }
+    const target = `${withSep(url)}${GLOBAL_PATH}`
+    return { text: target, open: target }
+  }
   if (url === null)
     return {
       text:

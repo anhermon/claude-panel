@@ -32,6 +32,7 @@ licenses (`web/kit/LICENSES.md`).
 | --- | --- |
 | `/panel` | Shows the pane and prints the browser URL. |
 | `/panel open [scene-id]` | Opens the browser view (or one scene) in your browser. |
+| `/panel global` | Opens the [global view](#global-view): every Claude Code session of the last 48 hours on one read-only page. |
 | `/panel live on\|off\|status` | A live preview of the stage in the terminal pane (needs Chrome, see Platforms). |
 | `/panel pulse on\|off\|status` | The ambient pulse of agent activity. `PANEL_PULSE=off` in the environment turns it off. |
 | `/panel watch <folder>` | Follow a router-kit run in another folder than the session's. |
@@ -56,6 +57,16 @@ windows, reset countdowns and freshness, followed by context fill and formatted 
 Optional local delegation-kit quotas refresh in the background every 120 seconds; missing tools or failed reads stay quiet.
 Snapshots older than 30 minutes are marked stale. Bars turn amber at 60% and red at 85%. Without readings it draws nothing.
 Replace it with a frame of the same id, or hide it with `frame_remove: "limits"`; `frames_clear` restores it.
+
+## Global view
+
+`/panel global` prints and opens `http://127.0.0.1:<port>/<token>/global/`, a second, read-only page beside the per-session panel (which is unchanged). It covers every Claude Code session on this machine that wrote in the last 48 hours, ended ones included:
+
+- **Needs you** at the top: one item per decision or question across all sessions, with a bold title, one line on why, and a link to its source when there is one. Items the session board itself lists (its `needs-you`/decision html frames, its `ask`) are certain; items the page infers are labelled **May**: an `AskUserQuestion` with no answer, a tool call with no answer for 20 s, a last reply that ends with a question, an API error, a session registered busy but quiet for 5 minutes. Inferred items come from live sessions only.
+- **Jira**: sessions grouped by ticket key, taken from the git branch (`feature/<KEY>-...`) and the prompts. Only project prefixes seen in real `atlassian.net/browse/` links count (DEV, CHR, RH, INC, plus any a transcript shows); links use `https://dealhub.atlassian.net/browse/<KEY>`. `INT-*` keys are internal and get no link. Nothing calls the Jira API.
+- **Sessions**: a card each (at most 40, waiting first, then busy, then the most recent): title, project and branch, state (busy, may be waiting, idle, ended), last activity, the current task and its progress (the last `TodoWrite`, `TaskCreate`/`TaskUpdate` or checklist state, else the board's steps), the subagents and what each is doing, and the latest PR, Jira and artifact links. A card expands for the last prompt and the details.
+
+How it works: the server computes the answer only when the page asks (every 4 s, cached for about 2 s). It lists `~/.claude/projects/*/*.jsonl` with `readdir` + `stat`, reads the last 512 KiB of each transcript (then only appended bytes), checks liveness with the `~/.claude/sessions/<pid>.json` registry and `ps` (never the `*.key` files), and reads each session's board from `$TMPDIR/claude-panel/` while that file is within the window. Every text is masked for secrets, cut, never sent to a model, and drawn as plain text; links are shown only as absolute `http(s)` URLs that carry no secret. The route is under the same token and `Host` check as the rest of the server, with its own content-security policy (no inline script). It is not a daemon: with no panel server running there is no global view.
 
 ## Options (`userConfig`)
 
@@ -107,6 +118,7 @@ Other environment variables: `CLAUDE_PANEL_PORT` (first port to try, default 471
 - Transcript text shown on the board (agent details) is passed through a redaction step first (home folders, key/token shapes, passwords in URLs), but treat the board as showing your session's work.
 - Form history uses one per-project store key (`panel.history`): generic jobs, form names, timestamps and opaque session keys only. Prompts, directory paths and branch names are not saved in that history.
 - Nothing is sent to any remote service by the mod. Scenes are model-written code: they run in a sandboxed iframe with a strict content-security policy, but with the CDN allow-list on (`web/scene-files.mjs`) a scene may load scripts from cdnjs, jsdelivr or unpkg in your browser. Do not put secrets in a scene folder.
+- The global view (`/panel global`) reads every session's transcript tail (512 KiB), subagent transcripts and board files, with the same masking and no write path; see [Global view](#global-view).
 - The board's `Other sessions` frame (`sessionsFrame` option, on by default) is drawn from the `~/.claude/sessions` registry and `ps`, plus the last 128 KiB of each such session's transcript (title, branch, and what it is doing now: the tool call in flight, else the first sentence of its latest reply, else its last prompt; redacted and cut to 80 characters). Sessions that may be waiting for you come first, and clicking a card opens that session's transcript in the Agents tile. It is not sent to the model; turn it off with `sessionsFrame: false`.
 
 ## Develop and test
