@@ -21,6 +21,7 @@ export const PANE_ID = 'panel'
 export const PANE_TITLE = 'Panel'
 export const COMMAND_NAME = 'panel'
 export const COMMAND_OPEN_ARG = 'open'
+export const COMMAND_GLOBAL_ARG = 'global'
 
 export const SECTION_ID = 'panel:baseline'
 

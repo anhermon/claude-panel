@@ -63,7 +63,7 @@ test('prints exactly one PORT line; /state matches the file; the UI is served un
 
 test('token: required on every route (wrong, missing, prefix, encoded -> 404); /<token> redirects to /<token>/', async () => {
   const s = await startS(join(dir, 'tok.json'));
-  for (const p of ['/', '/state', '/events', '/ui.js', '/s/x/', '/wrong/state', '/wrong/', `/${TEST_TOKEN}x/state`,
+  for (const p of ['/', '/state', '/events', '/ui.js', '/s/x/', '/global', '/global/', '/global/state.json', '/wrong/global/state.json', '/wrong/state', '/wrong/', `/${TEST_TOKEN}x/state`,
     `/${TEST_TOKEN.slice(0, -1)}/state`, '/%74esttoken0123456789/state', `//${TEST_TOKEN}/state`, '/state/' + TEST_TOKEN]) {
     assert.equal((await s.get(p)).status, 404, p);
   }

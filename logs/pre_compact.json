@@ -1,0 +1,12 @@
+[
+  {
+    "session_id": "beb3f820-3809-41e8-ac22-c18659052902",
+    "transcript_path": "/Users/angelhermon/.claude/projects/-Users-angelhermon-workspace/beb3f820-3809-41e8-ac22-c18659052902.jsonl",
+    "cwd": "/Users/angelhermon/workspace/claude-panel",
+    "scratchpad_dir": "/private/tmp/claude-503/-Users-angelhermon-workspace/beb3f820-3809-41e8-ac22-c18659052902/scratchpad",
+    "prompt_id": "f1d2f302-e5a5-4e94-afa7-1d75d47a07e9",
+    "hook_event_name": "PreCompact",
+    "trigger": "auto",
+    "custom_instructions": null
+  }
+]

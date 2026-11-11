@@ -1,6 +1,6 @@
 import { expect, test } from 'claude-code/testing'
 
-import { planCommand, NO_BROWSER_TEXT } from '../hooks/commands'
+import { planCommand, GLOBAL_PATH, NO_BROWSER_GLOBAL_TEXT, NO_BROWSER_TEXT } from '../hooks/commands'
 import { IMAGE_MAX_COLUMNS, IMAGE_MAX_ROWS, imageBox, pngSize } from '../hooks/png'
 import { envPortOf, hexOf, mintToken, portMapOf, preferredPort, serverArgv, serverUrl, TOKEN_PATTERN, withPort } from '../hooks/server'
 import { emptyState, parsePort } from '../hooks/state'
@@ -108,6 +108,14 @@ test('/panel open <unknown id> says which scenes exist, and opens nothing', () =
   expect(none.text).toBe('No scene "zzz" (scenes: a, b).')
   expect(none.open).toBeUndefined()
   expect(planCommand('open zzz', running()).text).toBe('No scene "zzz" (there are no scenes yet).')
+})
+
+test('/panel global answers the global view url and opens it; with no browser view it says so and opens nothing', () => {
+  expect(planCommand('global', running())).toEqual({ text: `${BASE}${GLOBAL_PATH}`, open: `${BASE}global/` })
+  expect(planCommand('  global  ', running('a')).open).toBe(`${BASE}global/`)
+  expect(planCommand('global', { ...running(), url: BASE.slice(0, -1) }).open).toBe(`${BASE}global/`) // a url without its trailing slash
+  expect(planCommand('global', { ...running(), url: null })).toEqual({ text: NO_BROWSER_GLOBAL_TEXT })
+  expect(planCommand('globalx', running())).toEqual({ text: BASE }) // another word is still no argument
 })
 
 test('with no browser view running every form answers plainly and opens nothing', () => {

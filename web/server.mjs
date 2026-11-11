@@ -22,6 +22,8 @@
 //   /s/<id>/<path...>  scene files (rules and residual risks: see scene-files.mjs)
 //   /workspace/        the workspace page (builtin/workspace/): every main scene as a tile of one grid. The terminal's live preview
 //                      screencasts it; /workspace/<file> serves its three assets (an exact allow-list). Own CSP: it frames /s/<id>/.
+//   /global/           the GLOBAL view (global/): a read-only overview of every Claude Code session of this machine active in the last
+//                      48 h (global/view.mjs); /global/state.json is its JSON (computed on request, cached ~2 s). Own CSP, no inline script.
 //   /kit/<path...>     vendored kit files (scene-kit.mjs): same file rules, smaller type list, no scene CSP
 //   POST /event        the return channel from the host page to Claude (scene-events.mjs)
 // The state sent to the page has scenes reduced to a whitelist (scene-registry.mjs); `dir` never leaves this process.
@@ -33,12 +35,14 @@
 // those CDNs). Do not put secrets in a scene folder or in anything it can fetch. Details: scene-files.mjs.
 import http from 'node:http';
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { handleSceneRequest } from './scene-files.mjs';
 import { createSceneRegistry, SCENE_ID_RE } from './scene-registry.mjs';
 import { createKit, KIT_SEGMENT } from './scene-kit.mjs';
+import { createGlobalView } from './global/view.mjs';
 import { createEventHandler, createEventLog, eventsFileFor, EVENT_SEGMENT } from './scene-events.mjs';
 
 const HOST = '127.0.0.1';
@@ -86,6 +90,16 @@ const WORKSPACE_FILES = new Map([
 // The workspace page is the server's own code (not model-written), so it may read /state and /events (same origin) and frame the
 // scenes; each scene is still sandboxed by the CSP it is served with. Nothing else may load.
 const WORKSPACE_CSP = "default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'self'; frame-src 'self'; img-src data:; base-uri 'none'; form-action 'none'";
+// The global page is the server's own code: it reads only /global/state.json (same origin) and nothing may load besides its own files.
+const GLOBAL_SEGMENT = 'global';
+const GLOBAL_DIR = path.join(WEB_DIR, GLOBAL_SEGMENT);
+const GLOBAL_STATE_FILE = 'state.json';
+const GLOBAL_FILES = new Map([
+  ['', { file: 'index.html', type: HTML_TYPE }],
+  ['global.js', { file: 'global.js', type: JS_TYPE }],
+  ['global.css', { file: 'global.css', type: 'text/css; charset=utf-8' }],
+]);
+const GLOBAL_CSP = "default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'";
 const NO_STORE = 'no-store';
 const PORT_LINE_PREFIX = 'PORT ';
 const EMPTY_STATE = Object.freeze({});
@@ -145,6 +159,8 @@ const roots = args.roots.length === 0 ? null : args.roots.flatMap((r) => {
 });
 const registry = createSceneRegistry({ stateFile, roots });
 const kit = createKit({ dir: path.resolve(args.kit ?? DEFAULT_KIT_DIR), token });
+// The panel's state folder is the one holding the state file (`<tmp>/claude-panel/`): the boards of the other sessions are in it.
+const globalView = createGlobalView({ claudeDir: process.env.CLAUDE_CONFIG_DIR || path.join(os.homedir(), '.claude'), stateDir: path.dirname(stateFile) });
 let boundPort = 0;
 let origin = '';
 const eventHandler = createEventHandler({ registry, log: createEventLog(eventsFileFor(stateFile)), getOrigin: () => origin, headers: BASE_HEADERS });
@@ -224,6 +240,23 @@ function sendWorkspace(req, res, name) {
   });
 }
 
+function sendGlobal(req, res, name) {
+  const headers = { ...BASE_HEADERS, 'content-security-policy': GLOBAL_CSP };
+  if (name === GLOBAL_STATE_FILE) {
+    if (req.method === 'HEAD') return res.writeHead(200, { ...headers, 'content-type': 'application/json; charset=utf-8' }).end();
+    return globalView.json().then(
+      (json) => res.writeHead(200, { ...headers, 'content-type': 'application/json; charset=utf-8' }).end(json),
+      () => plain(res, 500, 'global view failed', { 'content-security-policy': GLOBAL_CSP }),
+    );
+  }
+  const asset = GLOBAL_FILES.get(name);
+  if (!asset) return notFound(res);
+  return fs.readFile(path.join(GLOBAL_DIR, asset.file), (err, body) => {
+    if (err) return plain(res, 500, `${asset.file} missing`);
+    res.writeHead(200, { ...headers, 'content-type': asset.type }).end(req.method === 'HEAD' ? undefined : body);
+  });
+}
+
 function handle(req, res) {
   if (!hostAllowed(req.headers.host)) return plain(res, 421, 'misdirected request');
   if (typeof req.url !== 'string' || !req.url.startsWith('/')) return plain(res, 400, 'bad request');
@@ -251,6 +284,10 @@ function handle(req, res) {
   if (rest[0] === WORKSPACE_SEGMENT) {
     if (rest.length === 1) return plain(res, 308, '', { location: `/${token}/${WORKSPACE_SEGMENT}/` });
     return rest.length === 2 ? sendWorkspace(req, res, rest[1]) : notFound(res);
+  }
+  if (rest[0] === GLOBAL_SEGMENT) {
+    if (rest.length === 1) return plain(res, 308, '', { location: `/${token}/${GLOBAL_SEGMENT}/` }); // relative asset urls need the slash
+    return rest.length === 2 ? sendGlobal(req, res, rest[1]) : notFound(res);
   }
   if (rest[0] === KIT_SEGMENT && rest.length >= 2) {
     kit.handle(req, res, rest.slice(1));

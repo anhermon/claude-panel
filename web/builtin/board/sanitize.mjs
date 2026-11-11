@@ -63,7 +63,7 @@ export function cleanStyle(value) {
 }
 
 /** decoded href text -> the normalised absolute http(s) URL, or '' (relative, protocol-relative, other schemes, too long). */
-function cleanHref(val) {
+export function cleanHref(val) {
   const v = val.trim();
   if (v.length > HREF_MAX || !ABS_HTTP_RE.test(v.replace(IGNORED_IN_SCHEME, ''))) return '';
   try {
