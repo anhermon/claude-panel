@@ -18,3 +18,6 @@ tmp/
 
 # the author's own dev workflow (copies this mod into other sessions' plugin development folders); not part of the plugin
 scripts/sync-sessions.sh
+
+# hook logs written by local Claude Code hooks
+logs/
