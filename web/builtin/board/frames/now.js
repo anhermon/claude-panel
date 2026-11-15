@@ -6,6 +6,7 @@ import { h, watchSize } from './dom.js';
 import { fitHeadline } from './fit.js';
 
 const FIT_MARGIN_PX = 2;
+const LONG_FROM = 48;
 const STATUS_TONE = { working: 'acc', waiting: 'warn', blocked: 'danger', failed: 'danger', done: 'ok', testing: 'cyan' };
 
 export function render(el, f, ctx) {
@@ -19,7 +20,8 @@ export function render(el, f, ctx) {
   const lastEl = last && h('p', { class: 'now-last', text: last });
   const subEl = sub && h('p', { class: 'text-sub now-sub', text: sub });
   const body = h('div', { class: 'text-body' }, main, meta || null, lastEl, subEl);
-  const root = h('div', { class: 'now' }, body);
+  const len = capTitle(f.text, CAPS.text).length;
+  const root = h('div', { class: 'now', 'data-len': len <= LONG_FROM ? 'short' : 'long' }, body); // a long goal gets a smaller headline
   el.append(root);
   ctx.onDispose(fitHeadline(root, main));
   // still too tall with the headline at its floor: the subtitle goes first, then the last-finished line (the headline and the who/how long stay)

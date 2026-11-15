@@ -5,6 +5,7 @@
 // frame: the task title and the status chip.
 import type { BoardFrame, BoardLane, PanelStatus } from '../types'
 import { cut } from './blocks/common'
+import { clipWords } from './transcript-redact'
 import { plainTitle, ticketOf } from './agent-roles'
 import { FRAME_CAPS } from './board-frames'
 import { formatDuration, plural } from './insight-format'
@@ -27,6 +28,8 @@ export type NowInput = {
   /** The session's task title (trimmed, never empty here). */
   task: string
   status: PanelStatus
+  /** The derived state (`working · 3 calls · last: edited a.ts`) shown under the title when no agent is in sight. */
+  sub?: string
   now: number
 }
 
@@ -53,7 +56,7 @@ export function whoText(rows: readonly BoardLane[]): string {
 }
 
 export function nowFrame(input: NowInput): BoardFrame {
-  const base: BoardFrame = { id: NOW_ID, type: 'now', title: NOW_TITLE, size: NOW_SIZE, text: cut(plainTitle(input.task, false), FRAME_CAPS.TEXT_CHARS), status: input.status }
+  const base: BoardFrame = { id: NOW_ID, type: 'now', title: NOW_TITLE, size: NOW_SIZE, text: clipWords(plainTitle(input.task, false), FRAME_CAPS.TEXT_CHARS), status: input.status, ...(input.sub === undefined || input.sub === '' ? {} : { sub: cut(input.sub, FRAME_CAPS.SUB_CHARS) }) } as BoardFrame
   const rows = input.rows.filter(isAgent)
   const active = rows.filter(r => ACTIVE_STATES.includes(r.state)).sort(newest)
   const blocked = rows.filter(r => r.state === 'blocked').sort(newest)
@@ -68,7 +71,7 @@ export function nowFrame(input: NowInput): BoardFrame {
   return {
     ...base,
     text: cut(headline, FRAME_CAPS.TEXT_CHARS),
-    sub: cut(plainTitle(input.task, false), FRAME_CAPS.SUB_CHARS),
+    sub: clipWords(plainTitle(input.task, false), FRAME_CAPS.SUB_CHARS),
     ...(who === '' ? {} : { who }),
     ...(focus.startedAt > 0 ? { for: `${isBlocked ? FOR_BLOCKED : FOR_WORKING}${formatDuration(input.now - focus.startedAt)}` } : {}),
     ...(last === undefined ? {} : { last: cut(`${LAST_PREFIX}${workTitle(last, input.router)}`, FRAME_CAPS.SUB_CHARS) }),

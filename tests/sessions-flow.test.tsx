@@ -52,7 +52,7 @@ async function sessionsBoot($: Engine, on: On) {
 
 const LATER_MS = 90_000
 
-test('other live sessions are on the board with no panel call: busy first, with project and current task', async ($, on) => {
+test('other live sessions are on the board with no panel call: busy first, with project and current task', { options: { sessionsFrame: true } }, async ($, on) => {
   const b = await sessionsBoot($, on)
   await b.clock.advance(LATER_MS) // the pretend transcripts were written at 1 ms: a minute later only the registry's busy session is busy
   await b.settle()
@@ -64,7 +64,7 @@ test('other live sessions are on the board with no panel call: busy first, with 
   expect(columns[1]!.items[0]).toMatchObject({ title: 'beta', sub: 'write the docs', tags: ['beta', 'feature/x', '1m'] })
 })
 
-test('frame_remove silences the sessions frame', async ($, on) => {
+test('frame_remove silences the sessions frame', { options: { sessionsFrame: true } }, async ($, on) => {
   const b = await sessionsBoot($, on)
   await b.settle()
   expect((await $.tool.call({ tool: TOOL, frame_remove: 'sessions' })).result).toBe('frame sessions removed (auto; frames_clear brings it back) · 0 on board')

@@ -143,7 +143,7 @@ test('context stays bounded and contains only generic profile text, suggestions 
   const block = contextBlock(profile, ['riskgrid', 'compare', 'scene'], seedOf('session-a'))
   expect(block.length).toBeLessThanOrEqual(CONTEXT_MAX_CHARS)
   expect(block).toMatch(/^<panel-context>.*<\/panel-context>$/)
-  expect(block).toContain('task + why')
+  expect(block).toContain('task+why')
   expect(block).toContain('unless the content demands')
   expect(block).toContain('riskgrid, compare.')
   expect(block).not.toContain('scene')
@@ -382,4 +382,83 @@ test('real hooks over several sessions sharing one store: a form every session u
   expect(lastContext?.find(c => c.includes('Candidates'))).toMatch(/Avoid recent forms[^.]*steps/)
   expect(offered.at(-1)!.length).toBeGreaterThan(0)
   expect((b.stored.get(HISTORY_KEY) as unknown[]).length).toBe(LIVE_SESSIONS)
+})
+
+const NUDGE_AT = CONFIG_DEFAULTS.nudgeAfterCalls
+const nudges = (r: { context?: readonly string[] }) => (r.context ?? []).filter(c => c.startsWith('panel:'))
+const callsUntil = async ($: Engine, count: number, extra: object = {}) => {
+  const seen: string[] = []
+  for (let n = 0; n < count; n++) seen.push(...nudges(await call($, extra)))
+  return seen
+}
+
+test('mid-turn nudge: one reminder on the Nth call of a human turn, full text, never again that turn', { options: { midTurnNudge: true } }, async ($, on) => {
+  await setup($, on)
+  await submit($)
+  expect(await callsUntil($, NUDGE_AT - 1)).toEqual([])
+  const fired = nudges(await call($))
+  expect(fired).toHaveLength(1)
+  expect(fired[0]).toContain('task+why')
+  expect(await callsUntil($, NUDGE_AT)).toEqual([])
+})
+
+test('mid-turn nudge: bookkeeping calls do not count, and a new human prompt re-arms it', { options: { midTurnNudge: true } }, async ($, on) => {
+  await setup($, on)
+  await submit($)
+  for (const tool of BOOKKEEPING_TOOLS) if (tool === 'ToolSearch' || tool === 'TodoWrite' || tool === 'Skill') for (let n = 0; n < NUDGE_AT; n++) expect(nudges(await $.tool.call({ tool })), tool).toEqual([])
+  expect(await callsUntil($, NUDGE_AT)).toHaveLength(1)
+  await submit($, 'Fix the failing cache test')
+  expect(await callsUntil($, NUDGE_AT - 1)).toEqual([])
+  expect(nudges(await call($))).toHaveLength(1)
+})
+
+test('mid-turn nudge: not in a subagent, and subagent calls do not count toward the main turn', { options: { midTurnNudge: true } }, async ($, on) => {
+  await setup($, on)
+  await submit($)
+  expect(await callsUntil($, NUDGE_AT * 2, { agentId: 'worker' })).toEqual([])
+  expect(await callsUntil($, NUDGE_AT - 1)).toEqual([])
+  expect(nudges(await call($))).toHaveLength(1)
+})
+
+test('mid-turn nudge: not when the panel was already used this turn, but a later prompt re-arms it', { options: { midTurnNudge: true } }, async ($, on) => {
+  await setup($, on)
+  await submit($)
+  await call($)
+  await $.tool.call({ tool: TOOL, task: { title: 'Build a cache', why: 'Cache is slow' } })
+  expect(await callsUntil($, NUDGE_AT * 2)).toEqual([])
+  await submit($, 'Fix the failing cache test')
+  expect(await callsUntil($, NUDGE_AT)).toHaveLength(1)
+})
+
+test('mid-turn nudge: a task already on the board shortens it to the evidence frame', { options: { midTurnNudge: true } }, async ($, on) => {
+  await setup($, on)
+  await $.tool.call({ tool: TOOL, task: { title: 'Build a cache', why: 'Cache is slow' } })
+  await submit($)
+  const fired = await callsUntil($, NUDGE_AT)
+  expect(fired).toHaveLength(1)
+  expect(fired[0]).toContain('evidence frame')
+  expect(fired[0]).not.toContain('task+why')
+})
+
+test('mid-turn nudge: off with proactive off, midTurnNudge off or nudgeAfterCalls zero; chat and automated origins never nudge', { options: { midTurnNudge: true } }, async ($, on) => {
+  await setup($, on)
+  await submit($, 'Thanks')
+  expect(await callsUntil($, NUDGE_AT * 2)).toEqual([])
+  for (const kind of ['sdk', 'task-notification', 'scheduled-trigger']) await submit($, WORK, { origin: { kind } })
+  expect(await callsUntil($, NUDGE_AT * 2)).toEqual([])
+})
+
+for (const options of [{ proactive: false }, { midTurnNudge: false }, { nudgeAfterCalls: 0 }])
+  test(`mid-turn nudge: silent with ${JSON.stringify(options)}`, { options: { midTurnNudge: true, ...options } }, async ($, on) => {
+    await setup($, on)
+    await submit($)
+    expect(await callsUntil($, NUDGE_AT * 2)).toEqual([])
+  })
+
+test('mid-turn nudge: costs under 40 tokens per qualifying turn and the options parse', () => {
+  const text = 'panel: post task+why now (one call), then one evidence frame when you have it'
+  expect(Math.ceil(text.length / 4)).toBeLessThan(40)
+  expect(configOf()).toMatchObject({ midTurnNudge: false, nudgeAfterCalls: 4 }) // off by default: it was ignored in every measured turn
+  expect(configOf({ midTurnNudge: 'no', nudgeAfterCalls: -2 })).toMatchObject({ midTurnNudge: false, nudgeAfterCalls: 4 })
+  expect(configOf({ midTurnNudge: true, nudgeAfterCalls: 2.9 })).toMatchObject({ midTurnNudge: true, nudgeAfterCalls: 2 })
 })

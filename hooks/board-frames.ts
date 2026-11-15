@@ -4,7 +4,7 @@
 // chart says). Unknown keys are refused with the field named. The shape is the `BoardFrame` type in types/index.d.ts.
 import { validateVizData } from './viz-schema'
 import type { BoardFrame, BoardFrameType } from '../types'
-import { Invalid, isAbsent, isPlain } from './blocks/common'
+import { cut, Invalid, isAbsent, isPlain } from './blocks/common'
 import type { Plain } from './blocks/common'
 import { ROUTER_CAPS, ROUTER_STAGES } from './router-state'
 import { INSIGHT_KINDS } from './work-kinds'
@@ -116,12 +116,21 @@ type Spec = { keys: readonly string[]; build: Build }
 
 const fix = (what: string): string => `: ${what}`
 
+// Lenient mode (set by `validateFrame` for the length of one call): an over-cap text is cut, an over-long list keeps its first
+// items, and each cut is noted here instead of refusing the frame. Null is strict: every cap refuses, as before.
+let trimNotes: string[] | null = null
+const notePath = (path: string): string => path.replace(/^frame\./, '')
+
 /** A required, non-empty string of at most `max` characters (whitespace-trimmed). */
 function text(v: unknown, path: string, max: number, hint = 'shorten it'): string {
   if (typeof v !== 'string') throw new Invalid(`${path} must be a string of at most ${max} characters`)
   const out = v.trim()
   if (out === '') throw new Invalid(`${path} must not be empty`)
-  if (out.length > max) throw new Invalid(`${path} is ${out.length} characters; the limit is ${max}${fix(hint)}`)
+  if (out.length > max) {
+    if (trimNotes === null) throw new Invalid(`${path} is ${out.length} characters; the limit is ${max}${fix(hint)}`)
+    trimNotes.push(`${notePath(path)} ${out.length}→${max}`)
+    return cut(out, max)
+  }
   return out
 }
 
@@ -144,8 +153,12 @@ function finite(v: unknown, path: string): number {
 
 function list(v: unknown, path: string, max: number, min = 1): unknown[] {
   if (!Array.isArray(v)) throw new Invalid(`${path} must be an array of at most ${max} items`)
-  if (v.length > max) throw new Invalid(`${path} has ${v.length} items; the limit is ${max}${fix('keep the ones that matter most')}`)
   if (v.length < min) throw new Invalid(`${path} needs at least ${min} item${min === 1 ? '' : 's'}`)
+  if (v.length > max) {
+    if (trimNotes === null) throw new Invalid(`${path} has ${v.length} items; the limit is ${max}${fix('keep the ones that matter most')}`)
+    trimNotes.push(`${notePath(path)} ${v.length}→${max}`)
+    return v.slice(0, max)
+  }
   return v
 }
 
@@ -571,15 +584,76 @@ export function frameId(v: unknown, path: string): string {
   return v
 }
 
-/** One frame as the model sent it, validated. `path` names the field in a refusal (default `frame`). Throws `Invalid`. */
-export function validateFrame(v: unknown, path = 'frame'): BoardFrame {
-  if (!isPlain(v)) throw new Invalid(`${path} must be an object {id, type, title?, size?, ...fields of the type}`)
-  const type = oneOf(v.type, `${path}.type`, FRAME_TYPES)
+/** The commonest wrong shape: the frame sent as a JSON string, often with a bare word for a value (`"size":l`). Null when it cannot be read. */
+export function parseFrameString(raw: string): unknown {
+  const attempts = [raw, raw.replace(/(:\s*)([A-Za-z][\w-]*)(?=\s*[,}\]])/g, (m, lead: string, word: string) => (/^(true|false|null)$/.test(word) ? m : `${lead}"${word}"`))]
+  for (const text of attempts) {
+    try {
+      const parsed: unknown = JSON.parse(text)
+      if (isPlain(parsed)) return parsed
+    } catch {
+      // try the next form
+    }
+  }
+  return null
+}
+
+/**
+ * One frame as the model sent it, validated. `path` names the field in a refusal (default `frame`). Throws `Invalid`.
+ * With `trimmed` the length caps cut instead of refusing and each cut is pushed there ("items[2].t 61→48"); without it every cap refuses.
+ */
+export function validateFrame(v: unknown, path = 'frame', trimmed?: string[]): BoardFrame {
+  if (!isPlain(v)) throw new Invalid(`${path} must be an object, not ${Array.isArray(v) ? 'an array' : typeof v}: {"id":"plan","type":"steps","items":[{"t":"Read the log","state":"doing"}]}`)
+  const outer = trimNotes
+  trimNotes = trimmed ?? null
+  try {
+    return checkFrame(v, path)
+  } finally {
+    trimNotes = outer
+  }
+}
+
+/** One valid frame per common type, quoted in the unknown-field refusal. */
+const FRAME_EXAMPLES: Readonly<Record<string, string>> = {
+  text: '{"id":"note","type":"text","text":"Pick A","sub":"cheaper"}',
+  metric: '{"id":"p95","type":"metric","value":"120ms","label":"p95"}',
+  steps: '{"id":"plan","type":"steps","items":[{"t":"Read the log","state":"doing"}]}',
+  timeline: '{"id":"run","type":"timeline","items":[{"when":"10:02","text":"deploy"}]}',
+  compare: '{"id":"cmp","type":"compare","left":{"title":"Clock","items":["a","b"]},"right":{"title":"Tmp dir","items":["c","d"]}}',
+  ask: '{"id":"pick","type":"ask","q":"Which first?","options":["A","B"]}',
+  viz: '{"id":"chart","type":"viz","kind":"<kind>","data":{}}',
+}
+
+const isEmptyValue = (x: unknown): boolean => x === '' || x === null || (Array.isArray(x) && x.length === 0) || (isPlain(x) && Object.keys(x).length === 0)
+
+/** Lenient repairs of a frame's unknown fields, each noted: an empty placeholder is dropped, a lone `frame` object wrapping the real frame is unwrapped. */
+function repairFields(v: Plain, allowed: readonly string[]): Plain {
+  if (trimNotes === null) return v
+  let out = v
+  if (isPlain(out.frame) && (out.frame.type === undefined || out.frame.type === out.type) && !allowed.includes('frame') && Object.keys(out).every(k => k === 'frame' || COMMON_KEYS.includes(k as never))) {
+    out = { ...out, ...out.frame }
+    delete out.frame
+    trimNotes.push('frame was nested in frame, send it flat')
+  }
+  for (const key of Object.keys(out)) {
+    if (allowed.includes(key) || !isEmptyValue(out[key])) continue
+    out = { ...out }
+    delete out[key]
+    trimNotes.push(`empty ${key} dropped`)
+  }
+  return out
+}
+
+function checkFrame(input: Plain, path: string): BoardFrame {
+  const type = oneOf(input.type, `${path}.type`, FRAME_TYPES)
   const spec = SPECS[type]
   const allowed = [...COMMON_KEYS, ...spec.keys]
+  const v = repairFields(input, allowed)
   for (const key of Object.keys(v))
-    if (!allowed.includes(key))
-      throw new Invalid(`${path}.${key} is not a known field of a "${type}" frame (allowed: ${allowed.join(LIST_JOIN)})`)
+    if (!allowed.includes(key)) {
+      const example = FRAME_EXAMPLES[type] ?? `send {help:"${type}"} for the shape`
+      throw new Invalid(`${path}.${key} is not a known field of a "${type}" frame (allowed: ${allowed.join(LIST_JOIN)}). Example: ${example}`)
+    }
   const common = defined({
     id: frameId(v.id, `${path}.id`),
     type,

@@ -75,8 +75,9 @@ export async function registerTool(
   description: string,
   inputSchema: Record<string, unknown>,
   fullName: string,
+  isDeferred = false,
 ): Promise<void> {
-  const registered = await $.tool.register({ name, description, inputSchema, isDeferred: false })
+  const registered = await $.tool.register({ name, description, inputSchema, isDeferred })
   if (registered.tool !== fullName) log($, `tool is listed as ${registered.tool}, not ${fullName}`)
 }
 

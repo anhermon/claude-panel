@@ -44,7 +44,7 @@ The model gets two tools:
 
 The `panel:panel-guide` skill (`skills/panel-guide`) tells the model how to choose a form and write a scene.
 
-With the mod active, Claude uses the panel on its own for work that needs more than a few tool calls: task + why first,
+With the mod active, Claude uses the panel on its own for work that needs more than 3 tool calls: task + why first,
 then forms that fit the work and measured evidence. Short questions and acknowledgements stay in chat. Prompt context
 suggests forms from the current job and generic project markers. A local history of the last eight sessions helps avoid
 forms used in at least three of the last five sessions; among equally fitting forms, the suggestions rotate by session. Builds and operations
@@ -52,7 +52,9 @@ can use test results, debugging hypotheses, research sources, decisions a decisi
 sessions measured limits. If Claude has not posted a task after six non-panel tool calls (task bookkeeping such as ToolSearch or TodoWrite does not count), the mod fills the empty task from
 the first sentence of the request, with private text scrubbed. Claude can replace that starting point at any time.
 
-The board adds a small **Limits** frame (id `limits`, viz kind `limits`) whenever readings exist. It groups Claude, Codex, AGY Gemini shared and the AGY Claude/GPT pool with 5-hour and weekly
+The board draws itself from hook signals, with no model call: **Now** (the first sentence of your latest prompt, a short chat question included, cut at a word; under it `working · N calls · last: edited a.ts` or `waiting on you`, and a `done` chip once the turn ends), **Plan** (the model's TodoWrite / Task list, a `...__checklist` tool call (such as the subagent-progress `checklist`) or the checkboxes of a `CHECKLIST.md` it writes or edits, as steps: pending, in progress, done; at most six rows, `+N more`, hidden 60 seconds after every step is done) and **Last answer** (the final message as plain text, at most 400 characters: markdown removed, filler openers such as `Done.` dropped, bullets kept as separate lines, or its `TL;DR:` / `Summary` line when it starts with one). A task Claude posts itself replaces **Now**, and a frame of the same id replaces any of them. Tool-count and insight frames (bars, activity timeline, time by kind, time sinks, repeats, improve) are off unless `insightFrames` is on. All text is scrubbed first (secrets, home folders).
+
+With `limitsFrame: true` the board adds a small **Limits** frame (id `limits`, viz kind `limits`) whenever readings exist (off by default). It groups Claude, Codex, AGY Gemini shared and the AGY Claude/GPT pool with 5-hour and weekly
 windows, reset countdowns and freshness, followed by context fill and formatted cost. Live Claude usage takes precedence.
 Optional local delegation-kit quotas refresh in the background every 120 seconds; missing tools or failed reads stay quiet.
 Snapshots older than 30 minutes are marked stale. Bars turn amber at 60% and red at 85%. Without readings it draws nothing.
@@ -76,15 +78,19 @@ All optional; the defaults are in `.claude-plugin/plugin.json`.
 | --- | --- | --- | --- | --- |
 | `proactive` | Use the panel proactively | boolean | `true` | Enable automatic panel guidance, contextual form suggestions (and, after a task-only panel call, one nudge to add a form that fits), history recording and the task safety net. `false` leaves panel use on request. |
 | `autoTaskAfterCalls` | Calls before starting the task | number | `6` | Fill an empty task after this many non-panel tool calls following a work prompt. `0` disables this safety net. |
+| `midTurnNudge` | Remind mid-turn | boolean | `false` | Off by default (it was ignored in every measured turn, so its tokens bought nothing). On: once per prompt's turn, after `nudgeAfterCalls` non-panel calls with no panel use, add a one-line reminder to that tool's result (about 20 tokens). Main session only. |
+| `nudgeAfterCalls` | Calls before the reminder | number | `4` | `0` disables the mid-turn reminder. |
 | `doneRowMinutes` | Finished agent row (minutes) | number | `10` | How long a finished agent keeps its row on the board. |
-| `limitsShowPct` | Show limits from (%) | number | `0` | Show measured limits when any quota window or context fill reaches this percentage. `0` always shows available readings; `101` never shows the frame. |
+| `limitsFrame` | Limits frame | boolean | `false` | Draw the limits frame (quota windows, context fill, cost). It is not about this session's goal, so it is opt-in. |
+| `limitsShowPct` | Show limits from (%) | number | `0` | With `limitsFrame` on, show measured limits when any quota window or context fill reaches this percentage. `0` always shows available readings; `101` never shows the frame. |
 | `quotaEveryS` | Quota refresh (seconds) | number | `120` | Interval for local provider quota reads; `0` disables them. |
 | `dodFramesMax` | Checklist frames | number | `3` | At most this many agent checklist frames on the board at once. |
 | `stripRoutingSuffix` | Strip routing note from agent names | boolean | `true` | Drop a trailing (sonnet/high) style note from an agent's name on the board. |
 | `goalLabels` | Goal line labels | string | `goal,objective` | Comma-separated labels of the brief line that states an agent's goal. |
 | `ticketLabels` | Ticket line labels | string | `ticket` | Comma-separated labels of the brief line that names an agent's ticket. |
 | `insightMinSeconds` | Insight minimum (seconds) | number | `30` | The workflow-insight frames wait for this many seconds of agent time before they say anything. |
-| `sessionsFrame` | Other sessions frame | boolean | `true` | Draw a frame listing the other Claude Code sessions running on this machine (name, state, project, current task). |
+| `sessionsFrame` | Other sessions frame | boolean | `false` | Draw a frame listing the other Claude Code sessions running on this machine (name, state, project, current task). Opt-in: it is not about this session, and the sessions band already lists them. |
+| `insightFrames` | Insight frames | boolean | `false` | Also draw the tool-count and workflow-insight frames (bars, activity timeline, time by kind, time sinks, repeats, improve). Off keeps the board to the goal, the plan and the last answer (at most six frames of its own); on lifts that cap. |
 | `repeatMin` | Repeat: times | number | `4` | The same file touched or command run this many times is shown as repeated work. |
 | `retryMin` | Retry: times | number | `2` | A command run again right after failing this many times is shown as a retry. |
 | `similarMin` | Same task: agents | number | `3` | This many agents started with the same kind of task are shown as repeated work. |
@@ -119,7 +125,7 @@ Other environment variables: `CLAUDE_PANEL_PORT` (first port to try, default 471
 - Form history uses one per-project store key (`panel.history`): generic jobs, form names, timestamps and opaque session keys only. Prompts, directory paths and branch names are not saved in that history.
 - Nothing is sent to any remote service by the mod. Scenes are model-written code: they run in a sandboxed iframe with a strict content-security policy, but with the CDN allow-list on (`web/scene-files.mjs`) a scene may load scripts from cdnjs, jsdelivr or unpkg in your browser. Do not put secrets in a scene folder.
 - The global view (`/panel global`) reads every session's transcript tail (512 KiB), subagent transcripts and board files, with the same masking and no write path; see [Global view](#global-view).
-- The board's `Other sessions` frame (`sessionsFrame` option, on by default) is drawn from the `~/.claude/sessions` registry and `ps`, plus the last 128 KiB of each such session's transcript (title, branch, and what it is doing now: the tool call in flight, else the first sentence of its latest reply, else its last prompt; redacted and cut to 80 characters). Sessions that may be waiting for you come first, and clicking a card opens that session's transcript in the Agents tile. It is not sent to the model; turn it off with `sessionsFrame: false`.
+- The board's `Other sessions` frame (`sessionsFrame` option, off by default) is drawn from the `~/.claude/sessions` registry and `ps`, plus the last 128 KiB of each such session's transcript (title, branch, and what it is doing now: the tool call in flight, else the first sentence of its latest reply, else its last prompt; redacted and cut to 80 characters). Sessions that may be waiting for you come first, and clicking a card opens that session's transcript in the Agents tile. It is not sent to the model; turn it on with `sessionsFrame: true`.
 
 ## Develop and test
 

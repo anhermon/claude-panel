@@ -378,8 +378,32 @@ export type ProactiveState = {
   sinceInjection: number
   /** Times a task-only panel call was nudged to add a form this session. */
   formNudges: number
+  /** The one mid-turn reminder was given (or is off) for the current human turn. */
+  nudged: boolean
+  /** The main session called the panel in the current human turn. */
+  panelUsed: boolean
   /** The prompt named motion or media work (animation, audio, video, 3D, particles): a domain tag, never the text. */
   motion: boolean
+}
+
+/** One step of the session's plan, mirrored from TodoWrite / Task* inputs (text already redacted, <= 48 chars). */
+export type FactTodo = { id: string; t: string; state: 'todo' | 'doing' | 'done' }
+/** What the hooks saw of the session, kept so the board is drawn with no model call (./hooks/session-facts.ts). Redacted text only. */
+export type SessionFacts = {
+  /** Session the facts belong to; a different id resets them. */
+  sessionKey: string | null
+  /** Redacted first sentence of the latest human work prompt; '' before one. */
+  goal: string
+  turn: 'idle' | 'working' | 'done' | 'stopped'
+  /** Main-session work calls (bookkeeping and panel calls left out) in the current turn. */
+  calls: number
+  /** Short redacted action of the latest work call, e.g. `edited a.ts`. */
+  last: string
+  todos: FactTodo[]
+  /** Clock reading when every todo was first seen done; 0 while any is open. */
+  allDoneAt: number
+  /** Redacted head of the main session's latest final message; '' while a turn runs. */
+  answer: string
 }
 
 export type PanelRuntime = {
@@ -421,6 +445,7 @@ declare module 'claude-code' {
       runtime: Shaped<PanelRuntime>
       board: Shaped<PanelBoardKeep>
       proactive: Shaped<ProactiveState>
+      facts: Shaped<SessionFacts>
     }
   }
 }

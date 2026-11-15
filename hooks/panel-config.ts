@@ -15,6 +15,10 @@ export const CONFIG_DEFAULTS = {
   proactive: true,
   /** Non-panel calls before an empty task is filled; zero disables the safety net. */
   autoTaskAfterCalls: 6,
+  /** One reminder mid-turn when the panel is still unused; off (the default: it changed nothing in real turns) keeps only the upfront note. */
+  midTurnNudge: false,
+  /** Non-panel calls in a human turn before that reminder; zero disables it. */
+  nudgeAfterCalls: 4,
   /** Show measured provider limits at this percentage; zero always shows available readings. */
   limitsShowPct: LIMITS_SHOW_FROM_PCT,
   /** Seconds between local provider quota reads; zero disables them. */
@@ -30,8 +34,20 @@ export const CONFIG_DEFAULTS = {
   ticketLabels: 'ticket',
   /** The workflow-insight frames (time by kind, sinks, repeats, improve) wait for this many seconds of agent time: below it a share means nothing. */
   insightMinSeconds: 30,
-  /** Draw the `sessions` frame: every other Claude Code session running on this machine. */
-  sessionsFrame: true,
+  /** Register the `scene` tool behind ToolSearch: its schema loads only when the model asks for it. */
+  deferScene: true,
+  /** Register the `panel` tool behind ToolSearch too (the baseline and the context note then name the load call). */
+  deferPanel: false,
+  /** A frame text over its cap is cut with "…" and a list over its cap keeps the first items, and the result says so; false refuses the call. */
+  lenientLimits: true,
+  /** What a subagent may do on the board: "lane-only" (own lane or frame), "allow" (everything), "deny" (nothing). */
+  subagentPanel: 'lane-only',
+  /** Draw the `sessions` frame: every other Claude Code session running on this machine. Off by default: it is not about this session (the sessions band shows them). */
+  sessionsFrame: false,
+  /** Draw the `limits` frame (quota windows, context fill, cost). Off by default: it is not about this session's goal. */
+  limitsFrame: false,
+  /** Draw the tool-count and workflow-insight frames (bars, activity timeline, time by kind, time sinks, repeats, improve): off, the board keeps to the goal, the plan and the last answer. */
+  insightFrames: false,
   /** The same file touched / the same command run at least this many times is a repeat. */
   repeatMin: 4,
   /** A command run again right after it failed, at least this many times, is shown as a retry. */
@@ -49,9 +65,14 @@ export const CONFIG_DEFAULTS = {
   hintRetries: 3,
 } as const
 
+export const SUBAGENT_MODES = ['lane-only', 'allow', 'deny'] as const
+export type SubagentMode = (typeof SUBAGENT_MODES)[number]
+
 export type PanelConfig = {
   proactive: boolean
   autoTaskAfterCalls: number
+  midTurnNudge: boolean
+  nudgeAfterCalls: number
   limitsShowPct: number
   quotaEveryS: number
   doneRowMs: number
@@ -60,7 +81,13 @@ export type PanelConfig = {
   goalLabels: readonly string[]
   ticketLabels: readonly string[]
   insightMinMs: number
+  deferScene: boolean
+  deferPanel: boolean
+  lenientLimits: boolean
+  subagentPanel: SubagentMode
   sessionsFrame: boolean
+  limitsFrame: boolean
+  insightFrames: boolean
   repeatMin: number
   retryMin: number
   similarMin: number
@@ -78,12 +105,15 @@ const labelsOf = (raw: unknown, fallback: string): readonly string[] => {
     .filter(l => LABEL_SAFE.test(l)) // letters and spaces only: a label is spliced into a regex
   return list.length > 0 ? list : fallback.split(',')
 }
+const modeOf = (raw: unknown): SubagentMode => SUBAGENT_MODES.find(m => m === raw) ?? CONFIG_DEFAULTS.subagentPanel
 const countOf = (raw: unknown, fallback: number): number => (typeof raw === 'number' && Number.isFinite(raw) && raw >= 0 ? raw : fallback)
 
 /** The settings of a set of options; anything missing or odd falls back to the default. */
 export const configOf = (options: PluginOptions = {}): PanelConfig => ({
   proactive: typeof options.proactive === 'boolean' ? options.proactive : CONFIG_DEFAULTS.proactive,
   autoTaskAfterCalls: Math.floor(countOf(options.autoTaskAfterCalls, CONFIG_DEFAULTS.autoTaskAfterCalls)),
+  midTurnNudge: typeof options.midTurnNudge === 'boolean' ? options.midTurnNudge : CONFIG_DEFAULTS.midTurnNudge,
+  nudgeAfterCalls: Math.floor(countOf(options.nudgeAfterCalls, CONFIG_DEFAULTS.nudgeAfterCalls)),
   limitsShowPct: countOf(options.limitsShowPct, CONFIG_DEFAULTS.limitsShowPct),
   quotaEveryS: countOf(options.quotaEveryS, CONFIG_DEFAULTS.quotaEveryS),
   doneRowMs: countOf(options.doneRowMinutes, CONFIG_DEFAULTS.doneRowMinutes) * MS_PER_MINUTE,
@@ -92,7 +122,13 @@ export const configOf = (options: PluginOptions = {}): PanelConfig => ({
   goalLabels: labelsOf(options.goalLabels, CONFIG_DEFAULTS.goalLabels),
   ticketLabels: labelsOf(options.ticketLabels, CONFIG_DEFAULTS.ticketLabels),
   insightMinMs: countOf(options.insightMinSeconds, CONFIG_DEFAULTS.insightMinSeconds) * MS_PER_SECOND,
+  deferScene: typeof options.deferScene === 'boolean' ? options.deferScene : CONFIG_DEFAULTS.deferScene,
+  deferPanel: typeof options.deferPanel === 'boolean' ? options.deferPanel : CONFIG_DEFAULTS.deferPanel,
+  lenientLimits: typeof options.lenientLimits === 'boolean' ? options.lenientLimits : CONFIG_DEFAULTS.lenientLimits,
+  subagentPanel: modeOf(options.subagentPanel),
   sessionsFrame: typeof options.sessionsFrame === 'boolean' ? options.sessionsFrame : CONFIG_DEFAULTS.sessionsFrame,
+  limitsFrame: typeof options.limitsFrame === 'boolean' ? options.limitsFrame : CONFIG_DEFAULTS.limitsFrame,
+  insightFrames: typeof options.insightFrames === 'boolean' ? options.insightFrames : CONFIG_DEFAULTS.insightFrames,
   repeatMin: Math.floor(countOf(options.repeatMin, CONFIG_DEFAULTS.repeatMin)),
   retryMin: Math.floor(countOf(options.retryMin, CONFIG_DEFAULTS.retryMin)),
   similarMin: Math.floor(countOf(options.similarMin, CONFIG_DEFAULTS.similarMin)),

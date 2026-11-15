@@ -21,7 +21,7 @@ const FRAME_COUNT = 1
 const ONE_WRITE = 1
 const CHANGED_UNITS = ['rateLimits'] as const
 
-test('session.measure passes through its result and refreshes the board with pulse off', async ($, on) => {
+test('session.measure passes through its result and refreshes the board with pulse off', { options: { limitsFrame: true } }, async ($, on) => {
   const initial = { ...LIMITS_SAMPLE, rateLimits: LIMITS_SAMPLE.rateLimits.map(w => ({ ...w, percentUsed: LOW_PCT })) }
   const b = await boot($, on, {
     setup: o => {
@@ -57,7 +57,7 @@ test('session.measure passes through its result and refreshes the board with pul
 })
 
 
-test('provider quota completion refreshes all four groups after the first board draw', async ($, on) => {
+test('provider quota completion refreshes all four groups after the first board draw', { options: { limitsFrame: true } }, async ($, on) => {
   const CACHE_SUFFIX = '.claude/plugins/cache/delegation-kit/delegation-kit'
   const VERSION = '1.10.0'
   const SCRIPT = `${HOME}/${CACHE_SUFFIX}/${VERSION}/bin/delegate.py`

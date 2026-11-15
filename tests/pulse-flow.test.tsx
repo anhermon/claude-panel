@@ -113,7 +113,7 @@ test('an earlier snapshot is read back at start: the counts go on from it', asyn
 
 // ---- the stream of calls -------------------------------------------------------------------------------------------------
 
-test('main and subagent calls land in their own loops; only a tool name and a short target are kept', async ($, on) => {
+test('main and subagent calls land in their own loops; only a tool name and a short target are kept', { options: { insightFrames: true } }, async ($, on) => {
   const { snap, snapshots, flush, setup, writes, data } = await pulseBoot($, on)
   await spawn($)
   setup.agents = [agentRow({})]

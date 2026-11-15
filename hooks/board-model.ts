@@ -8,8 +8,10 @@ import { Invalid, cut, isAbsent, isPlain } from './blocks/common'
 import type { Plain } from './blocks/common'
 import { delegationFrame, pipelineFrame } from './agent-graph'
 import { agentBars, agentLanes, agentSwimlane, DOING_TITLE, DOD_FRAME_PREFIX, dodFrames, hasAgents } from './board-agents'
-import { FRAME_CAPS, frameId, validateFrame } from './board-frames'
+import { FRAME_CAPS, frameId, parseFrameString, validateFrame } from './board-frames'
 import { INSIGHT_FRAME_IDS, insightFrames } from './insight-frames'
+import { factsFrames, factsState, LAST_ANSWER_ID, PLAN_ID, TASK_WHY } from './session-facts'
+import type { SessionFacts } from './session-facts'
 import { nowFrame } from './now-frame'
 import { limitsFrameOf } from './limits-frame'
 import type { ProviderQuota } from './limits-quota'
@@ -34,14 +36,17 @@ export const FRAME_INPUT_KEYS = [FRAME_KEY, FRAME_REMOVE_KEY, FRAMES_CLEAR_KEY] 
 
 /** The ids of the frames the mod draws by itself. */
 export const AUTO = { NOW: 'now', ASK: 'ask', LIMITS: 'limits', LANES: 'lanes', BARS: 'bars', DELEGATION: 'delegation', PIPELINE: 'pipeline', DOING: 'now-doing', TIMELINE: 'activity-timeline' } as const
-export const AUTO_IDS: readonly string[] = [...Object.values(AUTO), ...INSIGHT_FRAME_IDS, ...ROUTER_FRAME_IDS, SESSIONS_FRAME_ID]
+export const AUTO_IDS: readonly string[] = [...Object.values(AUTO), LAST_ANSWER_ID, PLAN_ID, ...INSIGHT_FRAME_IDS, ...ROUTER_FRAME_IDS, SESSIONS_FRAME_ID]
 /** An auto frame: one of AUTO, or the checklist frame of a lane (`dod-<lane id>`). */
 export const isAutoId = (id: string): boolean => AUTO_IDS.includes(id) || id.startsWith(DOD_FRAME_PREFIX)
 const AUTO_TITLES = { now: 'Now', ask: 'Question', lanes: 'Agents' } as const
 const AUTO_SIZE = { now: 'm', ask: 'm', lanes: 'l' } as const
 const NAME_JOIN = ', '
+/** The most frames the mod's own drawing puts on the board (unless `insightFrames` is on); `ask`, `now`, `last-answer` and `plan` are always kept. */
+export const AUTO_FRAMES_MAX = 6
+const PRIORITY_IDS: readonly string[] = [AUTO.ASK, AUTO.NOW, LAST_ANSWER_ID, PLAN_ID]
 
-export type FramePlan = { rest: Plain; upsert?: BoardFrame; remove?: string[]; isClear: boolean }
+export type FramePlan = { rest: Plain; upsert?: BoardFrame; remove?: string[]; isClear: boolean; trimmed: string[] }
 export type FramePlanResult = { isOk: true; plan: FramePlan } | { isOk: false; error: string }
 
 /** What the model keeps on the board: its frames in order, and the auto frames it removed (until `frames_clear`). */
@@ -52,10 +57,10 @@ export const newBoardModel = (): BoardModel => ({ frames: [], removedAuto: [], r
  * Split one `panel` call's input into its frame part and the rest. The frame part is validated here (nothing is applied),
  * so a call with a bad frame and a good section changes neither. `rest` has no frame key.
  */
-export function planFrames(input: Plain): FramePlanResult {
+export function planFrames(input: Plain, isLenient: boolean = panelConfig.lenientLimits): FramePlanResult {
   const { [FRAME_KEY]: frame, [FRAME_REMOVE_KEY]: remove, [FRAMES_CLEAR_KEY]: clear, ...rest } = input
   try {
-    const plan: FramePlan = { rest, isClear: false }
+    const plan: FramePlan = { rest, isClear: false, trimmed: [] }
     if (!isAbsent(clear)) {
       if (typeof clear !== 'boolean') throw new Invalid(`${FRAMES_CLEAR_KEY} must be true or false`)
       plan.isClear = clear
@@ -65,7 +70,18 @@ export function planFrames(input: Plain): FramePlanResult {
       if (ids.length === 0) throw new Invalid(`${FRAME_REMOVE_KEY} must be a frame id or a non-empty array of ids`)
       plan.remove = ids.map((id, i) => frameId(id, Array.isArray(remove) ? `${FRAME_REMOVE_KEY}[${i}]` : FRAME_REMOVE_KEY))
     }
-    if (!isAbsent(frame)) plan.upsert = validateFrame(frame, FRAME_KEY)
+    if (!isAbsent(frame)) {
+      let raw = frame
+      if (typeof raw === 'string') {
+        // the model often sends the frame as a JSON string: read it, say so
+        const parsed = parseFrameString(raw)
+        if (parsed !== null) {
+          raw = parsed
+          plan.trimmed.push('frame was a JSON string, send an object')
+        }
+      }
+      plan.upsert = validateFrame(raw, FRAME_KEY, isLenient ? plan.trimmed : undefined)
+    }
     return { isOk: true, plan }
   } catch (err) {
     if (err instanceof Invalid) return { isOk: false, error: `panel: ${err.message}` }
@@ -175,6 +191,8 @@ export type BoardInput = {
   quota?: readonly ProviderQuota[]
   /** The other live Claude Code sessions (./sessions-io.ts), ordered and capped; undefined or empty: nothing is drawn. */
   sessions?: readonly SessionRow[]
+  /** What the hooks saw of the session (./session-facts.ts): the goal, the derived state, the plan, the last answer; none: nothing of it is drawn. */
+  facts?: SessionFacts
   now: number
 }
 
@@ -186,8 +204,16 @@ function agentRows(input: BoardInput): BoardLane[] {
 function autoFrames(input: BoardInput): { ask: BoardFrame[]; rest: { id: string; frame: BoardFrame }[] } {
   const rest: { id: string; frame: BoardFrame }[] = []
   const ask: BoardFrame[] = []
-  if (input.task !== null && input.task.title.trim() !== '')
+  // A task the model posted wins; the mod's own seed (the safety net) gives way to the goal the hooks read from the prompt.
+  const isModelTask = input.task !== null && input.task.title.trim() !== '' && input.task.why !== TASK_WHY
+  const facts = input.facts
+  if (input.task !== null && input.task.title.trim() !== '' && (isModelTask || facts === undefined || facts.goal === ''))
     rest.push({ id: AUTO.NOW, frame: nowFrame({ rows: agentRows(input), router: input.router, task: input.task.title.trim(), status: input.status, now: input.now }) })
+  else if (facts !== undefined && facts.goal !== '') {
+    const state = factsState(facts, input.ask !== null && input.ask.trim() !== '')
+    rest.push({ id: AUTO.NOW, frame: nowFrame({ rows: agentRows(input), router: input.router, task: facts.goal, status: state.status, sub: state.sub, now: input.now }) })
+  }
+  if (facts !== undefined) for (const frame of factsFrames(facts, input.now)) rest.push({ id: frame.id, frame })
   if (input.ask !== null && input.ask.trim() !== '')
     ask.push({
       id: AUTO.ASK,
@@ -199,7 +225,7 @@ function autoFrames(input: BoardInput): { ask: BoardFrame[]; rest: { id: string;
     })
   // A router-kit run (`.router/`): its tickets (or the checks of its one ticket) and latest events sit right under the task.
   for (const frame of routerFrames(input.router, input.now)) rest.push({ id: frame.id, frame })
-  const limits = limitsFrameOf(input.usage, input.now, panelConfig.limitsShowPct, input.quota)
+  const limits = panelConfig.limitsFrame ? limitsFrameOf(input.usage, input.now, panelConfig.limitsShowPct, input.quota) : undefined
   if (limits !== undefined) rest.push({ id: AUTO.LIMITS, frame: { id: AUTO.LIMITS, ...limits } })
   const isTile = input.hasAgentsTile === true // the tile shows every agent row and its drill-down: no second copy here
   if (hasAgents(input.lanes, input.loops)) {
@@ -209,12 +235,13 @@ function autoFrames(input: BoardInput): { ask: BoardFrame[]; rest: { id: string;
     rest.push(...dodFrames(agentRows(input), input.now))
   }
   // The `pulse` frame (orbit, sparks) is decoration: only a frame the model sends puts it on the board.
-  const bars = isTile ? undefined : agentBars(input.loops, input.now)
+  const isInsight = panelConfig.insightFrames
+  const bars = isTile || !isInsight ? undefined : agentBars(input.loops, input.now)
   if (bars !== undefined) rest.push({ id: AUTO.BARS, frame: bars })
-  const timeline = isTile ? undefined : agentSwimlane(input.loops, input.events ?? [], input.now) // the tile's gantt IS this timeline
+  const timeline = isTile || !isInsight ? undefined : agentSwimlane(input.loops, input.events ?? [], input.now) // the tile's gantt IS this timeline
   if (timeline !== undefined) rest.push({ id: AUTO.TIMELINE, frame: timeline })
   // Where the time went, what repeated and what to improve: each frame is left out while its data is thin (hooks/insight-frames.ts).
-  for (const frame of insightFrames(input.loops, input.events ?? [], input.now)) rest.push({ id: frame.id, frame })
+  if (isInsight) for (const frame of insightFrames(input.loops, input.events ?? [], input.now)) rest.push({ id: frame.id, frame })
   // The two live diagrams (who handed work to whom, each agent's checklist as a track) come last: below the agents frame, from two agents.
   const delegation = delegationFrame(input.loops, input.events, input.router)
   if (delegation !== undefined) rest.push({ id: AUTO.DELEGATION, frame: delegation })
@@ -234,7 +261,13 @@ export function assembleFrames(model: BoardModel, input: BoardInput): BoardFrame
   const silenced = new Set(model.removedAuto)
   const wanted = (id: string): boolean => !taken.has(id) && !silenced.has(id)
   const auto = autoFrames(input)
-  return [...auto.ask.filter(f => wanted(f.id)), ...model.frames, ...auto.rest.filter(a => wanted(a.id)).map(a => a.frame)]
+  const ask = auto.ask.filter(f => wanted(f.id))
+  // `insightFrames` is the person asking for more: the cap is for the default board.
+  const room = panelConfig.insightFrames ? Infinity : Math.max(0, AUTO_FRAMES_MAX - ask.length - model.frames.length)
+  // The priority frames are always kept; the others fill what is left of the cap (never a frame of the model's).
+  const kept = auto.rest.filter(a => wanted(a.id))
+  const fill = new Set(kept.filter(a => !PRIORITY_IDS.includes(a.id)).slice(0, Math.max(0, room - kept.filter(a => PRIORITY_IDS.includes(a.id)).length)).map(a => a.id))
+  return [...ask, ...model.frames, ...kept.filter(a => PRIORITY_IDS.includes(a.id) || fill.has(a.id)).map(a => a.frame)]
 }
 
 /** The whole `live/data.json` of the board. */

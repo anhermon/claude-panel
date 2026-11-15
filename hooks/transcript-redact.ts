@@ -81,6 +81,15 @@ export function clip(text: string, max: number): string {
   return text.length <= max ? text : `${text.slice(0, Math.max(0, max - 1)).trimEnd()}${ELLIPSIS}`
 }
 
+/** Like `clip`, but cuts at a word boundary (when one is in the back half) so a headline never ends mid-word. */
+export function clipWords(text: string, max: number): string {
+  if (text.length <= max) return text
+  const head = text.slice(0, Math.max(0, max - 1))
+  const space = head.lastIndexOf(' ')
+  const cut = space > max / 2 ? head.slice(0, space) : head
+  return `${cut.replace(/[\s,;:\-–—(]+$/, '')}${ELLIPSIS}`
+}
+
 /** An excerpt for the page: scrubbed, then cut. */
 export const excerpt = (text: string, max: number): string => clip(scrubText(text), max)
 
