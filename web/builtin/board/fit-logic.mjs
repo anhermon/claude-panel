@@ -22,3 +22,6 @@ export const spreadGap = ({ spare, n, maxGap }) => (n > 1 ? Math.max(0, Math.min
 
 /** How far a font may grow: a share of the box width, between the floor and `maxTimes` x the floor. */
 export const ceilFont = ({ width, share, floor, maxTimes }) => Math.max(floor, Math.min(width * share, floor * maxTimes));
+
+/** How many times the body-text floor a headline may shrink to: a single sentence stays big, a multi-line block shrinks to the floor so it always fits. */
+export const headlineFloorTimes = (lines) => (lines > 1 ? 1 : 1.5);

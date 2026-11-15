@@ -27,6 +27,7 @@ import { panelConfig } from './panel-config'
 import { PLUGIN_NAME } from './spec'
 import { watchedFolder } from './watch'
 import { agentsInfoLive, agentsInfoNote, agentsInfoPush, agentsInfoSessions } from './agents-info-host'
+import { factsRead, setFactsListener } from './facts-host'
 import { limitsUsage } from './limits-state'
 import { quotaRead, resetQuota } from './limits-io'
 
@@ -64,7 +65,7 @@ const sliceOf = (s: PanelState): Slice => ({ status: s.status, task: s.task, ask
 
 async function inputOf($: Dollar, b: Board, now: number): Promise<BoardInput> {
   const parts = pulseBoardParts(now)
-  return { ...b.slice, lanes: parts.lanes as BoardLane[], loops: parts.loops, pulse: parts.pulse, events: parts.events, hasAgentsTile: agentsInfoLive(), router: b.router?.run, quota: quotaRead($, now, panelConfig.quotaEveryS, boardRefresh), usage: await limitsUsage($), sessions: b.sessions, now }
+  return { ...b.slice, lanes: parts.lanes as BoardLane[], loops: parts.loops, pulse: parts.pulse, events: parts.events, hasAgentsTile: agentsInfoLive(), router: b.router?.run, quota: quotaRead($, now, panelConfig.quotaEveryS, boardRefresh), usage: await limitsUsage($), sessions: b.sessions, facts: await factsRead($), now }
 }
 
 /** Read `.router/` again (cheap: a listing and a stat per file unless something changed); a change wakes the writer. Never throws. */
@@ -167,6 +168,7 @@ export function boardNote(state: PanelState): void {
 
 /** Host observations share the board's coalescing refresh; no separate timer. */
 export const boardRefresh = (): void => board?.flusher?.touch()
+setFactsListener(boardRefresh)
 
 /** The model as it stands now, as plain data for the session state (undefined: nothing is kept in memory). */
 export const boardKept = (): BoardModel | undefined => board?.model

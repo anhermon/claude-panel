@@ -19,10 +19,11 @@ import { paneTree } from './pane'
 import { applyParts, boardAdopt, boardKept, boardNote, boardNoteScene, boardSceneDir, boardStart, boardVarietyHint } from './board-host'
 import { hasFramePart, planFrames } from './board-model'
 import { withBoard } from './board-scene'
+import { registerFacts } from './facts-host'
 import { applyOptions, panelConfig } from './panel-config'
 import { registerLimits } from './limits-host'
 import { limitsUsage } from './limits-state'
-import { ANY_TOOL_NAME, formNudgeLine, formsOfFrame, isCountedCall, NOT_A_MESSAGE, noteToolCall, recordForms, registerProactive, releaseSeed, TASK_WHY } from './proactive'
+import { ANY_TOOL_NAME, formNudgeLine, formsOfFrame, isCountedCall, isPanelUse, NOT_A_MESSAGE, notePanelUse, noteToolCall, recordForms, registerProactive, releaseSeed, TASK_WHY } from './proactive'
 import { parsePulseArgs, pulseAdoptLanes, pulseCommand, pulseLanes, pulseSelfCall, pulseStart, registerPulse } from './pulse-host'
 import type { PulseInit } from './pulse-host'
 import { HELP_KEY, helpText } from './panel-help'
@@ -363,21 +364,30 @@ export const register: Register = (on, options) => {
   registerPulse(on)
   registerLimits(on)
   registerProactive(on)
-  // The task safety net. Best effort: whatever fails here, the tool call itself still runs.
+  registerFacts(on)
+  // The task safety net and the one-shot mid-turn reminder. Best effort: whatever fails here, the tool call itself still runs.
   on('tool.call', { tool: ANY_TOOL_NAME }, async ($, e, next) => {
+    if (isPanelUse(e)) {
+      await notePanelUse($).catch(() => undefined)
+      return next(e)
+    }
     if (!isCountedCall(e)) return next(e)
+    let nudge = ''
     try {
-      const title = await noteToolCall($, e.tool, await panelHasTask($))
-      if (title !== null) {
+      const noted = await noteToolCall($, e.tool, await panelHasTask($))
+      nudge = noted.nudge
+      if (noted.title !== null) {
         try {
-          await seedPanelTask($, { title, why: TASK_WHY })
+          await seedPanelTask($, { title: noted.title, why: TASK_WHY })
         } catch (error) {
           await releaseSeed($)
           throw error
         }
       }
     } catch { /* the safety net never fails a call */ }
-    return next(e)
+    const out = await next(e)
+    // `context` is what the model reads right after this result: the cheapest place for one line.
+    return nudge === '' || out.deny !== undefined ? out : { ...out, context: [...(out.context ?? []), nudge] }
   })
 
   on('session.start', async ($, e, next) => {

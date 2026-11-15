@@ -61,11 +61,13 @@ test('on the board it is an auto frame: frame_remove silences it, a posted frame
   expect(assembleFrames(replaced.model, input).map(f => [f.id, f.type])).toEqual([['sessions', 'text']])
 })
 
-test('the setting `sessionsFrame` defaults to on, and only a boolean changes it', () => {
-  expect(CONFIG_DEFAULTS.sessionsFrame).toBe(true)
-  expect(configOf().sessionsFrame).toBe(true)
-  expect(configOf({ sessionsFrame: false }).sessionsFrame).toBe(false)
-  expect(configOf({ sessionsFrame: 'no' }).sessionsFrame).toBe(true)
+test('the settings `sessionsFrame` and `limitsFrame` default to off (they are not about this session), and only a boolean changes them', () => {
+  for (const key of ['sessionsFrame', 'limitsFrame'] as const) {
+    expect(CONFIG_DEFAULTS[key]).toBe(false)
+    expect(configOf()[key]).toBe(false)
+    expect(configOf({ [key]: true })[key]).toBe(true)
+    expect(configOf({ [key]: 'yes' })[key]).toBe(false)
+  }
 })
 
 test('a card click is for the Agents tile alone: it is not quoted to the model, even from a page that posts it', () => {

@@ -28,13 +28,13 @@ export function fitInto({ box, content, floor, ceil, apply, clamped = '' }) {
 }
 
 /** A headline (text / now): shrinks from its natural size to HEADLINE_FLOOR_TIMES x the text floor so it never clips. */
-export function fitHeadline(box, main) {
+export function fitHeadline(box, main, floorTimes = HEADLINE_FLOOR_TIMES) {
   const body = main.parentElement;
   const run = () => {
     main.style.removeProperty('--hl');
     delete main.dataset.shrunk;
     const natural = parseFloat(getComputedStyle(main).fontSize);
-    const px = fitInto({ box, content: body, floor: Math.min(natural, textFloorPx(box) * HEADLINE_FLOOR_TIMES), ceil: natural, apply: (v) => main.style.setProperty('--hl', `${v}px`) });
+    const px = fitInto({ box, content: body, floor: Math.min(natural, textFloorPx(box) * floorTimes), ceil: natural, apply: (v) => main.style.setProperty('--hl', `${v}px`) });
     if (px < natural) main.dataset.shrunk = 'true'; else main.style.removeProperty('--hl');
   };
   return watchSize(box, run);

@@ -208,18 +208,39 @@ test('validators: the four frame types name the field they refuse', () => {
   expect(refusal({ id: 'x', type: 'hints', items: [{ text: 't', evidence: 'e', rule: 'r' }], foot: 'f'.repeat(71) })).toMatch(/^frame\.foot is 71 characters/)
 })
 
+test('insightFrames off (the default) leaves the tool-count and insight frames off the board and keeps the agent frames; on brings every one back', () => {
+  const running = (l: PulseLoop): PulseLoop => ({ ...l, status: 'running' }) // the agent frames are for agents at work
+  const loops = [testy('a', 100, { tally: tallyOf({ 'read:a.ts': [4], 'run:make build': [5, 3, 3] }) }), B].map(running)
+  const demoted = ['bars', ...INSIGHT_FRAME_IDS]
+  const off = assembleFrames(newBoardModel(), { ...BASE, loops }).map(f => f.id)
+  expect(off).toContain('lanes')
+  for (const id of demoted) expect(off, id).not.toContain(id)
+  applyOptions({ insightFrames: true })
+  try {
+    const on = assembleFrames(newBoardModel(), { ...BASE, loops }).map(f => f.id)
+    for (const id of ['lanes', ...demoted]) expect(on, id).toContain(id)
+  } finally {
+    applyOptions({})
+  }
+})
+
 test('on the board: the four frames appear for agents with enough time, the model can replace or remove them by id, thin data adds none', () => {
-  const loops = [testy('a', 100, { tally: tallyOf({ 'read:a.ts': [4], 'run:make build': [5, 3, 3] }) }), B]
-  const frames = assembleFrames(newBoardModel(), { ...BASE, loops })
-  const ids = frames.map(f => f.id)
-  for (const id of INSIGHT_FRAME_IDS) expect(ids).toContain(id)
-  expect(ids.indexOf('time-by-kind')).toBeLessThan(ids.indexOf('time-sinks'))
-  const mine = { id: 'time-by-kind', type: 'text', text: 'mine' } as const
-  const replaced = assembleFrames({ ...newBoardModel(), frames: [mine] }, { ...BASE, loops })
-  expect(replaced.filter(f => f.id === 'time-by-kind')).toEqual([mine])
-  const removed = assembleFrames({ ...newBoardModel(), removedAuto: ['time-by-kind', 'improve'] }, { ...BASE, loops }).map(f => f.id)
-  expect(removed).not.toContain('time-by-kind')
-  expect(removed).not.toContain('improve')
-  expect(removed).toContain('time-sinks')
-  expect(assembleFrames(newBoardModel(), BASE).map(f => f.id).filter(id => (INSIGHT_FRAME_IDS as readonly string[]).includes(id))).toEqual([])
+  applyOptions({ insightFrames: true })
+  try {
+    const loops = [testy('a', 100, { tally: tallyOf({ 'read:a.ts': [4], 'run:make build': [5, 3, 3] }) }), B]
+    const frames = assembleFrames(newBoardModel(), { ...BASE, loops })
+    const ids = frames.map(f => f.id)
+    for (const id of INSIGHT_FRAME_IDS) expect(ids).toContain(id)
+    expect(ids.indexOf('time-by-kind')).toBeLessThan(ids.indexOf('time-sinks'))
+    const mine = { id: 'time-by-kind', type: 'text', text: 'mine' } as const
+    const replaced = assembleFrames({ ...newBoardModel(), frames: [mine] }, { ...BASE, loops })
+    expect(replaced.filter(f => f.id === 'time-by-kind')).toEqual([mine])
+    const removed = assembleFrames({ ...newBoardModel(), removedAuto: ['time-by-kind', 'improve'] }, { ...BASE, loops }).map(f => f.id)
+    expect(removed).not.toContain('time-by-kind')
+    expect(removed).not.toContain('improve')
+    expect(removed).toContain('time-sinks')
+    expect(assembleFrames(newBoardModel(), BASE).map(f => f.id).filter(id => (INSIGHT_FRAME_IDS as readonly string[]).includes(id))).toEqual([])
+  } finally {
+    applyOptions({})
+  }
 })

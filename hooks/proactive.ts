@@ -12,7 +12,8 @@ import { jobOf, MOTION_PATTERN, profileOf, RULE_SCAN_CHARS } from './session-con
 import type { Job, SessionProfile } from './session-context'
 import { PANEL_LOAD_NOTE, SCENE_FULL_NAME, TOOL_FULL_NAME } from './spec'
 import { suggestFor } from './suggest'
-import { clip, scrubText } from './transcript-redact'
+import { TASK_WHY } from './session-facts'
+import { clip, clipWords, scrubText } from './transcript-redact'
 
 /** Shared with the browser-event hook: commands and shell escapes are not messages. */
 export const NOT_A_MESSAGE = /^\s*[/!]/
@@ -20,7 +21,7 @@ export const NOT_A_MESSAGE = /^\s*[/!]/
 export const AUTOMATED_PROMPT = /\[SYSTEM NOTIFICATION|<task-notification>|^\s*<system-reminder>/
 export const CONTEXT_MAX_CHARS = 450
 export const TASK_TITLE_CHARS = 80
-export const TASK_WHY = 'Started from your request; Claude will refine it'
+export { TASK_WHY }
 const TASK_FALLBACK = 'Work on your request'
 const CONTEXT_OPEN = '<panel-context>'
 const CONTEXT_CLOSE = '</panel-context>'
@@ -39,7 +40,7 @@ export const TASK_INPUT_CHARS = 400
 export const INJECT_COOLDOWN_PROMPTS = 5
 export const MAX_INJECTIONS_PER_SESSION = 3
 /** Only prompts the person sent themselves (terminal or bridge) set the job or seed a task. */
-const HUMAN_ORIGINS: readonly string[] = ['composer', 'bridge']
+export const HUMAN_ORIGINS: readonly string[] = ['composer', 'bridge']
 /** Tools that keep the books and are not work: they never arm the task safety net. */
 export const BOOKKEEPING_TOOLS: ReadonlySet<string> = new Set(['ToolSearch', 'TodoWrite', 'Skill', 'TaskCreate', 'TaskUpdate', 'TaskGet', 'TaskList', 'TaskOutput', 'TaskStop'])
 const SENTENCE_MARK = '<panel-task-end>'
@@ -57,14 +58,14 @@ const PRIVATE_NAME_MIN_CHARS = 4
 const REGEX_META = /[.*+?^${}()|[\]\\]/g
 const PATH_SPLIT = /[\\/]/
 const GIT_MARKER = '.git'
-const ANY_PROMPT_TEXT = /[\s\S]*/
+export const ANY_PROMPT_TEXT = /[\s\S]*/
 /** Every tool name: the engine wants a matcher when several hooks watch tool.call. */
 export const ANY_TOOL_NAME = /./
 
 export const initialProactive = (sessionKey: string | null = null): ProactiveState => ({
-  lastInjected: null, job: null, title: null, calls: 0, seeded: false, toolCounts: {}, sessionKey, injections: 0, sinceInjection: 0, formNudges: 0, motion: false,
+  lastInjected: null, job: null, title: null, calls: 0, seeded: false, toolCounts: {}, sessionKey, injections: 0, sinceInjection: 0, formNudges: 0, motion: false, nudged: false, panelUsed: false,
 })
-const proactiveAtom = atom({ plugin: 'panel', key: 'proactive' } as const, initialProactive(), { shape: 'panel-proactive-4' })
+const proactiveAtom = atom({ plugin: 'panel', key: 'proactive' } as const, initialProactive(), { shape: 'panel-proactive-5' })
 
 export const seedOf = (id: string): number => [...id].reduce((seed, char) => (seed * SEED_MULTIPLIER + char.charCodeAt(0)) % SEED_MODULUS, 0)
 
@@ -74,20 +75,26 @@ export const forSession = (state: ProactiveState, sessionKey: string): Proactive
 /** `title` is the already-redacted task title: the raw prompt is never kept. */
 export function promptPlan(state: ProactiveState, job: Job, title: string): { state: ProactiveState; inject: boolean } {
   // Chat keeps the stored title so an approval ("yes, do it") after a plan can still start the task; it only restarts the count.
-  if (job === 'chat') return { state: { ...state, calls: 0 }, inject: false }
+  if (job === 'chat') return { state: { ...state, calls: 0, nudged: true }, inject: false }
   const inject = state.injections < MAX_INJECTIONS_PER_SESSION
     && (state.injections === 0 || (job !== state.lastInjected && state.sinceInjection >= INJECT_COOLDOWN_PROMPTS))
-  const next = { ...state, job, title, calls: 0, seeded: false }
+  const next = { ...state, job, title, calls: 0, seeded: false, nudged: false, panelUsed: false }
   return { state: inject ? { ...next, lastInjected: job, injections: state.injections + 1, sinceInjection: 0 } : { ...next, sinceInjection: state.sinceInjection + 1 }, inject }
 }
 
-export function callPlan(state: ProactiveState, tool: string, threshold: number, hasTask: boolean): { state: ProactiveState; seed: boolean } {
-  if (tool === TOOL_FULL_NAME || tool === SCENE_FULL_NAME) return { state, seed: false }
+// The mid-turn reminder: asks for task+why and a frame, or only the frame when a task is already on the board (or just auto-seeded).
+export const NUDGE_FULL = 'panel: post task+why now (one call), then one evidence frame when you have it'
+export const NUDGE_FRAME = 'panel: add one evidence frame when you have it'
+
+export function callPlan(state: ProactiveState, tool: string, threshold: number, hasTask: boolean, nudgeAt = 0): { state: ProactiveState; seed: boolean; nudge: string } {
+  if (tool === TOOL_FULL_NAME || tool === SCENE_FULL_NAME) return { state, seed: false, nudge: '' }
   const counts = { ...state.toolCounts, [tool]: (state.toolCounts[tool] ?? 0) + 1 }
-  if (BOOKKEEPING_TOOLS.has(tool)) return { state: { ...state, toolCounts: counts }, seed: false }
+  if (BOOKKEEPING_TOOLS.has(tool)) return { state: { ...state, toolCounts: counts }, seed: false, nudge: '' }
   const calls = state.title === null ? state.calls : state.calls + 1
   const seed = threshold > 0 && state.title !== null && !state.seeded && !hasTask && calls >= threshold
-  return { state: { ...state, calls, seeded: state.seeded || seed || hasTask, toolCounts: counts }, seed }
+  const hasBoardTask = state.seeded || seed || hasTask
+  const isNudge = nudgeAt > 0 && state.title !== null && !state.nudged && !state.panelUsed && calls >= nudgeAt
+  return { state: { ...state, calls, seeded: hasBoardTask, nudged: state.nudged || isNudge, toolCounts: counts }, seed, nudge: isNudge ? (hasBoardTask ? NUDGE_FRAME : NUDGE_FULL) : '' }
 }
 
 function plainSlashWord(word: string): string {
@@ -105,7 +112,7 @@ export function taskFromPrompt(prompt: string, privateNames: readonly string[] =
     const escaped = name.replace(REGEX_META, '\\$&')
     text = text.replace(new RegExp(`\\b${escaped}\\b`, 'gi'), NAME_MARK)
   }
-  return { title: clip(plainTitle(text), TASK_TITLE_CHARS) || TASK_FALLBACK, why: TASK_WHY }
+  return { title: clipWords(plainTitle(text), TASK_TITLE_CHARS) || TASK_FALLBACK, why: TASK_WHY }
 }
 
 /** `isDeferred`: the panel tool waits behind ToolSearch, so the block (which the model always sees) says how to load it, outside the length cap. */
@@ -144,7 +151,7 @@ export async function recordForms($: EngineInterface, forms: readonly string[]):
 }
 
 /** The engine requires literal environment names here so its permission inventory can list them. */
-async function privateNamesOf($: EngineInterface): Promise<string[]> {
+export async function privateNamesOf($: EngineInterface): Promise<string[]> {
   const names = await Promise.all([$.env.get('USER').catch(() => undefined), $.env.get('LOGNAME').catch(() => undefined)])
   const home = await $.env.get('HOME').catch(() => undefined)
   return [...names, home?.split(PATH_SPLIT).at(-1)].filter((n): n is string => n !== undefined)
@@ -187,17 +194,28 @@ export function registerProactive(on: On): void {
 export const isCountedCall = (e: { tool: string; agentId?: unknown }): boolean =>
   panelConfig.proactive && e.agentId === undefined && e.tool !== TOOL_FULL_NAME && e.tool !== SCENE_FULL_NAME
 
-/** Counts one call. Returns the title to seed when this call reaches the threshold (the claim is taken here: only one caller gets it). */
-export async function noteToolCall($: EngineInterface, tool: string, hasTask: boolean): Promise<string | null> {
+/** The main session's own panel call: it ends the turn's need for a reminder. */
+export const isPanelUse = (e: { tool: string; agentId?: unknown }): boolean =>
+  panelConfig.proactive && e.agentId === undefined && (e.tool === TOOL_FULL_NAME || e.tool === SCENE_FULL_NAME)
+
+export async function notePanelUse($: EngineInterface): Promise<void> {
   const key = await $.session.id()
-  let title: string | null = null
+  await update($, proactiveAtom, state => ({ ...forSession(state, key), panelUsed: true }))
+}
+
+/** Counts one call. Returns the title to seed when this call reaches the threshold (the claim is taken here: only one caller gets it) and the mid-turn reminder, if one is due. */
+export async function noteToolCall($: EngineInterface, tool: string, hasTask: boolean): Promise<{ title: string | null; nudge: string }> {
+  const key = await $.session.id()
+  const box: { title: string | null; nudge: string } = { title: null, nudge: '' }
+  const nudgeAt = panelConfig.midTurnNudge ? panelConfig.nudgeAfterCalls : 0
   await update($, proactiveAtom, state => {
-    const plan = callPlan(forSession(state, key), tool, panelConfig.autoTaskAfterCalls, hasTask)
-    // update may retry after a concurrent write: clear a seed decision that lost that race.
-    title = plan.seed ? plan.state.title : null
+    const plan = callPlan(forSession(state, key), tool, panelConfig.autoTaskAfterCalls, hasTask, nudgeAt)
+    // update may retry after a concurrent write: clear a decision that lost that race.
+    box.title = plan.seed ? plan.state.title : null
+    box.nudge = plan.nudge
     return plan.state
   })
-  return title
+  return box
 }
 
 /** Seeding failed: give the claim back so a later call can try again. */

@@ -8,7 +8,7 @@ import { normalizeInsight } from './insight-logic.mjs';
 
 // ---- caps (the contract: README.md) ---------------------------------------------------------------------------
 export const CAPS = Object.freeze({
-  title: 40, text: 90, sub: 120, say: 80, label: 28, item: 44, question: 70, option: 24, status: 16,
+  title: 40, text: 90, answer: 400, sub: 120, say: 80, label: 28, item: 44, question: 70, option: 24, status: 16,
   laneLabel: 80, laneStep: 80, laneNote: 60, stepItem: 48, dod: 6,
   bars: 8, rings: 4, steps: 6, timeline: 6, compare: 4, lanes: 6, nodes: 10, edges: 16, series: 3, points: 60, spark: 24, options: 4,
 });
@@ -33,6 +33,9 @@ export function capText(value, max) {
   if (s.length <= max) return s;
   return s.slice(0, Math.max(0, max - 1)).trimEnd() + ELLIPSIS;
 }
+
+/** A paragraph that may carry line breaks (the mod's last answer: a sentence, then `• item` lines) -> at most `lines` capped lines, empty ones dropped. */
+export const capLines = (value, max, lines) => (typeof value === 'string' ? value.split('\n') : []).map((l) => capText(l, max)).filter(Boolean).slice(0, lines); // capText, not capTitle: a sentence keeps its full stop
 
 /** Display text, cleaned before clipping; ids still use capText. */
 export const capTitle = (value, max) => capText(plainTitle(value, false), max);

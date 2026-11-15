@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import {
   CAPS, CHANGE_GAP_MS, GRID_COLS, GRID_ROWS_MAX, MAX_FRAMES, MAX_MOUNTED, QUIET_AFTER_MS, SHAPES,
-  capText, createChangeQueue, formatMetric, isQuiet, minSizeFor, moreCount, nextOp, normalizeData, parseMetric, planGrid, safeColor, safeImageSrc, scaleSeries, shapeOf, sortLanes,
+  capLines, capText, createChangeQueue, formatMetric, isQuiet, minSizeFor, moreCount, nextOp, normalizeData, parseMetric, planGrid, safeColor, safeImageSrc, scaleSeries, shapeOf, sortLanes,
 } from './board-logic.mjs';
 import { sanitizeHtml, cleanStyle } from './sanitize.mjs';
 import { MIN_FONT, layerGraph, layoutDiagram, normalizeDiagram } from './diagram-layout.mjs';
@@ -412,4 +412,11 @@ test('layoutDiagram right: edge labels never sit on a node either', () => {
   const spec = normalizeDiagram(fixture('busy').frames.find((f) => f.type === 'diagram'));
   const lay = layoutDiagram(spec, { width: 1100, height: 280, font: 20, measure });
   for (const e of lay.edges.filter((x) => x.label)) for (const n of lay.nodes) assert.ok(!boxHit(chipBox(e), n), `label ${e.label} on ${n.id}`);
+});
+
+test('capLines: the last answer keeps its line breaks (sentence, then bullets), drops empty lines and caps each line and the count', () => {
+  assert.deepEqual(capLines('`isEven` is in math.ts.\n• Function: isEven(n)\n\n• Tests: 2 pass', 400, 8), ['`isEven` is in math.ts.', '• Function: isEven(n)', '• Tests: 2 pass']);
+  assert.deepEqual(capLines('a\nb\nc\nd', 400, 2), ['a', 'b']);
+  assert.deepEqual(capLines('x'.repeat(30), 10, 8), ['xxxxxxxxx…']);
+  assert.deepEqual(capLines(undefined, 400, 8), []);
 });

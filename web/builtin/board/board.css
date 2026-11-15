@@ -114,12 +114,15 @@ body { background: radial-gradient(90vw 60vh at 78% -12%, #141a2e 0%, transparen
 
 /* ---- text / now ------------------------------------------------------------------------------------------------- */
 /* .text-body is the measured content: frames/fit.js shrinks --hl (the headline) until body fits the frame, headline AND sub */
-.text, .now { display: flex; flex-direction: column; justify-content: center; height: 100%; min-height: 0; overflow: hidden; }
+.text, .now { display: flex; flex-direction: column; justify-content: safe center; height: 100%; min-height: 0; overflow: hidden; }
 .text-body { flex: none; display: flex; flex-direction: column; gap: .55em; min-width: 0; }
 .text-main { font-weight: 700; line-height: 1.1; letter-spacing: -.02em; overflow-wrap: anywhere;
   font-size: var(--hl, max(var(--fs2), min(14cqw, 36cqh))); }
 .text[data-len="mid"] .text-main, .now .text-main { font-size: var(--hl, max(var(--fs2), min(10cqw, 26cqh))); }
 .text[data-len="long"] .text-main { font-size: var(--hl, min(max(calc(var(--fs2) * .78), min(7.4cqw, 21cqh)), calc(var(--read-max) * 1.8))); }
+.now[data-len="long"] .text-main { font-size: var(--hl, min(max(calc(var(--fs2) * .78), min(6.4cqw, 18cqh)), calc(var(--read-max) * 1.6))); }
+.text-lines { font-weight: 500; display: flex; flex-direction: column; gap: .35em; line-height: 1.25; }
+.text-line { margin: 0; }
 .text-sub { color: var(--mut); font-size: min(max(var(--fs), min(3.8cqw, 11cqh)), calc(var(--read-max) * 1.2)); line-height: 1.25; overflow-wrap: anywhere; }
 .now .text-body { align-items: flex-start; }
 .now-meta { display: flex; flex-wrap: wrap; align-items: center; gap: .3em .8em; min-width: 0; }

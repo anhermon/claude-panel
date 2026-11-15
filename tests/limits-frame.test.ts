@@ -6,7 +6,7 @@ import { validateFrame } from '../hooks/board-frames'
 import { LIMITS_NEVER_PCT, LIMITS_SHOW_FROM_PCT, limitsFrameOf } from '../hooks/limits-frame'
 import { QUOTA_WARN_PCT } from '../hooks/viz-kinds'
 import { QUOTA_MAX_PCT } from '../hooks/limits-quota'
-import { configOf } from '../hooks/panel-config'
+import { applyOptions, configOf } from '../hooks/panel-config'
 import { CONTEXT_PCT, EMPTY_PCT, EMPTY_USAGE, EXCEEDED_PCT, LIMITS_NOW, LIMITS_RESET, LIMITS_SAMPLE, LOW_PCT, PRESSURE_PCT, SAMPLE_USD, WEEKLY_PCT } from './limits-sample'
 
 const withWindow = (percentUsed: number, kind = 'five_hour') => ({ ...EMPTY_USAGE, rateLimits: [{ kind, percentUsed, resetsAt: LIMITS_RESET }] })
@@ -87,6 +87,15 @@ test('junk input never throws or leaks unknown labels; malformed optional readin
 })
 
 test('automatic limits obey replacement, removal, clear and persisted removals', () => {
+  applyOptions({ limitsFrame: true })
+  try {
+    limitsObey()
+  } finally {
+    applyOptions({})
+  }
+})
+
+function limitsObey(): void {
   const input: BoardInput = { task: null, status: 'working', ask: null, choices: [], lanes: [], loops: [], pulse: undefined, now: LIMITS_NOW, usage: LIMITS_SAMPLE }
   const initial = newBoardModel()
   const apply = (model: BoardModel, raw: Record<string, unknown>): BoardModel => {
@@ -105,7 +114,7 @@ test('automatic limits obey replacement, removal, clear and persisted removals',
   expect(assembleFrames(silenced, input)).toHaveLength(NO_FRAMES)
   expect(assembleFrames(restoreBoardModel(JSON.parse(JSON.stringify(silenced))), input)).toHaveLength(NO_FRAMES)
   expect(assembleFrames(apply(silenced, { frames_clear: true }), input)).toHaveLength(FRAME_COUNT)
-})
+}
 
 test('limits configuration accepts the two sentinel settings and rejects junk', () => {
   expect(configOf().limitsShowPct).toBe(LIMITS_SHOW_FROM_PCT)

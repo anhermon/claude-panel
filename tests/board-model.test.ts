@@ -209,29 +209,34 @@ test('restoreBoardModel: frames come back validated and capped, a bad frame or j
 })
 
 test('agents by default: one lanes row per loop (name, state, intent), a posted lane keeps its pct and step; never a shell word', () => {
-  const main = loop('main', { lastTool: 'Read', lastTarget: 'a.ts', calls: 9 })
-  const sub = loop('ag-1', { label: 'Survey the repo', lastTool: 'Bash', lastTarget: 'sed', intent: 'T30 · Map the live view.', status: 'running', calls: 4 })
-  expect(hasAgents([], [main])).toBe(false) // the main loop alone is the `now` frame's job
-  expect(hasAgents([], [main, loop('ag-1', { status: 'done' })])).toBe(false)
-  expect(hasAgents([], [main, sub])).toBe(true)
-  expect(hasAgents([LANE], [])).toBe(true)
-  const rows = agentLanes([], [main, sub, loop('ag-2', { status: 'idle', lastTool: '', lastTarget: '' })], 'Fix uploads')
-  expect(rows.map(r => [r.id, r.label, r.state, r.step, r.pct, r.calls])).toEqual([
-    ['main', 'Main', 'working', 'Fix uploads', null, 9],
-    ['ag-1', 'Survey the repo', 'working', 'Map the live view', null, 4],
-    ['ag-2', 'Agent ag-2', 'waiting', '', null, 3],
-  ])
-  expect(JSON.stringify(rows)).not.toMatch(/Bash|sed|Read|a\.ts/) // the tool in use is never shown
-  const posted: BoardLane = { id: 't25', label: 'Survey', state: 'testing', pct: 40, step: 'reading', note: '', goal: '', dod: [], at: null, startedAt: 1, updatedAt: 2, by: 'ag-1', loop: 'ag-1' }
-  const merged = agentLanes([posted, { ...posted, id: 'orphan', loop: null }], [main, sub])
-  expect(merged.map(r => r.id)).toEqual(['main', 't25', 'orphan'])
-  expect(merged[1]).toMatchObject({ label: 'Survey', pct: 40, step: 'reading', note: 'Map the live view', state: 'testing', calls: 4 }) // its own step wins, the intent follows
-  const bare = agentLanes([{ ...posted, label: 't25', step: '' }], [sub])
-  expect(bare[0]).toMatchObject({ label: 'Survey the repo', step: 'Map the live view', note: '', pct: 40 }) // named only by its id: the agent's name; no step: its intent
-  const frames = assembleBoard(newBoardModel(), input({ loops: [main, sub] }))
-  expect(ids(frames.frames)).toEqual(['now-doing', 'lanes', 'bars'])
-  expect(frames.lanes).toHaveLength(2)
-  expect(assembleBoard(newBoardModel(), input({ loops: [main] })).lanes).toEqual([])
+  applyOptions({ insightFrames: true })
+  try {
+    const main = loop('main', { lastTool: 'Read', lastTarget: 'a.ts', calls: 9 })
+    const sub = loop('ag-1', { label: 'Survey the repo', lastTool: 'Bash', lastTarget: 'sed', intent: 'T30 · Map the live view.', status: 'running', calls: 4 })
+    expect(hasAgents([], [main])).toBe(false) // the main loop alone is the `now` frame's job
+    expect(hasAgents([], [main, loop('ag-1', { status: 'done' })])).toBe(false)
+    expect(hasAgents([], [main, sub])).toBe(true)
+    expect(hasAgents([LANE], [])).toBe(true)
+    const rows = agentLanes([], [main, sub, loop('ag-2', { status: 'idle', lastTool: '', lastTarget: '' })], 'Fix uploads')
+    expect(rows.map(r => [r.id, r.label, r.state, r.step, r.pct, r.calls])).toEqual([
+      ['main', 'Main', 'working', 'Fix uploads', null, 9],
+      ['ag-1', 'Survey the repo', 'working', 'Map the live view', null, 4],
+      ['ag-2', 'Agent ag-2', 'waiting', '', null, 3],
+    ])
+    expect(JSON.stringify(rows)).not.toMatch(/Bash|sed|Read|a\.ts/) // the tool in use is never shown
+    const posted: BoardLane = { id: 't25', label: 'Survey', state: 'testing', pct: 40, step: 'reading', note: '', goal: '', dod: [], at: null, startedAt: 1, updatedAt: 2, by: 'ag-1', loop: 'ag-1' }
+    const merged = agentLanes([posted, { ...posted, id: 'orphan', loop: null }], [main, sub])
+    expect(merged.map(r => r.id)).toEqual(['main', 't25', 'orphan'])
+    expect(merged[1]).toMatchObject({ label: 'Survey', pct: 40, step: 'reading', note: 'Map the live view', state: 'testing', calls: 4 }) // its own step wins, the intent follows
+    const bare = agentLanes([{ ...posted, label: 't25', step: '' }], [sub])
+    expect(bare[0]).toMatchObject({ label: 'Survey the repo', step: 'Map the live view', note: '', pct: 40 }) // named only by its id: the agent's name; no step: its intent
+    const frames = assembleBoard(newBoardModel(), input({ loops: [main, sub] }))
+    expect(ids(frames.frames)).toEqual(['now-doing', 'lanes', 'bars'])
+    expect(frames.lanes).toHaveLength(2)
+    expect(assembleBoard(newBoardModel(), input({ loops: [main] })).lanes).toEqual([])
+  } finally {
+    applyOptions({})
+  }
 })
 
 test('a lane with a checklist also gets a `steps` frame titled with its goal; the item at `at` shows as doing; the model can remove it', () => {
@@ -251,26 +256,31 @@ test('a lane with a checklist also gets a `steps` frame titled with its goal; th
 })
 
 test('the bars frame: time per agent (tokens once any are known), the main loop left out, top 6, running highlighted, only from two loops; the model can replace or remove it', () => {
-  expect(agentBars([loop('main')], NOW)).toBeUndefined()
-  const MIN = 60_000
-  const many = ['main', ...Array.from({ length: 8 }, (_, i) => `ag-${i}`)].map((id, i) =>
-    loop(id, { startedAt: NOW - 10 * MIN, lastAt: NOW - 10 * MIN + i * MIN, status: i === 8 ? 'running' : 'done' }),
-  )
-  const bars = agentBars(many, NOW) as Extract<BoardFrame, { type: 'bars' }>
-  expect(bars).toMatchObject({ id: 'bars', type: 'bars', title: 'Time per agent', size: 's', unit: 'min' })
-  expect(bars.items).toHaveLength(6)
-  expect(bars.items.map(i => i.value)).toEqual([10, 7, 6, 5, 4, 3]) // ag-7 is running (10 min up to now), the others lasted lastAt - startedAt; main is not an agent
-  expect(bars.items[0]!.color).toBe(RUNNING_COLOR)
-  expect(bars.items[1]!.color).toBe(QUIET_COLOR)
-  expect(() => validateFrame(bars)).not.toThrow()
-  const withTokens = [loop('main', { tokens: 9_000_000 }), loop('ag-1', { tokens: 42_400 }), loop('ag-2', { tokens: 100_000 }), loop('ag-3')]
-  expect(agentBars(withTokens, NOW)).toMatchObject({ title: 'Tokens per agent', unit: 'k tokens', items: [{ value: 100 }, { value: 42 }] }) // ag-3 has no tokens known: no bar, not a zero one
-  expect((agentBars(withTokens, NOW) as Extract<BoardFrame, { type: 'bars' }>).items).toHaveLength(2)
-  expect(() => validateFrame(agentBars(withTokens, NOW) as BoardFrame)).not.toThrow()
-  const loops = [loop('main'), loop('ag-1')]
-  expect(ids(assembleFrames(newBoardModel(), input({ loops })))).toContain('bars')
-  expect(ids(assembleFrames(apply(newBoardModel(), { frame_remove: 'bars' }).model, input({ loops })))).not.toContain('bars')
-  expect(assembleFrames(apply(newBoardModel(), { frame: { id: 'bars', type: 'text', text: 'mine' } }).model, input({ loops })).filter(f => f.id === 'bars')).toHaveLength(1)
+  applyOptions({ insightFrames: true })
+  try {
+    expect(agentBars([loop('main')], NOW)).toBeUndefined()
+    const MIN = 60_000
+    const many = ['main', ...Array.from({ length: 8 }, (_, i) => `ag-${i}`)].map((id, i) =>
+      loop(id, { startedAt: NOW - 10 * MIN, lastAt: NOW - 10 * MIN + i * MIN, status: i === 8 ? 'running' : 'done' }),
+    )
+    const bars = agentBars(many, NOW) as Extract<BoardFrame, { type: 'bars' }>
+    expect(bars).toMatchObject({ id: 'bars', type: 'bars', title: 'Time per agent', size: 's', unit: 'min' })
+    expect(bars.items).toHaveLength(6)
+    expect(bars.items.map(i => i.value)).toEqual([10, 7, 6, 5, 4, 3]) // ag-7 is running (10 min up to now), the others lasted lastAt - startedAt; main is not an agent
+    expect(bars.items[0]!.color).toBe(RUNNING_COLOR)
+    expect(bars.items[1]!.color).toBe(QUIET_COLOR)
+    expect(() => validateFrame(bars)).not.toThrow()
+    const withTokens = [loop('main', { tokens: 9_000_000 }), loop('ag-1', { tokens: 42_400 }), loop('ag-2', { tokens: 100_000 }), loop('ag-3')]
+    expect(agentBars(withTokens, NOW)).toMatchObject({ title: 'Tokens per agent', unit: 'k tokens', items: [{ value: 100 }, { value: 42 }] }) // ag-3 has no tokens known: no bar, not a zero one
+    expect((agentBars(withTokens, NOW) as Extract<BoardFrame, { type: 'bars' }>).items).toHaveLength(2)
+    expect(() => validateFrame(agentBars(withTokens, NOW) as BoardFrame)).not.toThrow()
+    const loops = [loop('main'), loop('ag-1')]
+    expect(ids(assembleFrames(newBoardModel(), input({ loops })))).toContain('bars')
+    expect(ids(assembleFrames(apply(newBoardModel(), { frame_remove: 'bars' }).model, input({ loops })))).not.toContain('bars')
+    expect(assembleFrames(apply(newBoardModel(), { frame: { id: 'bars', type: 'text', text: 'mine' } }).model, input({ loops })).filter(f => f.id === 'bars')).toHaveLength(1)
+  } finally {
+    applyOptions({})
+  }
 })
 
 test('agent rows carry the insight computed from the ring: kind, headline, strip, mix, files, feed, tokens', () => {
@@ -288,18 +298,23 @@ test('the pulse frame is opt-in: only a frame the model sends puts it on the boa
 })
 
 test('the delegation and pipeline auto frames: from two agents, after the agents frame and the bars; the model can replace or remove them', () => {
-  const one = assembleFrames(newBoardModel(), input({ loops: [loop('main'), loop('a')] }))
-  expect(ids(one)).not.toContain('delegation')
-  const loops = [loop('main'), loop('a'), loop('b')]
-  const frames = assembleFrames(newBoardModel(), input({ loops }))
-  const ownIds = (fs: readonly BoardFrame[]) => ids(fs).filter(id => ['lanes', 'bars', 'delegation', 'pipeline'].includes(id)) // other auto frames may sit among them
-  expect(ownIds(frames)).toEqual(['lanes', 'bars', 'delegation', 'pipeline'])
-  expect(frames.find(f => f.id === 'delegation')).toMatchObject({ type: 'uml', title: 'Handoffs' })
-  const mine = apply(newBoardModel(), { frame: { id: 'pipeline', type: 'text', text: 'mine' } }).model
-  expect(assembleFrames(mine, input({ loops })).find(f => f.id === 'pipeline')).toMatchObject({ type: 'text' })
-  const removed = apply(newBoardModel(), { frame_remove: 'delegation' })
-  expect(removed.notes).toEqual(['frame delegation removed (auto; frames_clear brings it back)'])
-  expect(ownIds(assembleFrames(removed.model, input({ loops })))).toEqual(['lanes', 'bars', 'pipeline'])
+  applyOptions({ insightFrames: true })
+  try {
+    const one = assembleFrames(newBoardModel(), input({ loops: [loop('main'), loop('a')] }))
+    expect(ids(one)).not.toContain('delegation')
+    const loops = [loop('main'), loop('a'), loop('b')]
+    const frames = assembleFrames(newBoardModel(), input({ loops }))
+    const ownIds = (fs: readonly BoardFrame[]) => ids(fs).filter(id => ['lanes', 'bars', 'delegation', 'pipeline'].includes(id)) // other auto frames may sit among them
+    expect(ownIds(frames)).toEqual(['lanes', 'bars', 'delegation', 'pipeline'])
+    expect(frames.find(f => f.id === 'delegation')).toMatchObject({ type: 'uml', title: 'Handoffs' })
+    const mine = apply(newBoardModel(), { frame: { id: 'pipeline', type: 'text', text: 'mine' } }).model
+    expect(assembleFrames(mine, input({ loops })).find(f => f.id === 'pipeline')).toMatchObject({ type: 'text' })
+    const removed = apply(newBoardModel(), { frame_remove: 'delegation' })
+    expect(removed.notes).toEqual(['frame delegation removed (auto; frames_clear brings it back)'])
+    expect(ownIds(assembleFrames(removed.model, input({ loops })))).toEqual(['lanes', 'bars', 'pipeline'])
+  } finally {
+    applyOptions({})
+  }
 })
 
 test('applyFramePlan remembers the form of each upsert, and the hint appears on a streak', () => {
@@ -336,17 +351,22 @@ test('options: done-row minutes and checklist frame count, defaults when unset o
 })
 
 test('ONE agents component: while the Agents tile exists the board omits its agent rows (lanes), now-doing, bars and pipeline; checklists and user frames stay; without the tile all of them are back', () => {
-  const loops = [loop('main'), loop('a'), loop('b')]
-  const lane: BoardLane = { ...LANE, id: 't30', goal: 'Board', dod: [{ t: 'x', state: 'todo' }], at: 0, loop: 'a' }
-  const withoutTile = assembleFrames(newBoardModel(), input({ loops, lanes: [lane] }))
-  for (const id of ['now-doing', 'lanes', 'bars']) expect(ids(withoutTile)).toContain(id)
-  const withTile = assembleFrames(newBoardModel(), input({ loops, lanes: [lane], hasAgentsTile: true }))
-  for (const id of ['now-doing', 'lanes', 'bars', 'pipeline']) expect(ids(withTile)).not.toContain(id)
-  expect(ids(withTile)).toContain('dod-t30')
-  const user = apply(newBoardModel(), { frame: { id: 'mine', type: 'text', text: 'hi' } })
-  expect(ids(assembleFrames(user.model, input({ loops, hasAgentsTile: true })))).toContain('mine')
-  expect(assembleBoard(newBoardModel(), input({ loops, hasAgentsTile: true })).lanes).toHaveLength(3) // the data of the rows stays (the tile reads it)
-  expect(ids(assembleFrames(newBoardModel(), input({ loops, hasAgentsTile: false })))).toEqual(ids(assembleFrames(newBoardModel(), input({ loops })))) // the flag off is the same as no flag
+  applyOptions({ insightFrames: true })
+  try {
+    const loops = [loop('main'), loop('a'), loop('b')]
+    const lane: BoardLane = { ...LANE, id: 't30', goal: 'Board', dod: [{ t: 'x', state: 'todo' }], at: 0, loop: 'a' }
+    const withoutTile = assembleFrames(newBoardModel(), input({ loops, lanes: [lane] }))
+    for (const id of ['now-doing', 'lanes', 'bars']) expect(ids(withoutTile)).toContain(id)
+    const withTile = assembleFrames(newBoardModel(), input({ loops, lanes: [lane], hasAgentsTile: true }))
+    for (const id of ['now-doing', 'lanes', 'bars', 'pipeline']) expect(ids(withTile)).not.toContain(id)
+    expect(ids(withTile)).toContain('dod-t30')
+    const user = apply(newBoardModel(), { frame: { id: 'mine', type: 'text', text: 'hi' } })
+    expect(ids(assembleFrames(user.model, input({ loops, hasAgentsTile: true })))).toContain('mine')
+    expect(assembleBoard(newBoardModel(), input({ loops, hasAgentsTile: true })).lanes).toHaveLength(3) // the data of the rows stays (the tile reads it)
+    expect(ids(assembleFrames(newBoardModel(), input({ loops, hasAgentsTile: false })))).toEqual(ids(assembleFrames(newBoardModel(), input({ loops })))) // the flag off is the same as no flag
+  } finally {
+    applyOptions({})
+  }
 })
 
 test('now-doing: only when an agent row says what it does, above the agents frame; the model can remove it', () => {
@@ -362,24 +382,29 @@ test('now-doing: only when an agent row says what it does, above the agents fram
 })
 
 test('activity-timeline: a swimlane of every loop by kind, in seconds from the first start, only once an agent has done something', () => {
-  const T0 = NOW - 600_000
-  const main = loop('main', { startedAt: T0, lastAt: NOW })
-  const sub = loop('a', { startedAt: T0 + 60_000, lastAt: NOW - 1000 })
-  const events = [
-    { t: T0 + 10_000, loop: 'main', tool: 'Edit', target: 'work-kinds.ts', kind: 'logic' },
-    { t: T0 + 70_000, loop: 'a', tool: 'Bash', target: 'tsc', kind: 'tests' },
-    { t: T0 + 80_000, loop: 'a', tool: 'Edit', target: 'board.css', kind: 'ui' },
-  ] as never
-  expect(agentSwimlane([main], events, NOW)).toBeUndefined() // the main loop alone is not an activity timeline
-  expect(agentSwimlane([main, loop('quiet')], events, NOW)).toBeUndefined() // an agent with no call yet adds nothing
-  const frame = agentSwimlane([main, sub], events, NOW) as Extract<BoardFrame, { type: 'swimlane' }>
-  expect(frame).toMatchObject({ id: 'activity-timeline', type: 'swimlane', title: 'Activity' })
-  expect(frame.items.map(i => [i.label, i.from, i.state])).toEqual([['Main', 0, 'working'], ['Agent a', 60, 'working']])
-  expect(frame.items[1]!.segs.map(s => s.k)).toEqual(['tests', 'ui'])
-  expect(frame.items[0]!.segs[0]).toMatchObject({ k: 'logic', a: 10 })
-  expect(() => validateFrame(frame)).not.toThrow()
-  expect(JSON.stringify(frame)).not.toMatch(/Edit|Bash|work-kinds|board\.css/) // kinds and times only: no tool, no file
-  const data = assembleBoard(newBoardModel(), input({ loops: [main, sub], events }))
-  expect(ids(data.frames)).toContain('activity-timeline')
-  expect(ids(data.frames).indexOf('activity-timeline')).toBeGreaterThan(ids(data.frames).indexOf('lanes'))
+  applyOptions({ insightFrames: true })
+  try {
+    const T0 = NOW - 600_000
+    const main = loop('main', { startedAt: T0, lastAt: NOW })
+    const sub = loop('a', { startedAt: T0 + 60_000, lastAt: NOW - 1000 })
+    const events = [
+      { t: T0 + 10_000, loop: 'main', tool: 'Edit', target: 'work-kinds.ts', kind: 'logic' },
+      { t: T0 + 70_000, loop: 'a', tool: 'Bash', target: 'tsc', kind: 'tests' },
+      { t: T0 + 80_000, loop: 'a', tool: 'Edit', target: 'board.css', kind: 'ui' },
+    ] as never
+    expect(agentSwimlane([main], events, NOW)).toBeUndefined() // the main loop alone is not an activity timeline
+    expect(agentSwimlane([main, loop('quiet')], events, NOW)).toBeUndefined() // an agent with no call yet adds nothing
+    const frame = agentSwimlane([main, sub], events, NOW) as Extract<BoardFrame, { type: 'swimlane' }>
+    expect(frame).toMatchObject({ id: 'activity-timeline', type: 'swimlane', title: 'Activity' })
+    expect(frame.items.map(i => [i.label, i.from, i.state])).toEqual([['Main', 0, 'working'], ['Agent a', 60, 'working']])
+    expect(frame.items[1]!.segs.map(s => s.k)).toEqual(['tests', 'ui'])
+    expect(frame.items[0]!.segs[0]).toMatchObject({ k: 'logic', a: 10 })
+    expect(() => validateFrame(frame)).not.toThrow()
+    expect(JSON.stringify(frame)).not.toMatch(/Edit|Bash|work-kinds|board\.css/) // kinds and times only: no tool, no file
+    const data = assembleBoard(newBoardModel(), input({ loops: [main, sub], events }))
+    expect(ids(data.frames)).toContain('activity-timeline')
+    expect(ids(data.frames).indexOf('activity-timeline')).toBeGreaterThan(ids(data.frames).indexOf('lanes'))
+  } finally {
+    applyOptions({})
+  }
 })
