@@ -204,7 +204,7 @@ export async function applyFrames($: Dollar, plan: FramePlan, state: PanelState)
   }
   b.flusher?.touch()
   const hint = varietyHint(b.model.recent)
-  return { lines: [...withCount(applied.notes, onBoard), ...(hint === '' ? [] : [hint])] }
+  return { lines: [...withCount(applied.notes, onBoard), ...(plan.trimmed.length > 0 ? [`trimmed: ${plan.trimmed.join('; ')}`] : []), ...(hint === '' ? [] : [hint])] }
 }
 
 /** The one-line nudge when the recent forms repeat ('' otherwise): for the system prompt. */

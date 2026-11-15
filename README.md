@@ -44,7 +44,7 @@ The model gets two tools:
 
 The `panel:panel-guide` skill (`skills/panel-guide`) tells the model how to choose a form and write a scene.
 
-With the mod active, Claude uses the panel on its own for work that needs more than a few tool calls: task + why first,
+With the mod active, Claude uses the panel on its own for work that needs more than 3 tool calls: task + why first,
 then forms that fit the work and measured evidence. Short questions and acknowledgements stay in chat. Prompt context
 suggests forms from the current job and generic project markers. A local history of the last eight sessions helps avoid
 forms used in at least three of the last five sessions; among equally fitting forms, the suggestions rotate by session. Builds and operations

@@ -8,7 +8,7 @@ import { Invalid, cut, isAbsent, isPlain } from './blocks/common'
 import type { Plain } from './blocks/common'
 import { delegationFrame, pipelineFrame } from './agent-graph'
 import { agentBars, agentLanes, agentSwimlane, DOING_TITLE, DOD_FRAME_PREFIX, dodFrames, hasAgents } from './board-agents'
-import { FRAME_CAPS, frameId, validateFrame } from './board-frames'
+import { FRAME_CAPS, frameId, parseFrameString, validateFrame } from './board-frames'
 import { INSIGHT_FRAME_IDS, insightFrames } from './insight-frames'
 import { nowFrame } from './now-frame'
 import { limitsFrameOf } from './limits-frame'
@@ -41,7 +41,7 @@ const AUTO_TITLES = { now: 'Now', ask: 'Question', lanes: 'Agents' } as const
 const AUTO_SIZE = { now: 'm', ask: 'm', lanes: 'l' } as const
 const NAME_JOIN = ', '
 
-export type FramePlan = { rest: Plain; upsert?: BoardFrame; remove?: string[]; isClear: boolean }
+export type FramePlan = { rest: Plain; upsert?: BoardFrame; remove?: string[]; isClear: boolean; trimmed: string[] }
 export type FramePlanResult = { isOk: true; plan: FramePlan } | { isOk: false; error: string }
 
 /** What the model keeps on the board: its frames in order, and the auto frames it removed (until `frames_clear`). */
@@ -52,10 +52,10 @@ export const newBoardModel = (): BoardModel => ({ frames: [], removedAuto: [], r
  * Split one `panel` call's input into its frame part and the rest. The frame part is validated here (nothing is applied),
  * so a call with a bad frame and a good section changes neither. `rest` has no frame key.
  */
-export function planFrames(input: Plain): FramePlanResult {
+export function planFrames(input: Plain, isLenient: boolean = panelConfig.lenientLimits): FramePlanResult {
   const { [FRAME_KEY]: frame, [FRAME_REMOVE_KEY]: remove, [FRAMES_CLEAR_KEY]: clear, ...rest } = input
   try {
-    const plan: FramePlan = { rest, isClear: false }
+    const plan: FramePlan = { rest, isClear: false, trimmed: [] }
     if (!isAbsent(clear)) {
       if (typeof clear !== 'boolean') throw new Invalid(`${FRAMES_CLEAR_KEY} must be true or false`)
       plan.isClear = clear
@@ -65,7 +65,18 @@ export function planFrames(input: Plain): FramePlanResult {
       if (ids.length === 0) throw new Invalid(`${FRAME_REMOVE_KEY} must be a frame id or a non-empty array of ids`)
       plan.remove = ids.map((id, i) => frameId(id, Array.isArray(remove) ? `${FRAME_REMOVE_KEY}[${i}]` : FRAME_REMOVE_KEY))
     }
-    if (!isAbsent(frame)) plan.upsert = validateFrame(frame, FRAME_KEY)
+    if (!isAbsent(frame)) {
+      let raw = frame
+      if (typeof raw === 'string') {
+        // the model often sends the frame as a JSON string: read it, say so
+        const parsed = parseFrameString(raw)
+        if (parsed !== null) {
+          raw = parsed
+          plan.trimmed.push('frame was a JSON string, send an object')
+        }
+      }
+      plan.upsert = validateFrame(raw, FRAME_KEY, isLenient ? plan.trimmed : undefined)
+    }
     return { isOk: true, plan }
   } catch (err) {
     if (err instanceof Invalid) return { isOk: false, error: `panel: ${err.message}` }

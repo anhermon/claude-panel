@@ -142,6 +142,7 @@ export type RanCall = { argv: string[]; init?: ProcessRunInit }
 
 export async function boot($: Engine, on: On, opts: BootOptions = {}) {
   const registered: string[] = []
+  const deferred: Record<string, boolean> = {}
   const spawned: string[][] = []
   const children: FakeChild[] = []
   const blits: UiBlitArgs[] = []
@@ -169,6 +170,7 @@ export async function boot($: Engine, on: On, opts: BootOptions = {}) {
   on('session.cwd', () => ({ value: CWD }))
   on('tool.register', (_, e) => {
     registered.push(`mcp__panel__${e.name}`)
+    deferred[`mcp__panel__${e.name}`] = e.isDeferred === true
     return { value: { tool: `mcp__panel__${e.name}` } }
   })
   on('command.register', (_, e) => ({ value: { command: e.name } }))
@@ -233,5 +235,5 @@ export async function boot($: Engine, on: On, opts: BootOptions = {}) {
   /** The `--token` the server was started with, and the url it serves at. */
   const token = (): string => spawned[0]?.[(spawned[0]?.indexOf('--token') ?? -2) + 1] ?? ''
   const url = (port = PORT): string => `http://127.0.0.1:${port}/${token()}/`
-  return { writes, opened, registered, spawned, children, blits, ran, calls, clock, stopServer, last, token, url, stored }
+  return { writes, opened, registered, deferred, spawned, children, blits, ran, calls, clock, stopServer, last, token, url, stored }
 }

@@ -143,7 +143,7 @@ test('context stays bounded and contains only generic profile text, suggestions 
   const block = contextBlock(profile, ['riskgrid', 'compare', 'scene'], seedOf('session-a'))
   expect(block.length).toBeLessThanOrEqual(CONTEXT_MAX_CHARS)
   expect(block).toMatch(/^<panel-context>.*<\/panel-context>$/)
-  expect(block).toContain('task + why')
+  expect(block).toContain('task+why')
   expect(block).toContain('unless the content demands')
   expect(block).toContain('riskgrid, compare.')
   expect(block).not.toContain('scene')

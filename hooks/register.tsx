@@ -25,25 +25,27 @@ import { limitsUsage } from './limits-state'
 import { ANY_TOOL_NAME, formNudgeLine, formsOfFrame, isCountedCall, NOT_A_MESSAGE, noteToolCall, recordForms, registerProactive, releaseSeed, TASK_WHY } from './proactive'
 import { parsePulseArgs, pulseAdoptLanes, pulseCommand, pulseLanes, pulseSelfCall, pulseStart, registerPulse } from './pulse-host'
 import type { PulseInit } from './pulse-host'
+import { HELP_KEY, helpText } from './panel-help'
 import { hasLanePart, planLanes } from './pulse-lanes'
 import { applyUserScene } from './pulse-scene'
 import { STAGE_LAYOUT, withShotFace } from './scene'
 import { allowedRoots, prepareScene, resolveRoots } from './scene-fs'
 import { sceneIo, sendData } from './scene-io'
+import { subagentDeny } from './subagent-policy'
 import { envPortOf, mintToken, OPENSSL_ARGV, portMapOf, preferredPort, serverArgv, serverUrl, STORE_PORTS_KEY, STORE_TOKEN_KEY, TOKEN_PATTERN, withPort } from './server'
 import {
-  BASELINE_TEXT,
+  baselineText,
   COMMAND_NAME,
   PANE_ID,
-  PASSIVE_BASELINE_TEXT,
-  PASSIVE_TOOL_DESCRIPTION,
+  passiveBaselineText,
+  passiveToolDescription,
   PLUGIN_NAME,
   SCENE_FULL_NAME,
   SCENE_INPUT_SCHEMA,
   SCENE_TOOL_DESCRIPTION,
   SCENE_TOOL_NAME,
   SECTION_ID,
-  TOOL_DESCRIPTION,
+  toolDescription,
   TOOL_FULL_NAME,
   TOOL_INPUT_SCHEMA,
   TOOL_NAME,
@@ -380,8 +382,9 @@ export const register: Register = (on, options) => {
 
   on('session.start', async ($, e, next) => {
     resetLive()
-    await registerTool($, TOOL_NAME, panelConfig.proactive ? TOOL_DESCRIPTION : PASSIVE_TOOL_DESCRIPTION, TOOL_INPUT_SCHEMA, TOOL_FULL_NAME)
-    await registerTool($, SCENE_TOOL_NAME, SCENE_TOOL_DESCRIPTION, SCENE_INPUT_SCHEMA, SCENE_FULL_NAME)
+    const { deferPanel, deferScene } = panelConfig
+    await registerTool($, TOOL_NAME, panelConfig.proactive ? toolDescription({ deferScene, deferPanel }) : passiveToolDescription({ deferScene, deferPanel }), TOOL_INPUT_SCHEMA, TOOL_FULL_NAME, deferPanel)
+    await registerTool($, SCENE_TOOL_NAME, SCENE_TOOL_DESCRIPTION, SCENE_INPUT_SCHEMA, SCENE_FULL_NAME, deferScene)
     await $.command.register({
       name: COMMAND_NAME,
       description: COMMAND_DESCRIPTION,
@@ -416,7 +419,14 @@ export const register: Register = (on, options) => {
 
   on('tool.call', { tool: TOOL_FULL_NAME }, async ($, e) => {
     const { agentId } = e as typeof e & Reserved
-    const planned = planLanes(modelInput(e as typeof e & Reserved))
+    const sent = modelInput(e as typeof e & Reserved)
+    const barred = agentId === undefined ? undefined : subagentDeny(panelConfig.subagentPanel, false, sent)
+    if (barred !== undefined) return { deny: barred }
+    // {help: topic} alone: the field guide as the result; the board, the pane and the events stay untouched.
+    if (HELP_KEY in sent) {
+      return Object.keys(sent).length === 1 ? { result: helpText(sent[HELP_KEY]) } : { deny: `${PLUGIN_NAME}: ${HELP_KEY} must be sent alone` }
+    }
+    const planned = planLanes(sent)
     if (!planned.isOk) return { deny: planned.error }
     const { plan } = planned
     const framed = planFrames(plan.rest)
@@ -467,6 +477,9 @@ export const register: Register = (on, options) => {
   })
 
   on('tool.call', { tool: SCENE_FULL_NAME }, async ($, e) => {
+    const { agentId } = e as typeof e & Reserved
+    const barred = agentId === undefined ? undefined : subagentDeny(panelConfig.subagentPanel, true, {})
+    if (barred !== undefined) return { deny: barred }
     const prepared = await prepareScene(modelInput(e as typeof e & Reserved), await sceneEnv($), sceneFs($), sceneIo($)).then(
       action => ({ action }),
       (err: unknown) => {
@@ -557,7 +570,7 @@ export const register: Register = (on, options) => {
   on('prompt.compose', async ($, e, next) => {
     const { sections } = await next(e)
     return {
-      sections: [...sections, { id: SECTION_ID, text: panelConfig.proactive ? BASELINE_TEXT : PASSIVE_BASELINE_TEXT, scope: 'session' }],
+      sections: [...sections, { id: SECTION_ID, text: (panelConfig.proactive ? baselineText : passiveBaselineText)({ deferScene: panelConfig.deferScene, deferPanel: panelConfig.deferPanel }), scope: 'session' }],
     }
   })
 

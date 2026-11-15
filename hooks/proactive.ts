@@ -10,7 +10,7 @@ import { pushForm, readHistory, staleForms, startSession, writeHistory } from '.
 import { panelConfig } from './panel-config'
 import { jobOf, MOTION_PATTERN, profileOf, RULE_SCAN_CHARS } from './session-context'
 import type { Job, SessionProfile } from './session-context'
-import { SCENE_FULL_NAME, TOOL_FULL_NAME } from './spec'
+import { PANEL_LOAD_NOTE, SCENE_FULL_NAME, TOOL_FULL_NAME } from './spec'
 import { suggestFor } from './suggest'
 import { clip, scrubText } from './transcript-redact'
 
@@ -27,7 +27,8 @@ const CONTEXT_CLOSE = '</panel-context>'
 const STACK_CHARS = 65
 const NOTE_CHARS = 120
 const NO_STACK = 'general session'
-const START_INSTRUCTION = 'Post the task + why on the panel now if this will take more than a few tool calls.'
+// The one proactive guidance the model is sure to see: the baseline section rides prompt.compose, which another plugin's hook can starve.
+export const START_INSTRUCTION = 'Main session: once work passes 3 tool calls, post task+why on the panel and one evidence frame when you have evidence; no panel for one-line answers.'
 const SEED_MULTIPLIER = 31
 const SEED_MODULUS = 2 ** 32
 // A sentence ends at ". " but not inside "e.g." / "i.e.".
@@ -107,11 +108,13 @@ export function taskFromPrompt(prompt: string, privateNames: readonly string[] =
   return { title: clip(plainTitle(text), TASK_TITLE_CHARS) || TASK_FALLBACK, why: TASK_WHY }
 }
 
-export function contextBlock(profile: SessionProfile, stale: readonly string[], seed: number): string {
+/** `isDeferred`: the panel tool waits behind ToolSearch, so the block (which the model always sees) says how to load it, outside the length cap. */
+export function contextBlock(profile: SessionProfile, stale: readonly string[], seed: number, isDeferred = false): string {
   const suggestion = suggestFor(profile, stale, seed)
   const stack = clip(profile.stack.join(', ') || NO_STACK, STACK_CHARS)
   const body = `Session: ${profile.job}; ${stack}. ${START_INSTRUCTION} Candidates: ${suggestion.forms.join(', ')}. ${clip(suggestion.note, NOTE_CHARS)}`
-  return `${CONTEXT_OPEN}${clip(body, CONTEXT_MAX_CHARS - CONTEXT_OPEN.length - CONTEXT_CLOSE.length)}${CONTEXT_CLOSE}`
+  const load = isDeferred ? `Load the panel tool first: ${PANEL_LOAD_NOTE}. ` : ''
+  return `${CONTEXT_OPEN}${load}${clip(body, CONTEXT_MAX_CHARS - CONTEXT_OPEN.length - CONTEXT_CLOSE.length)}${CONTEXT_CLOSE}`
 }
 
 export function formsOfFrame(frame: unknown): string[] {
@@ -164,7 +167,7 @@ export function registerProactive(on: On): void {
       if (plan.inject) {
         const [markers, repo, history] = await Promise.all([$.fs.list().catch(() => []), $.session.repo().catch(() => null), readHistory($)])
         const profile = profileOf({ prompt: e.text, markers: [...markers.map(m => m.name), ...(repo === null ? [] : [GIT_MARKER])], toolCounts: state.toolCounts })
-        block = contextBlock(profile, staleForms(history.filter(s => s.sessionKey !== key)), seedOf(key))
+        block = contextBlock(profile, staleForms(history.filter(s => s.sessionKey !== key)), seedOf(key), panelConfig.deferPanel)
       }
       const entered = await next(block === undefined ? e : { ...e, context: [...(e.context ?? []), block] })
       // A dropped prompt does not consume the first-prompt nudge or arm the task safety net.

@@ -106,13 +106,22 @@ test('a worker\'s frame is upsert-only: no panel section changes, the result is 
   expect(b.frameIds()).toContain('agent-note')
 })
 
+test('lenient limits: an over-long text is cut and applied, and the result line says what was trimmed', async ($, on) => {
+  const b = await boardBoot($, on)
+  const r = await b.call({ frame: { id: 'long', type: 'text', text: 'x'.repeat(91) } })
+  expect(r.deny).toBeUndefined()
+  expect(JSON.stringify(r)).toMatch(/trimmed: text 91→90/)
+  await b.settle()
+  expect(b.frameIds()).toContain('long')
+})
+
 test('refusals name the field and change nothing: a bad frame, a bad remove, a full board', async ($, on) => {
   const b = await boardBoot($, on)
   await b.call({ frame: { id: 'one', type: 'text', text: 'x' } })
   await b.settle()
   const written = b.dataWrites().length
-  const long = await b.call({ frame: { id: 'two', type: 'text', text: 'x'.repeat(91) } })
-  expect(long.deny).toMatch(/^panel: frame\.text is 91 characters; the limit is 90/)
+  const wrong = await b.call({ frame: { id: 'two', type: 'text', text: 7 } })
+  expect(wrong.deny).toMatch(/^panel: frame\.text must be a string/)
   const unknown = await b.call({ frame: { id: 'two', type: 'text', text: 'x', colour: 'red' } })
   expect(unknown.deny).toMatch(/frame\.colour is not a known field of a "text" frame/)
   const edge = await b.call({ frame: { id: 'g', type: 'diagram', nodes: [{ id: 'a', label: 'A' }], edges: [{ from: 'a', to: 'zz' }] } })
