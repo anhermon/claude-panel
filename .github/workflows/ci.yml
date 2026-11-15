@@ -1,0 +1,25 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+env:
+  NODE_VERSION: '22'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      # Same command as README "Develop and test"; the Chrome-dependent suites under web/ are not run here.
+      - name: Unit tests
+        run: node --test web/builtin/imports.test.mjs web/builtin/agents-info/*.test.mjs web/builtin/board/*.test.mjs
