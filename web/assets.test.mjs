@@ -356,7 +356,8 @@ const TEXT_GLYPH_PX = 8;
 const makeElement = doc.createElement;
 doc.createElement = (tag) => {
   const node = makeElement(tag);
-  if (tag === 'canvas') node.getContext = () => ({ measureText: (text) => ({ width: text.length * TEXT_GLYPH_PX }) });
+  // Any other 2d method (setTransform, clearRect, ...) is a no-op; measureText is the only one with a result.
+  if (tag === 'canvas') node.getContext = () => new Proxy({ measureText: (text) => ({ width: text.length * TEXT_GLYPH_PX }) }, { get: (t, k) => (k in t ? t[k] : () => {}) });
   return node;
 };
 Object.defineProperty(FakeNode.prototype, 'isConnected', { get() { return this === doc.body || Boolean(this.parentNode?.isConnected); }, configurable: true });
