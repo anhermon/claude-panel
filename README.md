@@ -1,9 +1,18 @@
 # panel
 
-A Claude Code mod that keeps a live panel beside the chat. The model (or you) puts things on it: what the task is and why,
-context, what is done and next, cards, charts, diagrams, and small sandboxed HTML/JS "scenes". While subagents run, the
-panel also draws a board of them (who does what, how long, what went wrong). Everything is mirrored to a browser view on
-your own machine.
+**Claude draws what it's doing, beside the chat: task, plan, charts, diagrams, scenes.**
+
+![The panel mid-task: the task and why, a question for you, and the plan with progress](docs/panel-mid-task.png)
+
+A Claude Code mod that keeps a live panel beside the chat. Claude (or you) puts on it what the task is and why, the plan,
+cards, charts, diagrams and small sandboxed HTML/JS "scenes". While subagents run, it also draws a board of them (who does
+what, how long, what went wrong). Everything is mirrored to a browser view on your own machine; nothing leaves it.
+
+![Scenes on the panel: a chart and a canvas animation Claude wrote for this task](docs/panel-scenes.png)
+
+**vs Agent View:** Agent View (`claude agents`) is a list of your sessions. Panel is what one session shows about its own
+work, written by the model as it goes (plan, evidence, charts, scenes, a board of its subagents); its [global view](#global-view)
+is the sessions list, read-only.
 
 ## Install
 
@@ -44,6 +53,38 @@ The model gets two tools:
 
 The `panel:panel-guide` skill (`skills/panel-guide`) tells the model how to choose a form and write a scene.
 
+## Global view
+
+`/panel global` prints and opens `http://127.0.0.1:<port>/<token>/global/`, a second, read-only page beside the per-session panel (which is unchanged). It covers every Claude Code session on this machine that wrote in the last 48 hours, ended ones included:
+
+- **Needs you** at the top: one item per decision or question across all sessions, with a bold title, one line on why, and a link to its source when there is one. Items the session board itself lists (its `needs-you`/decision html frames, its `ask`) are certain; items the page infers are labelled **May**: an `AskUserQuestion` with no answer, a tool call with no answer for 20 s, a last reply that ends with a question, an API error, a session registered busy but quiet for 5 minutes. Inferred items come from live sessions only.
+- **Jira**: sessions grouped by ticket key, taken from the git branch (`feature/<KEY>-...`) and the prompts. Only project prefixes seen in real `atlassian.net/browse/` links count (DEV, CHR, RH, INC, plus any a transcript shows); links use `https://dealhub.atlassian.net/browse/<KEY>`. `INT-*` keys are internal and get no link. Nothing calls the Jira API.
+- **Sessions**: a card each (at most 40, waiting first, then busy, then the most recent): title, project and branch, state (busy, may be waiting, idle, ended), last activity, the current task and its progress (the last `TodoWrite`, `TaskCreate`/`TaskUpdate` or checklist state, else the board's steps), the subagents and what each is doing, and the latest PR, Jira and artifact links. A card expands for the last prompt and the details.
+
+How it works: the server computes the answer only when the page asks (every 4 s, cached for about 2 s). It lists `~/.claude/projects/*/*.jsonl` with `readdir` + `stat`, reads the last 512 KiB of each transcript (then only appended bytes), checks liveness with the `~/.claude/sessions/<pid>.json` registry and `ps` (never the `*.key` files), and reads each session's board from `$TMPDIR/claude-panel/` while that file is within the window. Every text is masked for secrets, cut, never sent to a model, and drawn as plain text; links are shown only as absolute `http(s)` URLs that carry no secret. The route is under the same token and `Host` check as the rest of the server, with its own content-security policy (no inline script). It is not a daemon: with no panel server running there is no global view.
+
+## Platforms
+
+- **macOS**: developed and tested here.
+- **Linux**: supported by reading the code, not run by the author: the browser opens with `xdg-open`, Chrome is found on `PATH` (`google-chrome`, `google-chrome-stable`, `chromium`, `chromium-browser`, `chrome`), and the process helpers (`ps -o lstart=`, `mv`, `openssl`, POSIX process groups) are standard on Linux.
+- **Windows**: not supported (the mod relies on POSIX tools and process groups). WSL is untested.
+- **Chrome** is only needed for scene screenshots and `/panel live`. Set `CHROME=/path/to/chrome` if it is not found. Without Chrome the panel, the browser view and every other feature still work; a screenshot reports "chrome not found".
+- If no browser can be opened (no `open`/`xdg-open`), `/panel open` prints the URL with "could not open a browser".
+
+Other environment variables: `CLAUDE_PANEL_PORT` (first port to try, default 4717), `TMPDIR` (where state goes, default `/tmp`).
+
+## Privacy
+
+- The browser view is a Node server bound to `127.0.0.1` only. Every route sits under a random 128-bit token (`http://127.0.0.1:<port>/<token>/`), anything else is a 404, and a `Host` header other than `127.0.0.1:<port>` or `localhost:<port>` is refused (DNS rebinding). The token is kept in Claude Code's per-project store so the same project reopens the same link. The server only reads; the one write path is the page's `POST /event`, which sends a click back to the model.
+- State is written under `$TMPDIR/claude-panel/` (default `/tmp/claude-panel/`): per-session state files, board, pulse, live-frame and inline-scene folders, and screenshots. The OS cleans temp folders; nothing is written to your project or home folder by the panel itself.
+- Transcript text shown on the board (agent details) is passed through a redaction step first (home folders, key/token shapes, passwords in URLs), but treat the board as showing your session's work.
+- Form history uses one per-project store key (`panel.history`): generic jobs, form names, timestamps and opaque session keys only. Prompts, directory paths and branch names are not saved in that history.
+- Nothing is sent to any remote service by the mod. Scenes are model-written code: they run in a sandboxed iframe with a strict content-security policy, but with the CDN allow-list on (`web/scene-files.mjs`) a scene may load scripts from cdnjs, jsdelivr or unpkg in your browser. Do not put secrets in a scene folder.
+- The global view (`/panel global`) reads every session's transcript tail (512 KiB), subagent transcripts and board files, with the same masking and no write path; see [Global view](#global-view).
+- The board's `Other sessions` frame (`sessionsFrame` option, off by default) is drawn from the `~/.claude/sessions` registry and `ps`, plus the last 128 KiB of each such session's transcript (title, branch, and what it is doing now: the tool call in flight, else the first sentence of its latest reply, else its last prompt; redacted and cut to 80 characters). Sessions that may be waiting for you come first, and clicking a card opens that session's transcript in the Agents tile. It is not sent to the model; turn it on with `sessionsFrame: true`.
+
+## How the board fills itself
+
 With the mod active, Claude uses the panel on its own for work that needs more than 3 tool calls: task + why first,
 then forms that fit the work and measured evidence. Short questions and acknowledgements stay in chat. Prompt context
 suggests forms from the current job and generic project markers. A local history of the last eight sessions helps avoid
@@ -59,16 +100,6 @@ windows, reset countdowns and freshness, followed by context fill and formatted 
 Optional local delegation-kit quotas refresh in the background every 120 seconds; missing tools or failed reads stay quiet.
 Snapshots older than 30 minutes are marked stale. Bars turn amber at 60% and red at 85%. Without readings it draws nothing.
 Replace it with a frame of the same id, or hide it with `frame_remove: "limits"`; `frames_clear` restores it.
-
-## Global view
-
-`/panel global` prints and opens `http://127.0.0.1:<port>/<token>/global/`, a second, read-only page beside the per-session panel (which is unchanged). It covers every Claude Code session on this machine that wrote in the last 48 hours, ended ones included:
-
-- **Needs you** at the top: one item per decision or question across all sessions, with a bold title, one line on why, and a link to its source when there is one. Items the session board itself lists (its `needs-you`/decision html frames, its `ask`) are certain; items the page infers are labelled **May**: an `AskUserQuestion` with no answer, a tool call with no answer for 20 s, a last reply that ends with a question, an API error, a session registered busy but quiet for 5 minutes. Inferred items come from live sessions only.
-- **Jira**: sessions grouped by ticket key, taken from the git branch (`feature/<KEY>-...`) and the prompts. Only project prefixes seen in real `atlassian.net/browse/` links count (DEV, CHR, RH, INC, plus any a transcript shows); links use `https://dealhub.atlassian.net/browse/<KEY>`. `INT-*` keys are internal and get no link. Nothing calls the Jira API.
-- **Sessions**: a card each (at most 40, waiting first, then busy, then the most recent): title, project and branch, state (busy, may be waiting, idle, ended), last activity, the current task and its progress (the last `TodoWrite`, `TaskCreate`/`TaskUpdate` or checklist state, else the board's steps), the subagents and what each is doing, and the latest PR, Jira and artifact links. A card expands for the last prompt and the details.
-
-How it works: the server computes the answer only when the page asks (every 4 s, cached for about 2 s). It lists `~/.claude/projects/*/*.jsonl` with `readdir` + `stat`, reads the last 512 KiB of each transcript (then only appended bytes), checks liveness with the `~/.claude/sessions/<pid>.json` registry and `ps` (never the `*.key` files), and reads each session's board from `$TMPDIR/claude-panel/` while that file is within the window. Every text is masked for secrets, cut, never sent to a model, and drawn as plain text; links are shown only as absolute `http(s)` URLs that carry no secret. The route is under the same token and `Host` check as the rest of the server, with its own content-security policy (no inline script). It is not a daemon: with no panel server running there is no global view.
 
 ## Options (`userConfig`)
 
@@ -107,31 +138,11 @@ None is required; a missing one simply shows nothing.
 - **delegation-kit** (codex/agy runs started by another plugin): the panel reads `<session cwd>/.router/runs/*.json`, else delegation-kit's ledger under `$DELEGATION_KIT_CACHE_DIR` (older name `$DELEGATION_KIT_CACHE`, default `~/.cache/delegation-kit`), and Codex rollouts under `$CODEX_HOME` (default `~/.codex`). Those runs then appear as agents. Without them there is nothing to read and no error.
 - **router-kit**: a `.router/` folder (`tickets/*/ticket.json`, `events.jsonl`) in the session's working directory is drawn as ticket and check frames.
 
-## Platforms
-
-- **macOS**: developed and tested here.
-- **Linux**: supported by reading the code, not run by the author: the browser opens with `xdg-open`, Chrome is found on `PATH` (`google-chrome`, `google-chrome-stable`, `chromium`, `chromium-browser`, `chrome`), and the process helpers (`ps -o lstart=`, `mv`, `openssl`, POSIX process groups) are standard on Linux.
-- **Windows**: not supported (the mod relies on POSIX tools and process groups). WSL is untested.
-- **Chrome** is only needed for scene screenshots and `/panel live`. Set `CHROME=/path/to/chrome` if it is not found. Without Chrome the panel, the browser view and every other feature still work; a screenshot reports "chrome not found".
-- If no browser can be opened (no `open`/`xdg-open`), `/panel open` prints the URL with "could not open a browser".
-
-Other environment variables: `CLAUDE_PANEL_PORT` (first port to try, default 4717), `TMPDIR` (where state goes, default `/tmp`).
-
-## Privacy
-
-- The browser view is a Node server bound to `127.0.0.1` only. Every route sits under a random 128-bit token (`http://127.0.0.1:<port>/<token>/`), anything else is a 404, and a `Host` header other than `127.0.0.1:<port>` or `localhost:<port>` is refused (DNS rebinding). The token is kept in Claude Code's per-project store so the same project reopens the same link. The server only reads; the one write path is the page's `POST /event`, which sends a click back to the model.
-- State is written under `$TMPDIR/claude-panel/` (default `/tmp/claude-panel/`): per-session state files, board, pulse, live-frame and inline-scene folders, and screenshots. The OS cleans temp folders; nothing is written to your project or home folder by the panel itself.
-- Transcript text shown on the board (agent details) is passed through a redaction step first (home folders, key/token shapes, passwords in URLs), but treat the board as showing your session's work.
-- Form history uses one per-project store key (`panel.history`): generic jobs, form names, timestamps and opaque session keys only. Prompts, directory paths and branch names are not saved in that history.
-- Nothing is sent to any remote service by the mod. Scenes are model-written code: they run in a sandboxed iframe with a strict content-security policy, but with the CDN allow-list on (`web/scene-files.mjs`) a scene may load scripts from cdnjs, jsdelivr or unpkg in your browser. Do not put secrets in a scene folder.
-- The global view (`/panel global`) reads every session's transcript tail (512 KiB), subagent transcripts and board files, with the same masking and no write path; see [Global view](#global-view).
-- The board's `Other sessions` frame (`sessionsFrame` option, off by default) is drawn from the `~/.claude/sessions` registry and `ps`, plus the last 128 KiB of each such session's transcript (title, branch, and what it is doing now: the tool call in flight, else the first sentence of its latest reply, else its last prompt; redacted and cut to 80 characters). Sessions that may be waiting for you come first, and clicking a card opens that session's transcript in the Agents tile. It is not sent to the model; turn it on with `sessionsFrame: true`.
-
 ## Develop and test
 
 ```
 node --test web/builtin/imports.test.mjs web/builtin/agents-info/*.test.mjs web/builtin/board/*.test.mjs
-node --test web/                  # page and server tests (some skip without Chrome)
+node --test web/                  # page and server tests, one process per file (some skip without Chrome)
 claude plugin test .              # hooks tests (tests/*.test.ts)
 claude plugin validate .
 ```
