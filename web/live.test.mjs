@@ -27,7 +27,8 @@ const WAIT_MAX_MS = 45000;
 const PHASE_WAIT_MS = 20000; // a step that follows a running page: a resize, the final state, Chrome and its profile going away
 const TEST_TIMEOUT_MS = 240000; // up to three Chrome runs per test, each allowed WAIT_MAX_MS to start
 const CHROME = findChrome({ env: process.env, exists: isExecutable, pathDirs: (process.env.PATH ?? '').split(delimiter).filter(Boolean) });
-const NO_CHROME = CHROME ? false : 'no Chrome on this machine';
+// CI runners have a Chrome, but its sandbox there breaks these process-lifecycle tests (and then hangs the job), so they run on a developer machine only.
+const NO_CHROME = process.env.CI ? 'live preview tests run on a developer machine, not in CI' : CHROME ? false : 'no Chrome on this machine';
 // Every run here gets its own TMPDIR: its Chrome profile lives under it, so "is anything left" looks at this file's runs
 // only (another live view running on the machine, e.g. a person's, is not ours and must not fail these tests).
 const SCRATCH = mkdtempSync(join(tmpdir(), 'live-test-root-'));
